@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AeroAgri — Global Satellite Agricultural Geomap</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2322c55e'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z'/></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Fullscreen Map Canvas -->
+  <div id="map"></div>
+
+  <!-- Top Cockpit Header Bar -->
+  <header class="hud-header">
+    <div class="hud-brand">
+      <div class="status-pulse"></div>
+      <div class="brand-text">
+        <span class="brand-title">AERO-AGRI</span>
+        <span class="brand-subtitle" id="hud-subtitle">MANDYA SATELLITE GEOMAP &bull; KAVERI AGRO-BASIN</span>
+      </div>
+    </div>
+
+    <!-- Scope Switcher: Mandya vs Global -->
+    <div class="scope-switcher">
+      <button class="scope-btn active" id="btn-scope-mandya" data-scope="mandya">
+        🇮🇳 Mandya (Karnataka)
+      </button>
+      <button class="scope-btn" id="btn-scope-global" data-scope="global">
+        🌐 Global Breadbaskets
+      </button>
+    </div>
+
+    <!-- Quick Global Stats Ribbon -->
+    <div class="hud-stats">
+      <div class="stat-pill">
+        <span class="stat-label">MONITORED CROPLAND</span>
+        <span class="stat-value" id="stat-cropland">247.9M ha</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-label">GLOBAL MEAN NDVI</span>
+        <span class="stat-value text-green" id="stat-ndvi">0.71 <small class="text-sub">Healthy</small></span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-label">IOT FIELD NODES</span>
+        <span class="stat-value text-cyan" id="stat-nodes">10 Active</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-label">ORBITAL PASS</span>
+        <span class="stat-value" id="stat-orbit">Sentinel-2A / 10m MSI</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Left Floating Control Panel -->
+  <aside class="hud-sidebar" id="hud-sidebar">
+    <div class="sidebar-section">
+      <div class="section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+        <span>SKY-VIEW BASE LAYER</span>
+      </div>
+      <div class="layer-selector">
+        <button class="layer-btn active" data-baselayer="satellite">
+          <span class="layer-dot"></span> True-Color Satellite
+        </button>
+        <button class="layer-btn" data-baselayer="hybrid">
+          <span class="layer-dot"></span> Satellite + Hybrid Labels
+        </button>
+        <button class="layer-btn" data-baselayer="topo">
+          <span class="layer-dot"></span> Topographic Terrain
+        </button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>DATA OVERLAYS</span>
+      </div>
+      <div class="toggle-group">
+        <label class="toggle-item">
+          <input type="checkbox" id="toggle-zones" checked />
+          <span class="toggle-slider"></span>
+          <span class="toggle-text">Agricultural Cropland Belts</span>
+        </label>
+        <label class="toggle-item">
+          <input type="checkbox" id="toggle-ndvi" checked />
+          <span class="toggle-slider"></span>
+          <span class="toggle-text">NDVI Biomass Shading</span>
+        </label>
+        <label class="toggle-item">
+          <input type="checkbox" id="toggle-sensors" checked />
+          <span class="toggle-slider"></span>
+          <span class="toggle-text">In-Field IoT Telemetry Nodes</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21a9 9 0 0 0 9-9c0-4.97-4.03-9-9-9s-9 4.03-9 9a9 9 0 0 0 9 9z"/><path d="m9 12 2 2 4-4"/></svg>
+        <span>FLY TO AGRICULTURAL HUB</span>
+      </div>
+      <div class="region-select-wrap">
+        <select id="region-jump" class="hud-select">
+          <option value="" disabled selected>Select a global breadbasket...</option>
+          <option value="us-corn-belt">🌽 US Corn & Soybean Belt</option>
+          <option value="california-central-valley">🍇 California Central Valley</option>
+          <option value="mato-grosso-cerrado">🌱 Brazil Mato Grosso (Cerrado)</option>
+          <option value="argentine-pampas">🌾 Argentine Humid Pampas</option>
+          <option value="ukrainian-chernozem">🌻 Ukrainian Chernozem Plain</option>
+          <option value="indo-gangetic-plain">🍚 Indo-Gangetic Alluvial Basin</option>
+          <option value="sanjiang-plain">🌾 Northeast China Plain</option>
+          <option value="po-river-valley">🌿 Italian Po River Valley</option>
+          <option value="nile-river-delta">🌿 Nile Delta & Valley Oasis</option>
+          <option value="murray-darling-basin">🌾 Australian Murray-Darling</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        <span>CROP TYPE FILTER</span>
+      </div>
+      <div class="filter-chips">
+        <button class="chip active" data-crop="all">All</button>
+        <button class="chip" data-crop="grains">Grains & Cereals</button>
+        <button class="chip" data-crop="oilseeds">Oilseeds & Soy</button>
+        <button class="chip" data-crop="specialty">Orchards & Specialty</button>
+      </div>
+    </div>
+
+    <!-- NDVI Scale Legend -->
+    <div class="sidebar-section legend-section">
+      <div class="section-title">
+        <span>NDVI CANOPY VIGOUR SCALE</span>
+      </div>
+      <div class="ndvi-bar"></div>
+      <div class="ndvi-labels">
+        <span>0.1 (Barren)</span>
+        <span>0.4 (Emerging)</span>
+        <span>0.7 (Dense)</span>
+        <span>0.9+ (Peak Canopy)</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Right Inspector Drawer (Slides in on Zone/Sensor selection) -->
+  <aside class="hud-inspector" id="hud-inspector">
+    <div class="inspector-header">
+      <div class="inspector-tag" id="inspect-tag">CROPLAND REGION</div>
+      <button class="inspector-close" id="inspect-close" title="Close Panel">&times;</button>
+    </div>
+
+    <div class="inspector-body" id="inspect-body">
+      <h2 class="inspector-title" id="inspect-title">US Corn & Soybean Belt</h2>
+      <div class="inspector-subtitle" id="inspect-subtitle">Midwest, United States</div>
+
+      <div class="inspector-grid">
+        <div class="grid-card">
+          <div class="card-title">CANOPY NDVI</div>
+          <div class="card-metric text-green" id="inspect-ndvi">0.79</div>
+          <div class="card-caption">Sentinel-2 Surface Reflectance</div>
+        </div>
+        <div class="grid-card">
+          <div class="card-title">SOIL MOISTURE</div>
+          <div class="card-metric" id="inspect-moisture">32.4%</div>
+          <div class="card-caption">Root-zone 0-30cm</div>
+        </div>
+        <div class="grid-card">
+          <div class="card-title">CANOPY TEMP</div>
+          <div class="card-metric" id="inspect-temp">22.8°C</div>
+          <div class="card-caption">Thermal Infrared Sensor</div>
+        </div>
+        <div class="grid-card">
+          <div class="card-title">CLIMATE RISK</div>
+          <div class="card-metric text-emerald" id="inspect-risk">Low</div>
+          <div class="card-caption">Drought & Frost Index</div>
+        </div>
+      </div>
+
+      <div class="detail-group">
+        <div class="detail-row">
+          <span class="detail-label">Primary Crops</span>
+          <span class="detail-value" id="inspect-crops">Field Corn, Soybeans, Winter Wheat</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Cropland Area</span>
+          <span class="detail-value" id="inspect-area">45,000,000 Hectares</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Soil Pedology</span>
+          <span class="detail-value" id="inspect-soil">Mollisols (Deep Humus) &bull; pH 6.5</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Water Supply</span>
+          <span class="detail-value" id="inspect-water">Rainfed & Center-Pivot (38%)</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Growing Cycle</span>
+          <span class="detail-value" id="inspect-cycle">April – October</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Projected Yield</span>
+          <span class="detail-value" id="inspect-yield">11.2 t/ha (Corn) / 3.4 t/ha (Soy)</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Remote Sensing</span>
+          <span class="detail-value" id="inspect-satellite">Sentinel-2 MSI / Landsat 9</span>
+        </div>
+      </div>
+
+      <div class="inspector-actions">
+        <button class="btn-action primary" id="btn-ping-telemetry">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          Simulate Satellite Pass & Telemetry Ping
+        </button>
+        <button class="btn-action secondary" id="btn-export-geojson">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export GeoJSON Dataset
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Notification Toast -->
+  <div class="hud-toast" id="hud-toast"></div>
+
+  <!-- Vite Entrypoint -->
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
