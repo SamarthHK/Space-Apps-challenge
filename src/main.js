@@ -141,7 +141,7 @@ function initMap() {
 
   state.activeParcelLayer = L.layerGroup().addTo(state.map);
   state.pegMarkersGroup = L.layerGroup().addTo(state.map);
-  state.drawingLineLayer = L.polyline([], { color: '#ea580c', weight: 3, dashArray: '5, 8' }).addTo(state.map);
+  state.drawingLineLayer = L.polyline([], { color: '#166534', weight: 3, dashArray: '5, 8' }).addTo(state.map);
 
   // Map Click Listener for Plot Drawing
   state.map.on('click', (e) => {
@@ -159,28 +159,28 @@ function renderMapActiveParcel() {
 
   const overlayMode = document.getElementById('cockpit-overlay-mode')?.value || 'ndvi';
 
-  // Determine parcel heatmap fill color matching reference image
-  let fillColor = '#f97316'; // Vibrant orange default
+  // Determine parcel heatmap fill color
+  let fillColor = '#166534';
   let fillOpacity = 0.55;
-  let borderColor = '#ea580c';
+  let borderColor = '#111827';
 
   if (overlayMode === 'ndvi') {
     const ndvi = plot.satelliteSummary?.latestNdvi || 0.74;
-    // Thermal heatmap scale (yellow to deep orange-red)
-    if (ndvi >= 0.8) fillColor = '#dc2626'; // Peak canopy / deep red-orange
-    else if (ndvi >= 0.7) fillColor = '#ea580c'; // High vigour
-    else if (ndvi >= 0.55) fillColor = '#f59e0b'; // Moderate canopy yellow-amber
-    else fillColor = '#eab308'; // Early/sparse canopy
-    fillOpacity = 0.62;
-    borderColor = '#ffffff';
+    // Muted agricultural green scale
+    if (ndvi >= 0.8) fillColor = '#14532d'; // Peak canopy / deep forest green
+    else if (ndvi >= 0.7) fillColor = '#1b5e34'; // High vigour
+    else if (ndvi >= 0.55) fillColor = '#2d8a4e'; // Moderate canopy
+    else fillColor = '#4ade80'; // Early/sparse canopy
+    fillOpacity = 0.55;
+    borderColor = '#111827';
   } else if (overlayMode === 'ndwi') {
-    fillColor = '#0284c7'; // Canopy water blue
-    fillOpacity = 0.5;
-    borderColor = '#38bdf8';
+    fillColor = '#1e3a8a'; // Canopy water blue
+    fillOpacity = 0.45;
+    borderColor = '#1d4ed8';
   } else {
     // True Color: subtle border only
     fillOpacity = 0.15;
-    borderColor = '#ffffff';
+    borderColor = '#111827';
   }
 
   // Leaflet expects [lat, lng] array
@@ -188,17 +188,17 @@ function renderMapActiveParcel() {
 
   const polygon = L.polygon(latLngs, {
     color: borderColor,
-    weight: 3.5,
+    weight: 2.5,
     fillColor: fillColor,
     fillOpacity: fillOpacity,
     dashArray: overlayMode === 'truecolor' ? '4' : null
   });
 
   polygon.bindTooltip(`
-    <div style="font-family: inherit; font-size: 12px; line-height: 1.4; color: #0f172a;">
-      <strong style="color: #ea580c;">${plot.name}</strong><br/>
+    <div style="font-family: inherit; font-size: 12px; line-height: 1.4; color: #111827;">
+      <strong style="color: #166534;">${plot.name}</strong><br/>
       <span>Area: <b>${plot.areaAcre} Acres</b> (${plot.areaGuntas} Guntas)</span><br/>
-      <span>NDVI Mean: <b style="color: #ea580c;">${plot.satelliteSummary?.latestNdvi || 0.74}</b></span><br/>
+      <span>NDVI Mean: <b style="color: #166534;">${plot.satelliteSummary?.latestNdvi || 0.74}</b></span><br/>
       <span>Irrigation: <b>${plot.irrigationType.toUpperCase()}</b></span>
     </div>
   `, { sticky: true, opacity: 0.95 });
@@ -234,10 +234,10 @@ function handleMapClickForDrawing(latlng) {
   // Store as [lng, lat] for GeoJSON standard
   state.drawCoordinates.push([latlng.lng, latlng.lat]);
 
-  // Place custom orange peg marker
+  // Place custom muted green peg marker
   const pegIcon = L.divIcon({
     className: 'custom-peg-marker',
-    html: `<div style="width:12px; height:12px; background:#ea580c; border:2px solid #ffffff; border-radius:50%; box-shadow:0 0 4px rgba(0,0,0,0.4);"></div>`,
+    html: `<div style="width:12px; height:12px; background:#14532d; border:2px solid #ffffff; border-radius:50%; box-shadow:0 0 3px rgba(0,0,0,0.5);"></div>`,
     iconSize: [12, 12],
     iconAnchor: [6, 6]
   });
@@ -464,14 +464,14 @@ function renderMyLand() {
     passContainer.innerHTML = satellitePassesHistory.map(pass => `
       <div class="pass-row-item ${pass.id === state.selectedSatellitePassId ? 'active' : ''}" data-pass-id="${pass.id}">
         <div class="pass-left">
-          <div class="pass-thumb-icon">🛰️</div>
+          <div class="pass-thumb-icon">EO</div>
           <div class="pass-meta">
             <span class="pass-date">${pass.dateFormatted}</span>
             <span class="pass-mission">${pass.satellite} &bull; ${pass.resolution}</span>
           </div>
         </div>
         <div class="pass-cloud-badge ${pass.cloudCoverPct > 30 ? 'high-cloud' : ''}">
-          ☁️ ${pass.cloudCoverPct}%
+          Cloud: ${pass.cloudCoverPct}%
         </div>
       </div>
     `).join('');
@@ -499,7 +499,7 @@ function renderMyLand() {
       <div><b>Area:</b> ${plot.areaAcre} ac (${plot.areaGuntas} guntas / ${plot.areaHectares} ha)</div>
       <div><b>Irrigation:</b> ${plot.irrigationType.toUpperCase()} (${plot.waterAvailability})</div>
       <div><b>Soil:</b> ${plot.soilRecord?.textureDisplay || 'Red sandy loam'}</div>
-      <div style="margin-top:0.4rem; padding-top:0.4rem; border-top:1px dashed var(--border-medium); color:var(--orange-700);">
+      <div style="margin-top:0.4rem; padding-top:0.4rem; border-top:1px dashed var(--border-medium); color:var(--green-800);">
         <b>Canopy Status:</b> ${plot.satelliteSummary?.canopyCondition || 'Active'}
       </div>
     `;
@@ -565,10 +565,10 @@ function renderTimeSeriesSvg() {
   svg.innerHTML = `
     ${gridSvg}
     ${rainfallBars}
-    <path d="${maxPath}" fill="none" stroke="#16a34a" stroke-width="2" stroke-dasharray="3, 3" />
-    <path d="${meanPath}" fill="none" stroke="#ea580c" stroke-width="2.8" />
+    <path d="${maxPath}" fill="none" stroke="#22c55e" stroke-width="2" stroke-dasharray="3, 3" />
+    <path d="${meanPath}" fill="none" stroke="#166534" stroke-width="2.5" />
     ${data.map((d, i) => `
-      <circle cx="${paddingLeft + i * stepX}" cy="${getY(d.mean)}" r="4" fill="#ea580c" stroke="#ffffff" stroke-width="1.5"/>
+      <circle cx="${paddingLeft + i * stepX}" cy="${getY(d.mean)}" r="3.5" fill="#166534" stroke="#ffffff" stroke-width="1.5"/>
     `).join('')}
     ${xLabels}
   `;
@@ -707,7 +707,7 @@ function renderCropRecommendations() {
               <!-- PESSIMISTIC -->
               <div class="scenario-box">
                 <div class="scenario-header pessimistic">
-                  <span>📉 Pessimistic Scenario</span>
+                  <span>Pessimistic Scenario</span>
                   <span style="font-size:0.68rem; font-weight:600;">(-20% Yield / Glut)</span>
                 </div>
                 <div class="scenario-stat-row">
@@ -729,7 +729,7 @@ function renderCropRecommendations() {
               <!-- EXPECTED -->
               <div class="scenario-box expected">
                 <div class="scenario-header expected">
-                  <span>⭐ Expected Scenario</span>
+                  <span>Expected Scenario</span>
                   <span style="font-size:0.68rem; font-weight:700;">(Modal APMC Baseline)</span>
                 </div>
                 <div class="scenario-stat-row">
@@ -740,8 +740,8 @@ function renderCropRecommendations() {
                   <span>Farm-Gate Price:</span>
                   <span class="scenario-stat-val">₹${exp.pricePerQuintal}/qtl</span>
                 </div>
-                <div class="scenario-stat-row" style="border-top:1px dashed var(--orange-300); padding-top:0.25rem; margin-top:0.25rem;">
-                  <span style="font-weight:700; color:var(--orange-700);">Plot Net Return:</span>
+                <div class="scenario-stat-row" style="border-top:1px dashed var(--green-border); padding-top:0.25rem; margin-top:0.25rem;">
+                  <span style="font-weight:700; color:var(--green-800);">Plot Net Return:</span>
                   <span class="scenario-stat-val" style="color:var(--status-green); font-size:0.92rem;">
                     +₹${exp.totalPlotNetReturn.toLocaleString()}
                   </span>
@@ -751,7 +751,7 @@ function renderCropRecommendations() {
               <!-- OPTIMISTIC -->
               <div class="scenario-box">
                 <div class="scenario-header optimistic">
-                  <span>🚀 Optimistic Scenario</span>
+                  <span>Optimistic Scenario</span>
                   <span style="font-size:0.68rem; font-weight:600;">(+15% Yield / Peak)</span>
                 </div>
                 <div class="scenario-stat-row">
@@ -792,7 +792,7 @@ function renderCropRecommendations() {
             <!-- RISKS & ACTION BUTTON -->
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding-top:0.75rem; border-top:1px solid var(--border-subtle); flex-wrap:wrap; gap:0.5rem;">
               <div style="font-size:0.78rem; color:var(--text-subtle);">
-                🛡️ <b>Key Risk:</b> ${c.pestsAndDiseases[0]?.name || 'Moisture deficit'} &bull; ${c.localGuidance.keyAdvantage}
+                <b>Key Risk:</b> ${c.pestsAndDiseases[0]?.name || 'Moisture deficit'} &bull; ${c.localGuidance.keyAdvantage}
               </div>
               <button class="btn-primary btn-sm btn-plan-crop" data-crop-id="${c.id}" data-crop-name="${c.name} (${c.kannadaName})" data-net="${exp.totalPlotNetReturn}" data-budget="${f.totalPlotCost}">
                 Commit to Planting Plan &rarr;
@@ -821,7 +821,7 @@ function renderCropRecommendations() {
       disqContainer.innerHTML = evalResult.disqualified.map(item => `
         <div class="disqualified-item">
           <div class="disqualified-title">
-            ❌ ${item.crop.name} (${item.crop.kannadaName}) — Disqualified
+            [Disqualified] ${item.crop.name} (${item.crop.kannadaName})
           </div>
           <div class="disqualified-reason">
             ${item.agronomicDisqualifiers.map(d => `• ${d}`).join('<br/>')}
@@ -852,13 +852,13 @@ function renderMarketIntelligence() {
     if (reports.length === 0) return '';
 
     const primaryReport = reports[0];
-    const trendIcon = primaryReport.trend === 'up' ? '↗️ Upward' : (primaryReport.trend === 'down' ? '↘️ Downward' : '➡️ Stable');
+    const trendText = primaryReport.trend === 'up' ? 'Upward' : (primaryReport.trend === 'down' ? 'Downward' : 'Stable');
 
     return `
       <div class="commodity-card">
         <div class="commodity-header">
           <div>
-            <div class="commodity-name">${data.cropName} <span style="color:var(--orange-600); font-size:0.9rem;">(${data.kannadaName})</span></div>
+            <div class="commodity-name">${data.cropName} <span style="color:var(--green-800); font-weight:700; font-size:0.9rem;">(${data.kannadaName})</span></div>
             <div style="font-size:0.75rem; color:var(--text-subtle);">Mandi: <b>${primaryReport.mandiName}</b> &bull; ${primaryReport.dataSource}</div>
           </div>
           <span class="brand-badge" style="background:#f0fdf4; color:#15803d;">MSP: ₹${data.mspSupportPrice}</span>
@@ -873,13 +873,13 @@ function renderMarketIntelligence() {
           <div style="text-align:right;">
             <div style="font-size:0.72rem; color:var(--text-subtle);">Min: <b>₹${primaryReport.minPrice}</b> | Max: <b>₹${primaryReport.maxPrice}</b></div>
             <div style="font-size:0.72rem; color:var(--text-subtle); margin-top:0.2rem;">Daily Arrivals: <b>${primaryReport.dailyArrivalsQuintals} Quintals</b></div>
-            <div style="font-size:0.72rem; font-weight:700; color:var(--orange-700); margin-top:0.2rem;">Trend: ${trendIcon}</div>
+            <div style="font-size:0.72rem; font-weight:700; color:var(--green-800); margin-top:0.2rem;">Trend: ${trendText}</div>
           </div>
         </div>
 
         <!-- FARM-GATE CASH REALIZATION -->
-        <div style="font-size:0.78rem; background:var(--bg-orange-soft); padding:0.65rem 0.85rem; border-radius:var(--radius-sm); border:1px solid var(--orange-200);">
-          <div style="display:flex; justify-content:space-between; font-weight:700; color:var(--orange-700); margin-bottom:0.25rem;">
+        <div style="font-size:0.78rem; background:var(--green-50); padding:0.65rem 0.85rem; border-radius:var(--radius-sm); border:1px solid var(--green-border);">
+          <div style="display:flex; justify-content:space-between; font-weight:700; color:var(--green-800); margin-bottom:0.25rem;">
             <span>Estimated Farm-Gate Realization:</span>
             <span>₹${data.farmGatePriceDeductions.estFarmGatePrice.toLocaleString()} / qtl</span>
           </div>
@@ -935,9 +935,9 @@ function renderPlantingPlans() {
         </div>
 
         <div style="font-size:0.78rem; line-height:1.7; margin:0.75rem 0; color:var(--text-muted);">
-          <div>📅 <b>Sowing Window:</b> ${p.sowingWindow}</div>
-          <div>🌾 <b>Expected Harvest:</b> ${p.harvestWindow}</div>
-          <div>💧 <b>Water Strategy:</b> ${p.irrigationStrategy || 'Rainfed'}</div>
+          <div><b>Sowing Window:</b> ${p.sowingWindow}</div>
+          <div><b>Expected Harvest:</b> ${p.harvestWindow}</div>
+          <div><b>Water Strategy:</b> ${p.irrigationStrategy || 'Rainfed'}</div>
         </div>
 
         <div style="background:var(--bg-surface-soft); border-radius:var(--radius-sm); padding:0.75rem; margin-bottom:0.85rem;">
