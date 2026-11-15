@@ -58,3 +58,13 @@ via `AGRI_TEST_DATABASE_URL`, `AGRI_TEST_DATABASE_NAME`, `AGRI_TEST_DATABASE_USE
 `AGRI_TEST_SCHEMA`, and `AGRI_TEST_PROJECT_IDS`. Tests create uniquely named
 application schemas and remove only those schemas; they do not seed scientific
 observations or modify existing provider evidence.
+
+For the real, separate-instance browser gate, run
+`python scripts\workspace_browser_acceptance.py --frontend <frontend-checkout>`
+with the same test data settings and installed Playwright Chromium. If browser
+binaries live outside Playwright's default cache, set `PLAYWRIGHT_BROWSERS_PATH`.
+The harness refuses occupied ports (defaults: API 18084, frontend 11084), creates
+only an isolated application schema, builds to its own artifact directory, and
+terminates only processes it started. It never replaces the normal frontend
+build or stops existing services. Logs/results remain under the ignored
+`.local\workspace-acceptance` directory.
