@@ -8,8 +8,11 @@ from agri_data.contracts.acceptance import prepare_acceptance
 
 
 def main():
+    from agri_data.contracts import india_cli
+
     parser = argparse.ArgumentParser(description="Plan.md agricultural data acceptance gates")
     commands = parser.add_subparsers(dest="command", required=True)
+    india_cli.register_commands(commands)
     validate = commands.add_parser("validate", help="Report required acceptance gates; incomplete gates return nonzero")
     validate.add_argument("--suite", choices=["connections", "database", "features", "all"], required=True)
     validate.add_argument("--config", type=Path, required=True)
@@ -61,6 +64,8 @@ def main():
     predict_outcome.add_argument("--input", type=Path, required=True)
     args = parser.parse_args()
     repository = Path.cwd()
+    if args.command in india_cli.COMMANDS:
+        return india_cli.run(args)
     if args.command in ("acquire-outcomes", "build-outcomes", "train-outcomes", "predict-outcome"):
         import json
         import yaml

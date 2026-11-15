@@ -1,7 +1,7 @@
 # India crop and rotation model plan
 
 Source/access review: **2026-11-15**. Development branch: **`backend-ai`**.
-Status: **planning and source sampling, not a trained Indian recommendation model**.
+Status: **implementation in progress, not yet a trained Indian recommendation model**.
 
 ## 1. Recommended direction and boundaries
 
@@ -387,7 +387,31 @@ Commit each coherent implementation increment on `backend-ai` after its relevant
 
 Completed for this planning task: review of all seven requested source families, additional Indian horticulture/calendar/soil routes, a broader staged crop catalogue, 25 archived EcoCrop condition profiles, the feature/time/storage contracts, competing architectures, resource policy and held-out evaluation design.
 
-**Not completed:** Indian APY/NHB/VDSA outcome ingestion, India-wide crop-presence verification, production requirement normalizers, GAEZ Indian raster acquisition, new feature adapters, Indian training/evaluation, resource scheduling or a field-rotation API. Those are implementation gates above, not implied by this document.
+**Implemented source/reference foundation:** verified native-TLS public form acquisition; typed EcoCrop acquisition and normalization; 25 crop identities and 475 crop-specific requirement assertions; immutable source/definition lineage; migration 008; canonical repeat-import protection; PostgreSQL readback and Parquet exports. These are 19 assertion types per profile, not 475 independent predictors. Real-source, missing-value, misbound-identity and independent-process database replay checks pass. The existing outcome-dataset roundtrip remains compatible.
+
+DES public reports now return actual district/crop/season/year records through an anonymous, certificate-verified form session. A genuine Karnataka rice/maize report was acquired. Its full reusable outcome normalizer and broader intake remain separate work below.
+
+**Not completed:** Indian APY/NHB/VDSA outcome ingestion, India-wide crop/use mapping and presence verification, Indian-reference conflict resolution, GAEZ Indian raster acquisition, new environmental adapters, Indian training/evaluation, resource scheduling or a field-rotation API. Those are implementation gates above, not implied by working crop-reference storage.
+
+### Implemented crop-reference commands
+
+Install the optional dependencies only in the separate ML environment:
+
+```powershell
+$env:UV_PROJECT_ENVIRONMENT = ".local\ml-env"
+uv sync --locked --extra ml --extra dev --extra india --python 3.12
+$env:PYTHONPATH = "src"
+
+& .local\ml-env\Scripts\python.exe -m agri_data acquire-crop-profiles `
+  --contract config\india_model.yaml --output data\raw\india-profiles-new
+
+# Configure DATABASE_URL and PostgreSQL authentication for the existing server.
+& .local\ml-env\Scripts\python.exe -m agri_data build-crop-profiles `
+  --config config\acceptance.yaml --corpus data\raw\india-profiles-new\corpus.json `
+  --output data\exports\india-profiles-new
+```
+
+Use new output directories. Acquisition is fresh; builds replay checksum-verified assets without re-querying the provider. Current retained bundles are `data\raw\india-profiles-v1` and `data\exports\india-profiles-v2`. Missing categories and unresolved latitude/cycle meanings remain explicit; no Indian cultivation evidence or observed outcome labels are created from EcoCrop.
 
 Recommended next implementation: I01/I02, followed by a real coverage audit to freeze the first task/vocabulary. Train B0/B1/B2 on the same viable corpus before spending resources on additional architectures. Keep all 12 initial reporting groups in intake, but activate only supported classes; expand horticulture from evidence rather than promising every listed crop on day one.
 
