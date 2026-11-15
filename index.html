@@ -41,6 +41,11 @@
         <div class="view-wrapper">
           <h1 class="view-header-title">Farmer Intelligence Dashboard</h1>
           <p class="view-header-subtitle">Source inspection only. No estimated crop or financial results.</p>
+          <div class="rotation-launch-card">
+            <div><h2>A whole year of possibilities, from one plot.</h2>
+              <p>Try the interactive crop rotation demo. Draw a boundary, explore seasonal crops and read simulated AI field notes.</p></div>
+            <button type="button" class="btn-primary" data-open-rotation>Try crop rotation demo &rarr;</button>
+          </div>
           <div class="card">
             <h2 class="card-title">Fields</h2>
             <p id="fields-status" role="status">Not loaded</p>
@@ -56,6 +61,10 @@
         <div class="view-wrapper">
           <h1 class="view-header-title">My Land</h1>
           <p class="view-header-subtitle">Stored geometry, not a generated parcel or analytical satellite overlay.</p>
+          <div class="rotation-launch-card">
+            <div><h2>Explore a seasonal crop rotation</h2><p>Use your recorded boundary or draw a plot in the standalone, clearly labeled demo.</p></div>
+            <button type="button" class="btn-primary" data-open-rotation>Open crop rotation demo &rarr;</button>
+          </div>
           <div class="card">
             <label for="boundary-select">Recorded boundary version</label>
             <select id="boundary-select" class="form-select" disabled><option value="">Select a field first</option></select>
@@ -104,8 +113,7 @@
         </div>
       </section>
       <section id="view-recommendations" class="view-section"><div class="view-wrapper">
-        <h1 class="view-header-title">Crop Recommendations</h1>
-        <div class="card"><p>No recommendation service is implemented. Crop suitability, scenarios and financial forecasts are unavailable; no browser rules or fallback values are used.</p></div>
+        <div id="crop-rotation-demo"></div>
       </div></section>
       <section id="view-market" class="view-section"><div class="view-wrapper">
         <h1 class="view-header-title">Market Intelligence</h1>

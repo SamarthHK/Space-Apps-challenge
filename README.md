@@ -33,6 +33,29 @@ project scope and its real PostgreSQL/PostGIS connection. See branch `backend`,
 filesystem. The generated API contract is pinned in `contracts/openapi.json`;
 `contracts/source.json` records its backend commit and checksum.
 
+## Crop rotation presentation demo
+
+Open **Crop Recommendations** (or `http://127.0.0.1:1080/?demo=rotation`) for the
+standalone demo. Use the example parcel, draw a polygon with the existing Leaflet
+drawing controls, or use a recorded field boundary after loading it in My Land.
+Click **Generate demo rotation** for the simulated scan, seasonal calendar and
+streamed-style explanation. **Show full explanation** skips the typing effect;
+reduced-motion preferences show the explanation immediately.
+
+The fixed scenario is an irrigated lowland plot near Mandya, Karnataka:
+July-December paddy, February-April green gram and a May-June managed fallow.
+January is a harvest-delay/drainage/preparation buffer. Nursery preparation for
+the next rice crop starts in June. Windows are illustrative and variety-dependent.
+Agronomy references and irrigation/drainage assumptions are linked on the page.
+
+The selected polygon supplies approximate area and coordinates only. Every
+polygon gets the same preset rotation, even outside Mandya. Soil, water supply
+and regional conditions are explicitly assumed, not satellite measurements.
+No live model is called, no field recommendation is claimed, and no demo plan is
+saved to the backend or localStorage. The demo is deliberately isolated from
+real observations and works even with missing API configuration or unavailable
+map tiles. Other workspace features still require the configured backend.
+
 ## What is connected
 
 Dashboard capability/field status, My Land stored boundary selection/map and
@@ -56,9 +79,10 @@ monitoring and downloads can resume after reload. No profile or agricultural
 state is written to localStorage. Lost POST responses reuse the same submission
 key only after an explicit retry; PATCH conflicts require a deliberate reload.
 
-Crop recommendations, markets, plans and
-analytical satellite layers are still unavailable. Their navigation remains,
-but old synthetic values and browser calculations no longer run.
+Live crop recommendations, markets, persistent plans and
+analytical satellite layers are still unavailable. Crop Recommendations now
+contains the explicit, opt-in presentation demo described above; it is not an
+automatic fallback for unavailable scientific data.
 Unused legacy data/service source files are retained for subsequent F10 cleanup;
 they are not imported into the production build.
 
@@ -67,9 +91,17 @@ they are not imported into the production build.
 ```powershell
 npm test
 npm run build
+npm run test:browser -- rotation.spec.js
 $env:TEST_API_ORIGIN = $env:VITE_API_BASE_URL
 npm run test:browser -- workspace.spec.js
 ```
+
+`rotation.spec.js` exercises only the isolated presentation demo and needs no
+running backend. Build with a valid API origin (for example
+`$env:VITE_API_BASE_URL = "http://localhost:8000"` before `npm run build`) so
+its selected-field integration case can intercept schema-valid UI fixtures.
+Those fixtures are not agricultural evidence. The remaining browser suites
+below require the real API.
 
 The read-only browser cases start the production preview on `127.0.0.1:1080`, so the actual
 API must also allow that origin. They need a prepared authentic field/canonical

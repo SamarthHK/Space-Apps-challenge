@@ -67,7 +67,7 @@ export function createFieldMap(container, tileStatus) {
           attribution: '&copy; OpenStreetMap contributors', maxZoom: 19,
         });
         tiles.on('tileerror', () => {
-          tileStatus.textContent = 'Base-map tiles unavailable. Stored field geometry is independent of the tile service.';
+          tileStatus.textContent = 'Base-map tiles unavailable. Boundary drawing and geometry remain available without tiles.';
         });
         tiles.addTo(map);
       }

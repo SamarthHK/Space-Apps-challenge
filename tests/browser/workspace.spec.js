@@ -64,7 +64,7 @@ test('empty, invalid and racing filters never restore old records', async ({ pag
   await expect(page.locator('#observations-body tr')).toHaveCount(0);
 });
 
-test('all seven views are usable and unsupported capabilities never activate demos', async ({ page }) => {
+test('all seven views are usable and the rotation demo requires explicit input', async ({ page }) => {
   await page.goto('/');
   for (const label of ['Dashboard', 'My Land', 'Land Analysis', 'Crop Recommendations',
     'Market Intelligence', 'Planting Plans', 'My Profile']) {
@@ -77,6 +77,8 @@ test('all seven views are usable and unsupported capabilities never activate dem
   expect(html).not.toContain('41,732');
   expect(html).not.toContain('100% accurate');
   await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toHaveCount(0);
+  await expect(page.locator('#rotation-report')).toBeHidden();
+  await expect(page.locator('#rotation-scan')).toBeDisabled();
 });
 
 test('network failure is explicit and reconnect restores real data', async ({ page }) => {

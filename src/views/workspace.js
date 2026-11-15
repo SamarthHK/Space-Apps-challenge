@@ -4,6 +4,7 @@ import { createResource } from '../state/resource.js';
 import { createFieldMap } from '../map/fieldMap.js';
 import { createProfile } from './profile.js';
 import { createLandActions } from './landActions.js';
+import { createCropRotation } from './cropRotation.js';
 
 const byId = id => document.getElementById(id);
 const node = (tag, text) => {
@@ -17,17 +18,25 @@ const display = value => value === null || value === undefined ? 'Unavailable' :
 
 export function startWorkspace(origin) {
   const fieldMap = createFieldMap(byId('api-map'), byId('tile-status'));
-  document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => {
+  const rotation = createCropRotation(byId('crop-rotation-demo'));
+  function openView(view) {
+    byId('connection-status').closest('.connection-bar').hidden = view === 'recommendations';
     document.querySelectorAll('[data-view]').forEach(tab => {
-      tab.classList.toggle('active', tab === button);
-      if (tab === button) tab.setAttribute('aria-current', 'page');
+      tab.classList.toggle('active', tab.dataset.view === view);
+      if (tab.dataset.view === view) tab.setAttribute('aria-current', 'page');
       else tab.removeAttribute('aria-current');
     });
     document.querySelectorAll('.view-section').forEach(section => {
-      section.classList.toggle('active', section.id === `view-${button.dataset.view}`);
+      section.classList.toggle('active', section.id === `view-${view}`);
     });
-    if (button.dataset.view === 'myland') fieldMap.show();
-  }));
+    if (view === 'myland') fieldMap.show();
+    if (view === 'recommendations') rotation.show();
+  }
+  document.querySelectorAll('[data-view]').forEach(button =>
+    button.addEventListener('click', () => openView(button.dataset.view)));
+  document.querySelectorAll('[data-open-rotation]').forEach(button =>
+    button.addEventListener('click', () => openView('recommendations')));
+  if (new URLSearchParams(window.location.search).get('demo') === 'rotation') openView('recommendations');
   let api;
   try {
     api = createClient(origin, { validate: validateResponse });
@@ -133,6 +142,7 @@ export function startWorkspace(origin) {
   }
   const field = createResource(state => {
     selectedHasBoundaries = false;
+    rotation.setField(null);
     landActions.setField(null, null);
     byId('field-details').replaceChildren();
     fieldMap.setGeometry(null);
@@ -141,6 +151,7 @@ export function startWorkspace(origin) {
     else if (state.status === 'error') byId('field-status').textContent = message(state.error);
     else if (state.status === 'ready') {
       const record = state.data.data;
+      rotation.setField(record);
       selectedHasBoundaries = !!record.boundary_versions.length;
       landActions.setField(record, state.data.etag);
       const select = byId('boundary-select');
