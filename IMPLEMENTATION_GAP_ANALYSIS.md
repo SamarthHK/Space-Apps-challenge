@@ -1,4 +1,4 @@
-# Plan.md implementation gap analysis and execution plan
+# backendplan.md implementation gap analysis and execution plan
 
 **Prepared:** 2026-11-14  
 **Branch:** `backend`  
@@ -12,7 +12,7 @@ adapter, basic processing, SQLite persistence, and profile exports. The orchestr
 now also has explicit `live` and `demo` modes, run-specific output directories,
 KML/raw-response snapshots, observation JSON/Parquet exports, and a run manifest.
 
-`Plan.md` describes a much broader agricultural data platform. It includes ten data
+`backendplan.md` describes a much broader agricultural data platform. It includes ten data
 domains, many external datasets, laboratory and sensor imports, raster extraction,
 crop science, rotation, management records, notebooks, provenance, repeatable
 orchestration, and validation. Most of those are configuration entries, ORM table
@@ -25,7 +25,7 @@ The main distinction is:
 Implemented prototype:
 KML → a few adapters → summary processing → SQLite/profile export
 
-Target platform in Plan.md:
+Target platform in backendplan.md:
 KML → source coverage discovery → many raw datasets → polygon/raster extraction
 → normalized observations → quality/provenance → crop/management interpretation
 → complete profile and analytical exports
@@ -159,8 +159,8 @@ dropped or treated as valid.
 
 ### 9. Notebook and documentation deliverables are incomplete
 
-Core Markdown documentation and tests exist, but the 21 notebook curriculum in
-`Plan.md` has not been created. The current tests cover the implemented prototype,
+Core Markdown documentation and tests exist, but the platform defined by
+`backendplan.md` has not been created. The current tests cover the implemented prototype,
 not every planned source, database model, raster workflow, or end-to-end domain.
 
 The status document also contains stale entries saying that prototype modules,
@@ -612,11 +612,11 @@ The source adapters should be implemented in parallel only after the common adap
 contract and provenance foundation are stable. Live integrations should always have
 fixture/import paths so tests do not depend on network access or credentials.
 
-## Definition of complete against Plan.md
+## Definition of complete against backendplan.md
 
 The project should not be called complete until all of the following are true:
 
-- Every enabled Plan.md domain has either a live adapter, an import adapter, or an
+- Every enabled backendplan.md domain has either a live adapter, an import adapter, or an
   explicit unavailable result.
 - Every raw input and normalized observation has provenance.
 - KML geometry controls polygon/raster extraction and source coverage.
