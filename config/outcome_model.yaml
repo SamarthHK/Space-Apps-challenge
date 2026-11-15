@@ -1,0 +1,97 @@
+schema_version: "1"
+task: retrospective_preplant_crop_outcome
+weather:
+  start: "1981-01-01"
+  end: "2022-12-31"
+  time_standard: LST
+  windows_days: [30, 90, 365]
+  minimum_coverage: 0.9
+evaluation:
+  train_fraction: 0.70
+  validation_fraction: 0.15
+  minimum_years: 5
+  minimum_training_rows: 40
+  iterations: 400
+  depth: 5
+  learning_rate: 0.05
+  seed: 42
+  threads: 2
+policy:
+  scientific_approval_required: false
+  cutoff: day_before_recorded_sowing
+  historical_availability: retrospective_source_reconstruction_not_archived_operational_forecasts
+  geography: represented_experiment_sites_only
+  future_weather: forbidden
+  fabricated_observations: forbidden
+  missing_numeric_inputs: native_model_missingness_not_imputation
+  cross_crop_raw_yield_ranking: forbidden
+sites:
+  woburn:
+    latitude: 51.99906
+    longitude: -0.61673
+    reference: https://www.era.rothamsted.ac.uk/experiment/wrn3
+  broadbalk:
+    latitude: 51.80946
+    longitude: -0.37301
+    reference: https://www.era.rothamsted.ac.uk/experiment/rbk1
+sources:
+  - id: broadbalk_wheat
+    site: broadbalk
+    crop: wheat
+    doi: 10.23637/rbk1-yld6822-01
+    landing: https://www.era.rothamsted.ac.uk/dataset/rbk1/01-YLD6822
+    download: https://www.era.rothamsted.ac.uk/metadata/rbk1/YLD6822/01-BKyld6822.xlsx
+    target_column: grain
+    target_unit: t ha-1 yr-1
+    mass_basis: grain_85_percent_dry_matter
+    crop_column: cropping
+    sowing_column: sow_date
+    citation: "Glendining, M., Poulton, P. (2023). Broadbalk Wheat annual grain and straw yields 1968-2022. Electronic Rothamsted Archive. DOI: 10.23637/rbk1-yld6822-01."
+  - id: broadbalk_beans
+    site: broadbalk
+    crop: field_beans
+    doi: 10.23637/rbk1-beanyld6822-01
+    landing: https://www.era.rothamsted.ac.uk/dataset/rbk1/01-BEANYLD
+    download: https://www.era.rothamsted.ac.uk/metadata/rbk1/BEANYLD/01-BKbeans6822.xlsx
+    target_column: grain
+    target_unit: t ha-1 yr-1, 85% DM
+    mass_basis: grain_85_percent_dry_matter
+    crop_column: crop
+    sowing_column: sow_date
+    citation: "Glendining, M. (2023). Broadbalk field bean yield components 1968-2022. Electronic Rothamsted Archive. DOI: 10.23637/rbk1-beanyld6822-01."
+  - id: broadbalk_oats
+    site: broadbalk
+    crop: oats
+    doi: 10.23637/rbk1-oatyld9622-01
+    landing: https://www.era.rothamsted.ac.uk/dataset/rbk1/01-OATYIELD
+    download: https://www.era.rothamsted.ac.uk/metadata/rbk1/OATYIELD/01-oatyld9622.xlsx
+    target_column: grain_yld_85%_DM
+    target_unit: t ha-1 85% DM
+    mass_basis: grain_85_percent_dry_matter
+    crop_column: crop
+    sowing_column: sow_date
+    citation: "Rothamsted Research (2025). Broadbalk oats grain and straw yields 1996-2022. Electronic Rothamsted Archive. DOI: 10.23637/rbk1-oatyld9622-01."
+  - id: broadbalk_maize
+    site: broadbalk
+    crop: forage_maize
+    doi: 10.23637/rbk1-fmyield9717-01
+    landing: https://www.era.rothamsted.ac.uk/dataset/rbk1/01-FMYIELD
+    download: https://www.era.rothamsted.ac.uk/metadata/rbk1/FMYIELD/01-BKfmyield9717.xlsx
+    target_column: yield_100%dm
+    target_unit: t ha-1 yr-1 at 100% dry matter
+    mass_basis: whole_crop_100_percent_dry_matter
+    crop_column: crop
+    sowing_column: sow_date
+    citation: "Rothamsted Research (2023). Broadbalk forage maize yields 1997-2017. Electronic Rothamsted Archive. DOI: 10.23637/rbk1-fmyield9717-01."
+  - id: broadbalk_potato
+    site: broadbalk
+    crop: potato
+    doi: 10.23637/rbk1-potyld6896-01
+    landing: https://www.era.rothamsted.ac.uk/dataset/rbk1/01-POTYIELD
+    download: https://www.era.rothamsted.ac.uk/metadata/rbk1/POTYIELD/01-potyld6896.xlsx
+    target_column: tuber_yield_t_ha_fresh_wt
+    target_unit: t ha-1 fresh weight
+    mass_basis: tuber_fresh_weight
+    crop_column: crop
+    sowing_column: plant_date
+    citation: "Rothamsted Research (2025). Broadbalk potato tuber yields 1968-1996. Electronic Rothamsted Archive. DOI: 10.23637/rbk1-potyld6896-01."

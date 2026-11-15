@@ -46,8 +46,34 @@ def main():
     snapshot.add_argument("--config", type=Path, required=True)
     snapshot.add_argument("--contract", type=Path, default=Path("config") / "ml_dataset.yaml")
     snapshot.add_argument("--output", type=Path, required=True)
+    acquire_outcomes = commands.add_parser("acquire-outcomes", help="Acquire published multicrop trials and site-matched NASA history")
+    acquire_outcomes.add_argument("--contract", type=Path, default=Path("config") / "outcome_model.yaml")
+    acquire_outcomes.add_argument("--output", type=Path, required=True)
+    build_outcomes = commands.add_parser("build-outcomes", help="Persist and export authentic multicrop modeling records")
+    build_outcomes.add_argument("--config", type=Path, required=True)
+    build_outcomes.add_argument("--corpus", type=Path, required=True)
+    build_outcomes.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     repository = Path.cwd()
+    if args.command in ("acquire-outcomes", "build-outcomes"):
+        import json
+        import yaml
+        from agri_data.contracts.outcome_data import acquire_outcome_corpus, build_outcome_dataset
+        try:
+            if args.command == "acquire-outcomes":
+                result = {"corpus": str(acquire_outcome_corpus(args.contract, args.output).resolve())}
+            else:
+                from agri_data.contracts.postgres import PostgresStore
+                database = yaml.safe_load(args.config.read_bytes())["database"]
+                store = PostgresStore(database["expected_database"], database["expected_user"],
+                                      database["acceptance_schema"], database["connection_environment_variable"])
+                result = build_outcome_dataset(args.corpus, args.output, store)
+            print(json.dumps(result, indent=2))
+            return 0
+        except Exception as error:
+            print(f"Outcome pipeline failed ({type(error).__name__}): inspect the input contract and failure receipts.",
+                  file=sys.stderr)
+            return 2
     if args.command == "health-check":
         import json
         from agri_data.contracts.health import run_health
