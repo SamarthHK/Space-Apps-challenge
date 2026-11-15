@@ -33,7 +33,8 @@ The earlier account-free decision is superseded by the approved private UI plan.
 | Connected field workflows | This increment: map drawing, complex GeoJSON editing, imports, job resume and Blob downloads | 16 frontend unit tests, production build and 14 real-browser cases using isolated authentic records and explicitly labelled topology probes |
 | Original UI restoration | Frontend `2f50c0f`: restore the `b59a73f` satellite cockpit, typography/cards, map toolbar, Earth view, direct drawing and responsive profile/tools layout | 16 units, production build and 15 browser cases, including actual satellite tile loading |
 | Private accounts | Backend `711d1e1`, frontend `ca647d6`: themed sign-up/sign-in/logout, CSRF/owner-bound requests and private profile labels | 84 backend API cases; 18 frontend units, production build, 15 shared and 3 private browser journeys |
-| Drawn KML and originals | Backend `e221e98`, current frontend increment: real KML preview/confirmation, byte-exact originals, retained rejected drafts and safe retry/resume controls | 61 affected backend API cases plus focused corruption/filename cases; 22 frontend units, production build, 16 shared and 4 private browser journeys |
+| Drawn KML and originals | Backend `e221e98`, frontend `e46343d`: real KML preview/confirmation, byte-exact originals, retained rejected drafts and safe retry/resume controls | 61 affected backend API cases plus focused corruption/filename cases; 22 frontend units, production build, 16 shared and 4 private browser journeys |
+| Private hosted release | Backend code `e221e98`, frontend code `e46343d`; separate Tailscale ports 8080/1080 and account worker | Frozen-wheel private browser gate against empty fully migrated schemas; live cross-port desktop/mobile entry, exact OpenAPI and worker heartbeat checked without seeding production accounts |
 
 The owner has now approved private per-person accounts/plot ownership and saving
 drawn KML, with AI explicitly unavailable until its real input pipeline exists.
@@ -89,7 +90,10 @@ Karnataka. POWER reference evidence is from a Dutch parcel.
 ## Remaining work
 
 The requested profile, field/import/export, private accounts and drawn-KML milestones are complete.
-The new 1080/8080 private hosting release is next.
+The 1080/8080 private release is hosted from separate owned artifacts. Its private
+canonical/application schemas do not reuse the old shared/reference storage.
+Superseded owned services on 1081/8001 were retired after readiness checks; the
+unrelated 8000 listener was left untouched. No commits have been pushed.
 Still deferred: B05/F05 soil submissions/analysis, B06/F06 acquisition/satellite, B07/F07/F08 crop and
 market services, B08/F09 planting plans, then cleanup and full deployment gates.
 No full scientific or platform-completion claim: additional authentic geometry
