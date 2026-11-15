@@ -7,7 +7,9 @@ acceptance_corpus:
   boundaries:
     - path: data/raw/authentic-reference-corpus/55c39b30685bcb336aea24a6a5f5cc59b6ab3a2897eaa35727ff920d550a820a.kml
       origin: "RVO/PDOK brpgewas parcel 364716d2-7384-5941-8ad5-37952c10d6e1; lossless translation of archived official GeoJSON rings, independently read with GDAL."
-  crops_and_cultivars: []
+  crops_and_cultivars:
+    - path: data/raw/rotation-trials/woburn-acquisition.json
+      origin: "Rothamsted e-RA Woburn Ley-arable published empirical trial, DOI 10.23637/wrn3-wheat7618-01, CC-BY-4.0; pending context and scientific review."
   seasons: []
   source_records:
     - path: data/raw/authentic-reference-corpus/raw/46c31bddc1326662a7db6beb36e56d782850cc59b9c64f691cd1ad65a2905b87
@@ -24,6 +26,7 @@ database:
   acceptance_schema: agri_contracts
 
 reference_corpus_manifest: data/raw/authentic-reference-corpus/6e3108c911404afe96e35a36b6368a20.corpus.json
+trial_corpus_manifest: data/raw/rotation-trials/woburn-acquisition.json
 preparatory_storage_evidence: data/exports/authentic-storage-context-integrity/storage_proof.json
 
 credentials:
