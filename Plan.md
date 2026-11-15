@@ -8,7 +8,7 @@ This document is the implementation authority. Section 2 is the **only implement
 
 ### 1.1 Full scope
 
-**Every feature family, constituent variable, source integration and instrument category listed in this document is required.** There is no reduced prototype definition of project completion. Completing early steps is progress toward the full system. An empty adapter, database table, registry entry, notebook or report is not a completed feature.
+**Every feature family, constituent variable, source integration and instrument category listed in this document is required.** There is no reduced prototype definition of project completion. Completing early steps is progress toward the full system. An empty adapter, database table, registry entry, Python module or report is not a completed feature.
 
 Implement soil; terrain/geology; rainfall; climate; water; historical land/vegetation; degradation/hazards; environmental quality; crop requirements; germination; crop development; actual performance; biological risks; rotation interactions; cultivation management; field instruments; spatial processing; database storage; provenance; validation; and complete exports.
 
@@ -19,7 +19,7 @@ Support crop suitability evidence, observed growth trajectories and multi-season
 ### 1.2 Authentic data only
 
 1. Retrieve actual provider responses, download actual datasets, or import actual laboratory reports, sensor recordings, farmer submissions and published research records.
-2. **Prohibit fabricated, augmented, randomized, hardcoded baseline, demo, mock, synthetic and fallback-generated agricultural data everywhere, including tests and notebooks.** Do not fabricate field boundaries, crops, dates, sensor readings or expected scientific values to make tests pass.
+2. **Prohibit fabricated, augmented, randomized, hardcoded baseline, demo, mock, synthetic and fallback-generated agricultural data everywhere, including tests and development scripts.** Do not fabricate field boundaries, crops, dates, sensor readings or expected scientific values to make tests pass.
 3. Do not use monkeypatched provider responses, HTTP response mocks, generated fixtures, in-memory SQLite, or a database substitute as connection or acceptance evidence. Test expected values must come from independently inspected authentic records or independently calculated results from those records.
 4. Preserve provider-issued modelled maps, satellite estimates, reanalysis, published parameters and climate projections as authentic **source products**, with their true evidence type. They are not direct field measurements. “Real” means authentic and traceable, not that every source product is a direct observation.
 5. Deterministic calculations from validated real inputs are allowed: unit conversion, aggregation, vegetation indices, terrain derivatives and scientifically specified indicators. Preserve input lineage, formulas, assumptions and uncertainty. Do not invent missing inputs, interpolate gaps, generate growth curves, or synthesize observations to achieve completeness.
@@ -27,7 +27,7 @@ Support crop suitability evidence, observed growth trajectories and multi-season
 7. A failed request remains failed. Missing credentials remain blocked. A provider gap remains missing. Missing, zero, below detection limit and not applicable are different states.
 8. Preserve raw source bytes immutably with checksums. Never overwrite a previous response or silently merge conflicting sources.
 9. Legacy caches without verifiable provenance are ineligible. Keep new raw assets separate; do not delete existing user data. An online acceptance test must make a fresh request even if an authentic cached asset exists.
-10. Never report a feature complete solely because data are nonempty, an HTTP status is 200, a notebook executes, files exist, or unit tests pass.
+10. Never report a feature complete solely because data are nonempty, an HTTP status is 200, a Python script executes, files exist, or unit tests pass.
 
 ### 1.3 Honest completion and blockers
 
@@ -55,7 +55,7 @@ Each step has a hard exit gate. Follow these steps in order. A blocked step perm
 | S08 — Biology, rotation and management | Implement F13–F15 and related supplementary features. Import actual host/pathogen records, paired rotation trials, management histories and farmer records. | FEAT and Q13–Q15 pass. Preceding/following crop, before/after conditions, treatment and study context are preserved; no invented compatibility scores or rotation benefits. |
 | S09 — Instruments and laboratory acquisition | Implement all 14 Section 7 categories and required ancillary monitoring inputs. Connect to actual devices/gateways or ingest authentic device exports/reports. Attach deployment/sample/calibration metadata and preserve recorded readings. | DEVICE cases pass for every category and each configured instance/transport. Real laboratory and sensor evidence is required; an empty CSV template does not pass. |
 | S10 — Integrated validation and complete outputs | Run all domains together from real KML through acquisition, validation, database readback and Section 4 export. Execute all feature, source, database, cross-source and end-to-end cases. | E2E-01 through E2E-08 pass. Required-feature coverage is 100%; unresolved gaps remain visible; exported records match the database and raw lineage. |
-| S11 — Refactor and reproduce | Move notebook-validated logic into reusable package modules, retaining notebooks as demonstrations. Re-execute through the package/CLI and rerun affected acceptance tests on real data. | No second divergent implementation. Clean-process execution and final full acceptance command pass. All steps and requirements have evidence; deliver the coverage ledger and blocker-free report before claiming completion. |
+| S11 — Reproduce and hand over | Verify the Python package and CLI run from a clean process using documented configuration. Review module boundaries, concise comments/docstrings, dependency locks and usage instructions; rerun affected acceptance tests after any changes. | Clean-process execution and final full acceptance command pass. All steps and requirements have evidence; deliver the Python source, coverage ledger and blocker-free report before claiming completion. |
 
 For each S05–S09 domain step, finish all applicable CONN cases for its source bindings as well as its feature checks before passing the gate. This places normalization tests after their implementation, while requiring real connection evidence before accepting any domain. S10 repeats the entire source matrix together.
 
@@ -63,11 +63,11 @@ Assign every F16 supplementary family and child to the step that produces it: fi
 
 ### 2.1 Working method within each step
 
-Develop and execute explanatory Jupyter notebooks for the current step. Use small real requests to limit download size. Inspect raw responses and intermediate results. Save actual run outputs, provenance and test evidence. Keep reusable shared infrastructure in modules when needed; S11 consolidates domain logic only after validation. Notebook order is the step order above. Do not create a second notebook roadmap or stop after an early subset.
+Implement each step directly in reusable Python files under `src/agri_data/`, with executable tests under `tests/` and documented CLI entry points. Use concise comments and docstrings where they explain scientific assumptions, unit conversions, source-specific behavior or non-obvious decisions. Keep acquisition, geographical processing, validation, storage and orchestration in coherent modules; CLI commands and tests must call the same implementation. Use small real requests to limit download size, inspect raw responses and intermediate results, and save actual run outputs, provenance and test evidence as files. Build and validate the modules as each step progresses; S11 verifies reproducibility and handover. No Jupyter notebooks or later notebook-to-Python conversion are required.
 
 S01's real acceptance corpus must include the minimal authentic field, source record and spatial asset needed for S02/S03 infrastructure tests. These can be existing provenance-verified files or small direct provider downloads; using them early does not imply the later automated adapters are implemented. Missing prerequisites are recorded as blockers. Cross-source laboratory/station references can likewise be independently inspected before their automated import paths are built.
 
-Use Python with JupyterLab, pandas/NumPy, GeoPandas/Shapely/pyproj/GDAL, rasterio/rioxarray/xarray, NetCDF and Parquet support, HTTP and provider clients, SQLAlchemy/GeoAlchemy with a PostgreSQL driver, and pytest. Verify exact dependency versions during implementation and record them. Library installation/import tests supplement actual service tests.
+Use Python with pandas/NumPy, GeoPandas/Shapely/pyproj/GDAL, rasterio/rioxarray/xarray, NetCDF and Parquet support, HTTP and provider clients, SQLAlchemy/GeoAlchemy with a PostgreSQL driver, and pytest. Verify exact dependency versions during implementation and record them. Library installation/import tests supplement actual service tests.
 
 Implement and document these acceptance commands as part of the work; the commands below specify the required interface, not existing functionality:
 
@@ -580,7 +580,7 @@ All atomic variables require FEAT-01 through FEAT-09 and their domain Q profile 
 
 ### 5.16 Required supplementary features and dimensions — Q16
 
-These preserve requirements previously described in prose, source descriptions, notebook tasks and database schemas. They are additional requirements or explicit expansions of existing families, not optional extras.
+These preserve requirements previously described in prose, source descriptions, implementation tasks and database schemas. They are additional requirements or explicit expansions of existing families, not optional extras.
 
 | Feature ID | Feature | Required content and validation context |
 | --- | --- | --- |
@@ -871,7 +871,7 @@ Instantiate DEVICE-01 through DEVICE-06 for each Section 7 category and every co
 | E2E-04 Missing feature | Run an actually uncovered date/site or incomplete authentic report. | Every requested missing feature remains in the status output; zero/omission/synthetic replacement cannot hide the gap. |
 | E2E-05 Repeat run | Re-run identical authentic inputs and then a changed actual time/source/version selection. | Stable field IDs, correct deduplication, preserved distinct observations and immutable raw history. |
 | E2E-06 Complete export | Reconcile every database record, lineage edge and export partition; exercise filtering/pagination. | Counts/IDs/checksums agree; filters leave original complete data unchanged and declare selection criteria/counts. |
-| E2E-07 Clean process | Start a new process using documented configuration and required services, then query/reproduce the accepted run. | No dependency on notebook memory, temporary files, hidden credentials or manual state; evidence survives process restart. |
+| E2E-07 Clean process | Start a new process using documented configuration and required services, then query/reproduce the accepted run. | No dependency on interactive-session memory, temporary files, hidden credentials or manual state; evidence survives process restart. |
 | E2E-08 Requirement coverage | Compare the full frozen feature/source/device/case inventory with test evidence and completion ledger. | 100% of required atomic features, bindings, instrument categories and applicable tests verified; zero missing tests, unresolved blockers or false passes. |
 
 ## 9. Final completion checklist and handover
@@ -881,11 +881,11 @@ Before reporting the full implementation complete, verify all of the following:
 - Every S01–S11 gate passed with evidence, and every Section 5 family/child is implemented.
 - Every Section 6 source binding has verified authentic access/import, semantic data validation and persistence; every instrument category has actual readings/reports and its required tests.
 - The database is PostgreSQL/PostGIS, with successful independent connection, spatial behavior, commit/readback, failure and idempotency tests.
-- No fabricated, augmented, synthetic, mock or fallback-generated data are used in the accepted dataset, notebooks or tests. No locally generated simulations are presented as observed data.
+- No fabricated, augmented, synthetic, mock or fallback-generated data are used in the accepted dataset, development scripts or tests. No locally generated simulations are presented as observed data.
 - All scientific values have source mappings, original records, documented units/context, quality results and traceable derivations.
 - Every required feature appears in the status export even when missing at a particular field. Positive acceptance evidence exists for every feature in the agreed corpus.
 - The full fresh acceptance command exits successfully with zero required failures, blockers or skips; test discovery and coverage checks pass.
 - Full exports reconcile with the database and immutable raw assets, including categorical data, curves, series, metadata and all partitions.
-- All validated notebooks remain executable, package logic is reusable, and documented clean-process runs reproduce the accepted behavior.
+- Python modules and CLI entry points are reusable and documented with concise comments/docstrings where useful; documented clean-process runs reproduce the accepted behavior.
 
-Deliver the executed notebooks, package, migrations, registries, real input/source evidence references, complete export bundles, acceptance commands, machine-readable test results and readable coverage report. Report actual implemented/verified totals and any remaining blockers. If any required item is incomplete, explicitly say the implementation is incomplete and list the exact feature/source/test IDs; do not describe partial completion as completion of this plan.
+Deliver the Python source files and tests, package/CLI usage instructions, migrations, registries, real input/source evidence references, complete export bundles, acceptance commands, machine-readable test results and readable coverage report. Report actual implemented/verified totals and any remaining blockers. If any required item is incomplete, explicitly say the implementation is incomplete and list the exact feature/source/test IDs; do not describe partial completion as completion of this plan.
