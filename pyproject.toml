@@ -51,6 +51,10 @@ india = [
     "requests>=2.32.3",
     "truststore>=0.10.4",
 ]
+india-ml = [
+    "torch>=2.6.0",
+    "psutil>=6.0.0",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
