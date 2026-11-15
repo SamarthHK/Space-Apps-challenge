@@ -19,6 +19,7 @@ import yaml
 import requests
 
 from agri_data.contracts.canonical import reconcile_reference
+from agri_data.contracts.ml_dataset import export_preparation, load_training_snapshot
 from agri_data.contracts.postgres import PostgresStore
 from agri_data.contracts.trials import import_woburn, workbook_rows
 from agri_data.contracts.assets import archive_response
@@ -104,3 +105,27 @@ def test_real_trial_yields_match_csv_and_independent_workbook():
         ambiguous += metadata["source_plot_code_not_unique"]
     assert missing > 0
     assert ambiguous > 0  # Genuine source plot-code collisions are retained, not merged.
+
+
+def test_preparation_snapshot_is_reproducible_and_refuses_training():
+    store, _, _ = context()
+    base = ROOT / "data" / "exports" / ("ml-regression-" + uuid.uuid4().hex)
+    config = ROOT / "config" / "ml_dataset.yaml"
+    reports = [export_preparation(store, config, base / name, ROOT) for name in ("first", "second")]
+    assert reports[0] == reports[1]
+    manifests = [json.loads((base / name / "manifest.json").read_bytes()) for name in ("first", "second")]
+    assert manifests[0]["snapshot_id"] == manifests[1]["snapshot_id"]
+    for name, manifest in zip(("first", "second"), manifests):
+        assert manifest["training_ready"] is False
+        for item in manifest["files"]:
+            assert sha256((base / name / item["path"]).read_bytes()).hexdigest() == item["sha256"]
+    with pytest.raises(ValueError, match="not an approved training"):
+        load_training_snapshot(base / "first")
+    examples = pd.read_parquet(base / "first" / "examples.parquet")
+    targets = pd.read_parquet(base / "first" / "targets.parquet")
+    splits = pd.read_parquet(base / "first" / "splits.parquet")
+    assert not examples["context_id"].duplicated().any()
+    assert examples["decision_at"].isna().all()
+    assert targets["value"].isna().any()
+    assert set(splits["split"]) == {"withheld"}
+    assert set(examples["example_id"]) == set(targets["example_id"]) == set(splits["example_id"])

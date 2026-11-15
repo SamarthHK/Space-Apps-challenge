@@ -1,0 +1,38 @@
+schema_version: "1"
+task_id: following_crop_yield_v1
+task: Predict observed following-crop grain yield conditional on recorded history and decision-available conditions
+target:
+  variable: grain_yield
+  unit: kg/ha
+  mass_basis: 85_percent_dry_matter
+  context: one harvested crop per plot and season
+  permitted_evidence: [measured]
+example_unit: site + trial + plot + treatment + harvest_year
+decision_time:
+  required: true
+  infer_from_sowing_date: false
+  realized_future_weather_permitted: false
+  require_feature_available_at: true
+split_policy:
+  group: site + trial + main_plot
+  temporal: training outcomes precede evaluation decisions
+  random_daily_row_split: forbidden
+  external_generalization_requires_held_out_sites: true
+missing_values:
+  generate_observations: false
+  imputation: disabled
+minimum_readiness:
+  # Structural minima are not evidence of statistical adequacy.
+  distinct_sites: 2
+  distinct_harvest_years: 3
+  distinct_rotation_treatments: 3
+  require_reviewed_sample_size: true
+  require_independent_target_validation: true
+baseline:
+  method: training-only crop and management-stratified mean
+  metrics: [MAE_kg_per_ha, RMSE_kg_per_ha, per_rotation_error]
+  causal_rotation_benefit_claims: false
+scope:
+  first_target_only: true
+  soil_change_and_water_targets: require independently measured compatible outcomes
+  full_Plan_md_completion: separate mandatory gate

@@ -31,13 +31,29 @@ def main():
     ingest.add_argument("--repair-reference", type=Path)
     ingest.add_argument("--repair-area-tolerance-m2", type=float)
     ingest.add_argument("--repair-shape-tolerance-m2", type=float)
+    reconcile = commands.add_parser("reconcile-data", help="Resolve reviewed field aliases and scientific duplicates")
+    reconcile.add_argument("--config", type=Path, required=True)
+    reconcile.add_argument("--corpus", type=Path)
+    trials = commands.add_parser("acquire-trials", help="Acquire the published CC-BY Woburn empirical trial")
+    trials.add_argument("--output", type=Path, required=True)
+    trial_import = commands.add_parser("import-trials", help="Import Woburn outcome evidence, retaining pending status")
+    trial_import.add_argument("--config", type=Path, required=True)
+    trial_import.add_argument("--manifest", type=Path, required=True)
+    snapshot = commands.add_parser("prepare-ml", help="Export an immutable dataset snapshot and training blockers")
+    snapshot.add_argument("--config", type=Path, required=True)
+    snapshot.add_argument("--contract", type=Path, default=Path("config") / "ml_dataset.yaml")
+    snapshot.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     repository = Path.cwd()
     if args.command == "acquire-reference":
         from agri_data.contracts.corpus import acquire_reference_corpus
         print(acquire_reference_corpus(args.output)["manifest"])
         return 0
-    if args.command in ("storage-proof", "ingest-boundaries"):
+    if args.command == "acquire-trials":
+        from agri_data.contracts.trials import acquire_woburn
+        print(acquire_woburn(args.output))
+        return 0
+    if args.command in ("storage-proof", "ingest-boundaries", "reconcile-data", "import-trials", "prepare-ml"):
         import json
         import yaml
         from agri_data.contracts.postgres import PostgresStore
@@ -46,6 +62,18 @@ def main():
         database = config["database"]
         store = PostgresStore(database["expected_database"], database["expected_user"],
                               database["acceptance_schema"], database["connection_environment_variable"])
+        if args.command == "reconcile-data":
+            from agri_data.contracts.canonical import reconcile_reference
+            print(json.dumps(reconcile_reference(store, args.corpus or repository / config["reference_corpus_manifest"]), indent=2))
+            return 0
+        if args.command == "import-trials":
+            from agri_data.contracts.trials import import_woburn
+            print(json.dumps(import_woburn(store, args.manifest), indent=2))
+            return 0
+        if args.command == "prepare-ml":
+            from agri_data.contracts.ml_dataset import export_preparation
+            print(json.dumps(export_preparation(store, args.contract, args.output, repository), indent=2))
+            return 2
         if args.command == "ingest-boundaries":
             from agri_data.contracts.boundary_import import ingest_boundaries
             result = ingest_boundaries(
