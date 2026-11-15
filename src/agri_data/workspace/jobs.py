@@ -132,6 +132,11 @@ class JobStore:
                 "candidates": (row["preview"] or {}).get("candidates", []),
                 "rejected": (row["preview"] or {}).get("rejected", [])}
 
+    def original_import(self, identifier):
+        with self.workspace.session() as connection:
+            row = self.import_row(connection, identifier)
+            return self.fields.original_asset(connection, row["sha256"])
+
     def confirm(self, identifier, payload, key):
         with self.workspace.session() as connection:
             row = self.import_row(connection, identifier, lock=True)

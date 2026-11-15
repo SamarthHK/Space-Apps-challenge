@@ -1,7 +1,7 @@
 # Frontend/backend integration contract
 
 Revisions: `private-workspace-2` in account mode; `shared-workspace-1` for shared compatibility.
-Status: **private accounts, scoped reads/profiles/fields, imports/jobs and geometry exports implemented**.
+Status: **private accounts, scoped reads/profiles/fields, imports/jobs, originals and geometry exports implemented**.
 Other resource contracts below remain proposals.
 
 Updated owner decision: private per-person accounts, with the original UI restored.
@@ -109,6 +109,7 @@ and model-input dependencies.
 listObservations/getObservation/listObservationEvidence, getProfile/updateProfile,
 createField/updateField/archiveField, createBoundaryImport/getBoundaryImport/
 confirmBoundaryImport, getJob, createExport/downloadExport,
+downloadBoundaryImport/downloadBoundaryOriginal,
 getSession/createSignInContext/registerAccount/loginAccount/logoutAccount.
 The implementation column identifies the backend task, not current readiness.
 Resource IDs, nested resources, downloads and jobs must stay within the explicit
@@ -128,6 +129,7 @@ server-resolved account scope, or the configured shared scope in compatibility m
 | listFields | GET `/fields` | Archived records excluded; page of unchanged FieldRecord DTOs | B03 |
 | createField | POST `/fields` | project_id, nullable name, geometry; FieldMutation + ETag | B04 |
 | getField | GET `/fields/{field_id}` | Field including current authoritative geometry + ETag | B03 |
+| downloadBoundaryOriginal | GET `/fields/{field_id}/boundaries/{boundary_id}/original` | Owned original source bytes for an explicit saved version; not a re-export or filesystem path | U3 |
 | updateField | PATCH `/fields/{field_id}` | name and/or geometry; FieldMutation + ETag | B04 |
 | archiveField | DELETE `/fields/{field_id}` | If-Match; FieldMutation with archived=true, without deleting history | B04 |
 | listObservations | GET `/fields/{field_id}/observations` | `variable_id`, inclusive `start_date`, `end_date`, `validation_status` (default `all`); page of CanonicalObservation | B03 |
@@ -138,6 +140,7 @@ server-resolved account scope, or the configured shared scope in compatibility m
 | createSoilRecord | POST `/fields/{field_id}/soil-records` | SoilSubmission; append-only SoilRecord, never automatically verified | B05 |
 | createBoundaryImport | POST `/imports` | Raw bytes; filename, project_id, source_namespace query parameters; 202 Job | B04 |
 | getBoundaryImport | GET `/imports/{import_id}` | BoundaryImport with preview candidates/rejections and job IDs | B04 |
+| downloadBoundaryImport | GET `/imports/{import_id}/download` | Owned original upload bytes, including before confirmation; checksum ETag | U3 |
 | confirmBoundaryImport | POST `/imports/{import_id}/confirm` | `preview_hash`, `candidate_ids`; 202 Job | B04 |
 | getJob | GET `/jobs/{job_id}` | Job; no internal output path | B04 |
 | createAcquisition | POST `/fields/{field_id}/acquisitions` | `source_id`, `variable_ids`, `start_date`, `end_date`, `boundary_id`; 202 Job | B06 |

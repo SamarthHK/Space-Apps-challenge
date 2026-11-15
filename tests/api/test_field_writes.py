@@ -78,6 +78,41 @@ def test_field_writes_require_versions_and_explicit_project_scope(field_store, a
     assert missing.value.status == 428
 
 
+def test_original_download_preserves_versions_and_never_reads_legacy_filesystem_sources(field_store, actual_geometry,
+                                                                                      prepared_settings):
+    created = create(field_store, actual_geometry)
+    updated = field_store.update(created["field_id"], FieldPatch(name="Later boundary copy", geometry=actual_geometry),
+                                 field_etag(created["field_id"], 1), "original-history")
+    settings = Settings.from_env({"AGRI_ALLOWED_ORIGINS": ORIGIN})
+    app = create_app(settings, field_store.settings, field_store.workspace.settings)
+    with TestClient(app, base_url="http://127.0.0.1", headers={"Origin": ORIGIN}) as http:
+        prefix = "/api/v1/fields/" + created["field_id"] + "/boundaries/"
+        old = http.get(prefix + created["current_boundary_id"] + "/original")
+        current = http.get(prefix + updated["current_boundary_id"] + "/original")
+        assert old.status_code == current.status_code == 200
+        assert old.json()["properties"]["name"] == "Actual provider boundary copy"
+        assert current.json()["properties"]["name"] == "Later boundary copy"
+        assert old.headers["ETag"] != current.headers["ETag"]
+        assert http.get(prefix + "unknown" + "/original").status_code == 404
+        digest = current.headers["ETag"].removeprefix('"sha256:').removesuffix('"')
+        for content, media_type in ((b"Owned corruption diagnostic", "application/geo+json"),
+                                   (current.content, "text/html")):
+            with field_store.workspace.session() as connection:
+                connection.execute(
+                    "UPDATE workspace_assets SET original_bytes=%s,media_type=%s WHERE workspace_id=%s AND sha256=%s",
+                    (content, media_type, field_store.workspace.settings.workspace_id, digest))
+            rejected = http.get(prefix + updated["current_boundary_id"] + "/original")
+            assert rejected.status_code == 409 and rejected.json()["error"]["code"] == "original_integrity_error"
+            assert http.get(prefix + created["current_boundary_id"] + "/original").content == old.content
+    reader = DataStore(prepared_settings)
+    legacy = reader.fields()[0]
+    boundary_id = legacy["boundary_versions"][0]["boundary_id"]
+    legacy_app = create_app(settings, prepared_settings, field_store.workspace.settings)
+    with TestClient(legacy_app, base_url="http://127.0.0.1") as http:
+        response = http.get("/api/v1/fields/" + legacy["field_id"] + "/boundaries/" + boundary_id + "/original")
+        assert response.status_code == 404 and response.json()["error"]["code"] == "original_unavailable"
+
+
 def test_field_transaction_rolls_back_assets_and_idempotency_on_audit_failure(field_store, actual_geometry):
     with field_store.workspace.session() as connection:
         connection.execute("ALTER TABLE workspace_field_revisions ADD CONSTRAINT rollback_probe CHECK (version < 1)")

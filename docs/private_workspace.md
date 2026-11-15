@@ -106,6 +106,13 @@ Preview still creates no canonical field. Explicit confirmation is required.
 Exports recheck ownership and archival state. No provider observations or model
 results are fabricated.
 
+Original uploads can be downloaded at `/api/v1/imports/{import_id}/download`.
+Saved versions retain their source at
+`/api/v1/fields/{field_id}/boundaries/{boundary_id}/original`. Both require the
+same current owner/project scope and verify the stored checksum before returning
+bytes. They never open legacy local source paths. Import history stays retained
+after a field is archived; normal field/source access is hidden with the field.
+
 ## Verification and remaining operations
 
 `python -m pytest tests\api -q` includes eleven account cases alongside the existing

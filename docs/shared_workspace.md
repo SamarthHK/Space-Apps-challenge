@@ -166,6 +166,15 @@ Legacy canonical 2D geometry is explicitly labelled; missing altitude is never
 invented. Source metadata is retained in GeoJSON properties and structured KML
 ExtendedData, with existing folder names.
 
+The `boundary_originals` capability exposes byte-for-byte original files without
+requiring a running worker. `GET /imports/{import_id}/download` retrieves a scoped
+upload before or after confirmation. `GET /fields/{field_id}/boundaries/{boundary_id}/original`
+retrieves the owned source for that explicit saved version. Both paths are after
+`/api/v1`. MIME and checksum are checked, filenames are generated from hashes,
+and only database bytes are served. Missing legacy originals return 404, never a
+filesystem fallback; geometry exports remain available. Archival hides a field's
+original endpoint, but does not erase separately retained import history.
+
 Limits: 16 MiB uploads, 100 preview features, 100000 total KML positions, 10000
 positions per field, 256 KMZ entries, 32 MiB expanded KML/output. External links,
 entities/DTDs, unsafe archive paths, excessive nesting/compression, and encrypted

@@ -90,7 +90,8 @@ def test_private_boundary_requires_sessions_origin_csrf_and_no_owner_overrides(p
         assert http.get(ROOT + "/health").json()["data"]["contract_revision"] == "private-workspace-2"
         assert http.get(ROOT + "/auth/session").json()["data"]["user"] is None
         for path in ("/workspace", "/profile", "/fields", "/fields/guessed/observations",
-                     "/imports/guessed", "/jobs/guessed", "/exports/guessed/download"):
+                     "/imports/guessed", "/jobs/guessed", "/exports/guessed/download",
+                     "/imports/guessed/download", "/fields/guessed/boundaries/guessed/original"):
             response = http.get(ROOT + path)
             assert response.status_code == 401
             assert response.json()["error"]["code"] == "unauthenticated"
@@ -237,12 +238,15 @@ def test_private_kml_jobs_worker_and_downloads_preserve_owner_and_original_bytes
         assert capabilities["imports"] == "ready"
         content = serialize_export([{"type": "Feature", "id": "private-geometry-probe",
             "geometry": actual_geometry, "properties": {"name": "Real geometry copy & <label>"}}], "kml")
-        query = {"filename": "private.kml", "project_id": project(first), "source_namespace": "drawn-probe"}
+        query = {"filename": 'private "quoted".kml', "project_id": project(first), "source_namespace": "drawn-probe"}
         headers = {"Content-Type": "application/vnd.google-earth.kml+xml", "Idempotency-Key": "upload"}
         assert second.post(ROOT + "/imports", params=query, content=content, headers=headers).status_code == 404
         submitted = first.post(ROOT + "/imports", params=query, content=content, headers=headers)
         assert submitted.status_code == 202
         job = submitted.json()["data"]
+        original_import = ROOT + "/imports/" + job["resource_id"] + "/download"
+        assert first.get(original_import).content == content
+        assert second.get(original_import).status_code == 404
         assert first.get(ROOT + "/fields").json()["data"] == []
         assert worker.run_once("private-worker")
         assert first.get(ROOT + "/jobs/" + job["job_id"]).json()["data"]["status"] == "succeeded"
@@ -256,6 +260,12 @@ def test_private_kml_jobs_worker_and_downloads_preserve_owner_and_original_bytes
                                json=selection, headers={"Idempotency-Key": "confirm"})
         assert confirmed.status_code == 202 and worker.run_once("private-worker")
         field = first.get(ROOT + "/fields").json()["data"][0]
+        original_path = ROOT + "/fields/" + field["field_id"] + "/boundaries/" + field["selected_boundary_id"] + "/original"
+        original = first.get(original_path)
+        assert original.status_code == 200 and original.content == content
+        assert original.headers["ETag"] == f'"sha256:{info["sha256"]}"'
+        assert original.headers["Content-Disposition"] == f'attachment; filename="original_{info["sha256"]}.kml"'
+        assert second.get(original_path).status_code == 404
         assert shape(field["geometry"]).equals_exact(force_2d(shape(actual_geometry)), 1e-12)
         assert first.get(ROOT + "/fields/" + field["field_id"] + "/observations").json()["data"] == []
         account = accounts.session(first.cookies.get(accounts.session_cookie))
@@ -281,6 +291,11 @@ def test_private_kml_jobs_worker_and_downloads_preserve_owner_and_original_bytes
         assert second.get(ROOT + "/fields").json()["data"] == []
         assert second.post(ROOT + "/imports/" + info["import_id"] + "/confirm", json=selection,
                            headers={"Idempotency-Key": "foreign-confirm"}).status_code == 404
+        current = first.get(ROOT + "/fields/" + field["field_id"])
+        assert first.delete(ROOT + "/fields/" + field["field_id"],
+                            headers={"If-Match": current.headers["ETag"]}).status_code == 200
+        assert first.get(original_path).status_code == 404
+        assert first.get(original_import).content == content
 
 
 def test_registration_rolls_back_profile_project_and_account_on_database_failure(private_app, field_store):

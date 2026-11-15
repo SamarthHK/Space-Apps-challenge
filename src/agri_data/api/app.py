@@ -203,6 +203,7 @@ def create_app(settings=None, data_settings=None, workspace_settings=None, accou
                 "jobs": ["getJob"],
                 "acquisition": ["createAcquisition"],
                 "exports": ["createExport", "downloadExport"],
+                "boundary_originals": ["downloadBoundaryImport", "downloadBoundaryOriginal"],
                 "satellite": ["listScenes", "getVegetationSeries"],
                 "crops": ["listCrops"],
                 "recommendations": ["createRecommendation", "listRecommendations", "getRecommendation"],
@@ -223,6 +224,9 @@ def create_app(settings=None, data_settings=None, workspace_settings=None, accou
             elif capability.capability_id == "field_writes":
                 capability.state = "ready" if writer_ready else "blocked"
                 capability.reason = None if capability.state == "ready" else "Scoped canonical storage and an authorized workspace writer required"
+            elif capability.capability_id == "boundary_originals":
+                capability.state = "ready" if writer_ready else "blocked"
+                capability.reason = None if writer_ready else "Scoped field and original-asset storage required"
             elif capability.capability_id in ("imports", "exports"):
                 capability.state = "ready" if worker_ready else "blocked"
                 capability.reason = None if worker_ready else "A configured import/export worker heartbeat is required"

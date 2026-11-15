@@ -96,6 +96,8 @@ router = APIRouter(prefix="/api/v1")
 IDEMPOTENCY_DESCRIPTION = (
     "Workspace-wide submission key. Receipts are retained without expiry; different input or operation returns 409."
 )
+BINARY_RESPONSE = {200: {"content": {mime: {"schema": {"type": "string", "format": "binary"}} for mime in (
+    "application/geo+json", "application/vnd.google-earth.kml+xml", "application/vnd.google-earth.kmz")}}}
 
 
 def envelope(request, data):
@@ -105,6 +107,13 @@ def envelope(request, data):
 def submitted(request, response, job):
     response.headers["Location"] = "/api/v1/jobs/" + job["job_id"]
     return envelope(request, job)
+
+
+def attachment(record):
+    return Response(content=bytes(record["content"]), media_type=record["media_type"], headers={
+        "Content-Disposition": f'attachment; filename="{record["filename"]}"',
+        "ETag": f'"sha256:{record["sha256"]}"',
+    })
 
 
 @router.get("/jobs/{job_id}", operation_id="getJob", response_model=JobResponse)
@@ -134,6 +143,18 @@ def get_import(import_id: str, request: Request):
     return envelope(request, request.state.job_store.import_info(import_id))
 
 
+@router.get("/imports/{import_id}/download", operation_id="downloadBoundaryImport", response_class=Response,
+            responses=BINARY_RESPONSE)
+def download_import(import_id: str, request: Request):
+    return attachment(request.state.job_store.original_import(import_id))
+
+
+@router.get("/fields/{field_id}/boundaries/{boundary_id}/original", operation_id="downloadBoundaryOriginal",
+            response_class=Response, responses=BINARY_RESPONSE)
+def download_original(field_id: str, boundary_id: str, request: Request):
+    return attachment(request.state.field_store.original_boundary(field_id, boundary_id))
+
+
 @router.post("/imports/{import_id}/confirm", operation_id="confirmBoundaryImport",
              response_model=JobResponse, status_code=202)
 def confirm_import(import_id: str, body: ImportConfirmation, request: Request, response: Response,
@@ -149,11 +170,6 @@ def create_export(body: ExportRequest, request: Request, response: Response,
 
 
 @router.get("/exports/{export_id}/download", operation_id="downloadExport", response_class=Response,
-            responses={200: {"content": {mime: {"schema": {"type": "string", "format": "binary"}} for mime in (
-                "application/geo+json", "application/vnd.google-earth.kml+xml", "application/vnd.google-earth.kmz")}}})
+            responses=BINARY_RESPONSE)
 def download_export(export_id: str, request: Request):
-    record = request.state.job_store.download(export_id)
-    return Response(content=bytes(record["content"]), media_type=record["media_type"], headers={
-        "Content-Disposition": f'attachment; filename="{record["filename"]}"',
-        "ETag": f'"sha256:{record["sha256"]}"',
-    })
+    return attachment(request.state.job_store.download(export_id))

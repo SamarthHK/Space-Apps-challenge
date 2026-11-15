@@ -91,7 +91,7 @@ def test_live_health_and_workspace_are_honest_and_share_response_contract(server
     assert workspace["access_mode"] == "shared_trusted_network"
     assert workspace["project_ids"] == []
     assert all(item["state"] == ("blocked" if item["capability_id"] in (
-        "fields", "observations", "profile", "field_writes", "jobs", "imports", "exports")
+        "fields", "observations", "profile", "field_writes", "jobs", "imports", "exports", "boundary_originals")
                                 else "not_implemented") for item in workspace["capabilities"])
     assert "user_id" not in workspace and "token" not in workspace
 
@@ -133,7 +133,8 @@ def test_openapi_export_is_deterministic_and_matches_live_routes(server, tmp_pat
                           "createField", "updateField", "archiveField", "getJob",
                           "createBoundaryImport", "getBoundaryImport", "confirmBoundaryImport",
                           "createExport", "downloadExport", "getSession", "createSignInContext",
-                          "registerAccount", "loginAccount", "logoutAccount"}
+                          "registerAccount", "loginAccount", "logoutAccount",
+                          "downloadBoundaryImport", "downloadBoundaryOriginal"}
     output = tmp_path / "openapi.json"
     result = subprocess.run(
         [sys.executable, "-m", "agri_data.api", "--export-openapi", str(output)],

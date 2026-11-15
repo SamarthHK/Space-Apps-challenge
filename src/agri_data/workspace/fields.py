@@ -11,6 +11,7 @@ from agri_data.api.data import DataStore
 from agri_data.contracts.identity import fingerprint
 from .errors import WorkspaceError, WorkspaceUnavailable
 from .geometry import prepare_geometry
+from .formats import MEDIA_TYPES
 
 
 def field_etag(identifier, version):
@@ -119,10 +120,37 @@ class FieldStore:
             "VALUES (%s,%s,%s,%s,clock_timestamp(),%s) ON CONFLICT DO NOTHING"
         ).format(self.table("source_assets")), (
             source_id, digest, f"workspace-asset://{settings.schema}/{settings.workspace_id}/{digest}",
-            "shared-workspace:user-supplied", Jsonb({"filename": filename, "media_type": media_type,
+            "workspace:user-supplied", Jsonb({"filename": filename, "media_type": media_type,
                                                    "provenance": provenance}),
         ))
         return source_id
+
+    def original_asset(self, connection, digest):
+        row = connection.execute(
+            "SELECT sha256,media_type,original_bytes FROM workspace_assets WHERE workspace_id=%s AND sha256=%s",
+            (self.workspace.settings.workspace_id, digest),
+        ).fetchone()
+        if row is None:
+            raise WorkspaceError(404, "original_unavailable",
+                                 "Original bytes are not stored in this workspace; use a geometry export instead")
+        content = bytes(row["original_bytes"])
+        suffix = next((name for name, media in MEDIA_TYPES.items() if media == row["media_type"]), None)
+        if suffix is None or sha256(content).hexdigest() != row["sha256"]:
+            raise WorkspaceError(409, "original_integrity_error", "Stored original format or checksum does not match")
+        return {"content": content, "media_type": row["media_type"], "sha256": row["sha256"],
+                "filename": "original_" + row["sha256"] + "." + suffix}
+
+    def original_boundary(self, identifier, boundary_id):
+        with self.workspace.session() as connection:
+            self.locked(connection, identifier)
+            row = connection.execute(sql.SQL(
+                "SELECT s.raw_sha256 FROM {} b JOIN {} s USING(source_asset_id) "
+                "WHERE b.field_id=%s AND b.boundary_id=%s"
+            ).format(self.table("field_boundaries"), self.table("source_assets")),
+                (identifier, boundary_id)).fetchone()
+            if row is None:
+                raise WorkspaceError(404, "not_found", "Boundary not found")
+            return self.original_asset(connection, row["raw_sha256"])
 
     def add_boundary(self, connection, identifier, source_id, prepared):
         boundary_id = "boundary_" + fingerprint([identifier, source_id, prepared["geometry"]])
