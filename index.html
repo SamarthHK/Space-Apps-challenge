@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AeroAgri Karnataka — Agricultural Intelligence MVP</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ea580c'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z'/></svg>" />
+  <title>Bhumi — Karnataka Agricultural Intelligence</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231b5e34'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z'/></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -12,64 +12,41 @@
 </head>
 <body>
   <div id="app-container">
-    <!-- TOP COCKPIT HEADER BAR -->
-    <header class="app-header">
-      <div class="brand-section">
-        <div class="brand-logo-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        </div>
-        <div class="brand-info">
-          <div class="brand-title">
-            AERO-AGRI <span class="brand-badge">KARNATAKA</span>
-          </div>
-          <div class="brand-subtitle">Agricultural Intelligence & Profit Engine</div>
+
+    <!-- LEFT PERMANENT SIDEBAR NAVIGATION -->
+    <nav id="left-sidebar-nav">
+      <!-- BRAND BLOCK -->
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon"></div>
+        <div class="sidebar-brand-text">
+          <div class="sidebar-brand-name">BHUMI</div>
+          <div class="sidebar-brand-sub">Karnataka</div>
         </div>
       </div>
 
-      <!-- 7 PRIMARY NAVIGATION SECTIONS -->
-      <nav class="nav-tabs" id="main-nav-tabs">
-        <button class="nav-tab-btn active" data-view="dashboard">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-          Dashboard
-        </button>
-        <button class="nav-tab-btn" data-view="myland">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-          My Land
-        </button>
-        <button class="nav-tab-btn" data-view="landanalysis">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-          Land Analysis
-        </button>
-        <button class="nav-tab-btn" data-view="recommendations">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-          Crop Recommendations
-        </button>
-        <button class="nav-tab-btn" data-view="market">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          Market Intelligence
-        </button>
-        <button class="nav-tab-btn" data-view="plans">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-          Planting Plans
-        </button>
-        <button class="nav-tab-btn" data-view="profile">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          My Profile
-        </button>
-      </nav>
-
-      <!-- ACTIVE PLOT SELECTOR & FARMER BADGE -->
-      <div class="header-actions">
-        <div class="active-plot-badge">
-          <span style="font-size:0.75rem; font-weight:700;">PLOT:</span>
-          <select id="global-plot-select" class="active-plot-select"></select>
-        </div>
-        <div class="farmer-quick-pill" id="header-farmer-pill" title="View Profile">
-          <div class="farmer-avatar-dot"></div>
-          <span id="header-farmer-name">Shivalingaiah G.</span>
-        </div>
+      <!-- ACTIVE PLOT SELECTOR -->
+      <div class="sidebar-plot-block">
+        <div class="sidebar-plot-label">Active Plot</div>
+        <select id="global-plot-select" class="sidebar-plot-select"></select>
       </div>
-    </header>
+
+      <!-- NAV ITEMS -->
+      <div class="sidebar-nav-list" id="main-nav-tabs">
+        <button class="nav-tab-btn active" data-view="dashboard">Dashboard</button>
+        <button class="nav-tab-btn" data-view="myland">My Land</button>
+        <button class="nav-tab-btn" data-view="landanalysis">Land Analysis</button>
+        <button class="nav-tab-btn" data-view="recommendations">Crop Recommendations</button>
+        <button class="nav-tab-btn" data-view="market">Market Intelligence</button>
+        <button class="nav-tab-btn" data-view="plans">Planting Plans</button>
+        <button class="nav-tab-btn" data-view="profile">My Profile</button>
+      </div>
+
+      <!-- FARMER IDENTITY -->
+      <div class="sidebar-farmer-pill" id="header-farmer-pill" title="View Profile">
+        <div class="farmer-avatar-dot"></div>
+        <span id="header-farmer-name">Shivalingaiah G.</span>
+      </div>
+    </nav>
 
     <!-- MAIN VIEWS CONTAINER -->
     <main class="main-content">
@@ -86,11 +63,9 @@
             </div>
             <div style="display:flex; gap:0.5rem;">
               <button class="btn-primary" id="btn-dash-run-rec">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                 Evaluate Crops for Active Plot
               </button>
               <button class="btn-secondary" id="btn-dash-add-plot">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Register New Plot
               </button>
             </div>
@@ -157,20 +132,14 @@
             <div style="display:flex; flex-direction:column; gap:1.25rem;">
               <!-- RECENT PLANTING PLANS -->
               <div class="card">
-                <h3 class="card-title">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-                  Active Planting Plans
-                </h3>
+                <h3 class="card-title">Active Planting Plans</h3>
                 <p class="card-subtitle">Saved cropping decisions for upcoming season</p>
                 <div id="dash-plans-list" style="display:flex; flex-direction:column; gap:0.6rem;"></div>
               </div>
 
               <!-- USEFUL NEXT ACTIONS -->
               <div class="card">
-                <h3 class="card-title">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                  Recommended Next Actions
-                </h3>
+                <h3 class="card-title">Recommended Next Actions</h3>
                 <div class="quick-action-list">
                   <button class="action-card-btn" id="act-draw-plot">
                     <span>Draw boundary for a new agricultural parcel</span>
@@ -199,12 +168,9 @@
           <!-- TOP COCKPIT TOOLBAR (Matches Reference GUI Top Bar) -->
           <div class="cockpit-top-bar">
             <div style="display:flex; align-items:center; gap:0.75rem;">
-              <button class="btn-secondary btn-sm" id="btn-cockpit-menu" title="Toggle Plot List">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-              </button>
+              <button class="btn-secondary btn-sm" id="btn-cockpit-menu" title="Toggle Plot List">Menu</button>
               <!-- Date Range Pickers (as seen in reference GUI) -->
               <div class="date-range-display">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 <span>2026.06.01</span>
                 <span>&rarr;</span>
                 <span>2026.11.15</span>
@@ -214,15 +180,13 @@
             <!-- DRAW BOUNDARY PEG TOOL & LAYER SWITCHER -->
             <div class="cockpit-tools-group">
               <button class="btn-primary btn-sm" id="btn-start-drawing">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-                Draw Plot Boundary Pegs
+                Draw Plot Boundary
+              </button>
+              <button class="btn-secondary btn-sm" id="btn-export-kml" title="Export KML / CAML File for Earth / GIS / Home Directory">
+                Export KML / CAML
               </button>
               <button class="btn-secondary btn-sm" id="btn-export-current-geojson" title="Export GeoJSON">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Export Parcel GeoJSON
-              </button>
-              <button class="btn-secondary btn-sm" id="btn-refresh-cockpit" title="Refresh Telemetry">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                Export GeoJSON
               </button>
             </div>
           </div>
@@ -239,18 +203,15 @@
               <button class="btn-secondary btn-sm" id="btn-cancel-drawing" style="padding:0.2rem 0.5rem;">Cancel</button>
             </div>
 
-            <!-- FLOATING MAP CONTROLS OVERLAY (Matches Reference GUI Top Right) -->
+            <!-- FLOATING MAP CONTROLS OVERLAY (Cleaned up, no distracting icons) -->
             <div class="map-floating-overlay-top">
               <select class="hud-select-pill" id="cockpit-overlay-mode">
                 <option value="ndvi">NDVI Vegetation Heatmap</option>
                 <option value="ndwi">NDWI Canopy Moisture</option>
                 <option value="truecolor">Natural Satellite (No Heatmap)</option>
               </select>
-              <button class="hud-btn-pill" id="btn-map-info" title="Vegetation Health Info">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-              </button>
               <button class="hud-btn-pill" id="btn-fit-parcel" title="Center on Active Plot">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                Center Plot
               </button>
             </div>
           </div>
@@ -260,10 +221,7 @@
             <!-- CARD 1: SATELLITE PASSES (Sentinel-2 / Landsat) -->
             <div class="sidebar-panel-card">
               <div class="sidebar-panel-header">
-                <div class="sidebar-panel-title">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/></svg>
-                  Satellite Passes
-                </div>
+                <div class="sidebar-panel-title">Satellite Passes</div>
                 <div class="cloud-filter-pill">
                   Max Cloud: 100%
                 </div>
@@ -274,10 +232,7 @@
             <!-- CARD 2: WEATHER & ENVIRONMENTAL INDICATORS (Matches Reference GUI) -->
             <div class="sidebar-panel-card">
               <div class="sidebar-panel-header">
-                <div class="sidebar-panel-title">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
-                  Weather &amp; Agro-Met Forecast
-                </div>
+                <div class="sidebar-panel-title">Weather &amp; Agro-Met Forecast</div>
                 <span style="font-size:0.7rem; color:var(--text-subtle);">IMD / KSNDMC</span>
               </div>
               <div class="weather-row-list" id="cockpit-weather-list">
@@ -333,24 +288,24 @@
           </aside>
 
           <!-- BOTTOM COLLAPSIBLE TIME-SERIES PANEL (Matches Reference GUI) -->
-          <div class="cockpit-bottom-drawer" id="cockpit-drawer">
+          <div class="cockpit-bottom-drawer" id="cockpit-bottom-drawer">
             <div class="drawer-header" id="drawer-toggle-bar">
               <div class="drawer-title-group">
-                <span style="font-size:0.82rem; font-weight:700; color:var(--text-main);">
-                  NDVI Canopy Vigour & Seasonal Moisture Trend
+                <span style="font-size:0.75rem; font-weight:700; color:var(--text-main);">
+                  NDVI Vigour & Moisture Trend
                 </span>
                 <div class="drawer-legend">
-                  <span><span class="legend-dot" style="background:#ea580c;"></span> Mean NDVI</span>
-                  <span><span class="legend-dot" style="background:#16a34a;"></span> Max Vegetative Peak</span>
-                  <span><span class="legend-dot" style="background:#0284c7;"></span> 24h Rainfall (mm)</span>
+                  <span><span class="legend-dot" style="background:#166534;"></span> Mean NDVI</span>
+                  <span><span class="legend-dot" style="background:#22c55e;"></span> Peak Canopy</span>
+                  <span><span class="legend-dot" style="background:#0284c7;"></span> 24h Rain</span>
                 </div>
               </div>
               <button class="toggle-drawer-btn" id="btn-toggle-drawer" title="Expand/Collapse">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
             </div>
             <div class="drawer-body">
-              <svg class="timeseries-svg" id="timeseries-chart-svg" viewBox="0 0 900 140" preserveAspectRatio="none">
+              <svg class="timeseries-svg" id="timeseries-chart-svg" viewBox="0 0 900 85" preserveAspectRatio="none">
                 <!-- SVG Chart will be rendered dynamically by main.js -->
               </svg>
             </div>
@@ -369,7 +324,6 @@
               <p class="view-header-subtitle">Integrating Farmer Laboratory Records, Water Audit, Climate & Satellite Sensors</p>
             </div>
             <button class="btn-primary" id="btn-open-soil-modal">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
               Update Soil Health Card / Lab Records
             </button>
           </div>
@@ -378,10 +332,7 @@
             <!-- 1. SOIL HEALTH CARD & LABORATORY RECORDS -->
             <div class="card">
               <div class="sidebar-panel-header">
-                <h3 class="card-title">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
-                  Soil Health Card (SHC) Lab Data
-                </h3>
+                <h3 class="card-title">Soil Health Card (SHC) Lab Data</h3>
                 <span class="brand-badge" id="shc-badge-status">Verified Lab Record</span>
               </div>
               <p class="card-subtitle" id="shc-card-meta">ICAR-KVK Hirehalli &bull; Sample Sy. 42/3</p>
@@ -429,10 +380,7 @@
 
             <!-- 2. WATER RESOURCES & IRRIGATION AUDIT -->
             <div class="card">
-              <h3 class="card-title">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
-                Water Resources & Irrigation Audit
-              </h3>
+              <h3 class="card-title">Water Resources &amp; Irrigation Audit</h3>
               <p class="card-subtitle">Source dependability & pumping economic cost</p>
 
               <div style="font-size:0.82rem; line-height:1.7; color:var(--text-muted);" id="water-audit-details">
@@ -450,10 +398,7 @@
 
             <!-- 3. CLIMATE & DROUGHT RISK AUDIT -->
             <div class="card">
-              <h3 class="card-title">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
-                Regional Climate &amp; Drought Vulnerability
-              </h3>
+              <h3 class="card-title">Regional Climate &amp; Drought Vulnerability</h3>
               <p class="card-subtitle" id="climate-region-name">Tumakuru District Baseline &bull; Southern Dry Zone</p>
 
               <div style="font-size:0.82rem; line-height:1.7; color:var(--text-muted);">
@@ -490,7 +435,6 @@
               <p class="view-header-subtitle">Stage A Agronomic Filtering &bull; Stage B Financial Net Returns &bull; Stage C Sensitivity Scenarios</p>
             </div>
             <button class="btn-primary" id="btn-save-top-plan">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
               Create Planting Plan for Top Crop
             </button>
           </div>
@@ -607,7 +551,6 @@
               <p class="view-header-subtitle">Compare Cultivation Budgets, Expected Profits & Risk Across Scenarios</p>
             </div>
             <button class="btn-primary" id="btn-create-new-plan">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Create New Planting Plan
             </button>
           </div>
@@ -927,7 +870,7 @@
             </div>
             <div>
               <label class="form-label">Planned Sowing Window</label>
-              <input type="text" class="form-input" id="plan-input-sow" value="July 10, 2026" required />
+              <input type="date" class="form-input" id="plan-input-sow" value="2026-07-10" required />
             </div>
           </div>
           <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.25rem;">

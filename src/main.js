@@ -515,11 +515,11 @@ function renderTimeSeriesSvg() {
 
   const data = ndviTimeSeriesData;
   const width = 900;
-  const height = 130;
-  const paddingLeft = 45;
-  const paddingRight = 20;
-  const paddingTop = 15;
-  const paddingBottom = 25;
+  const height = 90;
+  const paddingLeft = 44;
+  const paddingRight = 16;
+  const paddingTop = 10;
+  const paddingBottom = 22;
 
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
@@ -529,13 +529,13 @@ function renderTimeSeriesSvg() {
   // Helper coordinate mapper for NDVI (0 to 1)
   const getY = (val) => paddingTop + chartHeight * (1 - Math.max(0, Math.min(1, val)));
 
-  // Generate path data for Mean NDVI (Orange curve)
+  // Generate path data for Mean NDVI (Green curve)
   let meanPath = `M ${paddingLeft} ${getY(data[0].mean)}`;
   for (let i = 1; i < data.length; i++) {
     meanPath += ` L ${paddingLeft + i * stepX} ${getY(data[i].mean)}`;
   }
 
-  // Generate path data for Max NDVI (Green curve)
+  // Generate path data for Max NDVI (Dashed green curve)
   let maxPath = `M ${paddingLeft} ${getY(data[0].max)}`;
   for (let i = 1; i < data.length; i++) {
     maxPath += ` L ${paddingLeft + i * stepX} ${getY(data[i].max)}`;
@@ -546,8 +546,8 @@ function renderTimeSeriesSvg() {
   [0.2, 0.4, 0.6, 0.8, 1.0].forEach(level => {
     const y = getY(level);
     gridSvg += `
-      <line x1="${paddingLeft}" y1="${y}" x2="${width - paddingRight}" y2="${y}" stroke="#e2e8f0" stroke-width="1" />
-      <text x="${paddingLeft - 8}" y="${y + 4}" font-size="10" fill="#94a3b8" text-anchor="end">${level.toFixed(1)}</text>
+      <line x1="${paddingLeft}" y1="${y}" x2="${width - paddingRight}" y2="${y}" stroke="var(--border-subtle)" stroke-width="1" />
+      <text x="${paddingLeft - 7}" y="${y + 3.5}" font-size="10.5" font-weight="600" fill="var(--text-subtle)" text-anchor="end">${level.toFixed(1)}</text>
     `;
   });
 
@@ -555,20 +555,20 @@ function renderTimeSeriesSvg() {
   let rainfallBars = '';
   data.forEach((d, idx) => {
     const x = paddingLeft + idx * stepX;
-    xLabels += `<text x="${x}" y="${height - 5}" font-size="10" fill="#64748b" text-anchor="middle">${d.date}</text>`;
+    xLabels += `<text x="${x}" y="${height - 4}" font-size="10" font-weight="600" fill="var(--text-muted)" text-anchor="middle">${d.date}</text>`;
     
     // Rainfall bar at bottom
-    const barHeight = (d.rainfallMm / 100) * 40;
-    rainfallBars += `<rect x="${x - 5}" y="${height - paddingBottom - barHeight}" width="10" height="${barHeight}" fill="rgba(2, 132, 199, 0.35)" rx="2"/>`;
+    const barHeight = (d.rainfallMm / 100) * 26;
+    rainfallBars += `<rect x="${x - 4.5}" y="${height - paddingBottom - barHeight}" width="9" height="${barHeight}" fill="rgba(2, 132, 199, 0.45)" rx="1.5"/>`;
   });
 
   svg.innerHTML = `
     ${gridSvg}
     ${rainfallBars}
-    <path d="${maxPath}" fill="none" stroke="#22c55e" stroke-width="2" stroke-dasharray="3, 3" />
-    <path d="${meanPath}" fill="none" stroke="#166534" stroke-width="2.5" />
+    <path d="${maxPath}" fill="none" stroke="var(--green-500)" stroke-width="1.8" stroke-dasharray="4, 3" />
+    <path d="${meanPath}" fill="none" stroke="var(--green-800)" stroke-width="2.6" />
     ${data.map((d, i) => `
-      <circle cx="${paddingLeft + i * stepX}" cy="${getY(d.mean)}" r="3.5" fill="#166534" stroke="#ffffff" stroke-width="1.5"/>
+      <circle cx="${paddingLeft + i * stepX}" cy="${getY(d.mean)}" r="3" fill="var(--green-800)" stroke="var(--bg-surface)" stroke-width="1.5"/>
     `).join('')}
     ${xLabels}
   `;
@@ -1032,6 +1032,9 @@ function initEventListeners() {
           ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>`
           : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
       }
+      setTimeout(() => {
+        if (state.map) state.map.invalidateSize();
+      }, 200);
     }
   };
 
@@ -1149,6 +1152,11 @@ function initEventListeners() {
     dl.click();
     dl.remove();
     showToast(`Exported ${plot.name} GeoJSON`);
+  });
+
+  // Export KML / CAML File
+  document.getElementById('btn-export-kml')?.addEventListener('click', () => {
+    exportPlotAsKML(getActivePlot());
   });
 
   // Form Submissions
@@ -1314,7 +1322,17 @@ function setupForms() {
     const plotId = document.getElementById('plan-input-plot').value;
     const cropId = document.getElementById('plan-input-crop').value;
     const acres = parseFloat(document.getElementById('plan-input-acre').value) || 1.0;
-    const sowing = document.getElementById('plan-input-sow').value;
+    const rawSowingDate = document.getElementById('plan-input-sow').value;
+    let sowingFormatted = rawSowingDate;
+    if (rawSowingDate) {
+      try {
+        const [y, m, d] = rawSowingDate.split('-');
+        const dateObj = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+        sowingFormatted = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      } catch (err) {
+        sowingFormatted = rawSowingDate;
+      }
+    }
 
     const plot = state.plots.find(p => p.id === plotId) || getActivePlot();
     const crop = karnatakaCrops.find(c => c.id === cropId) || karnatakaCrops[0];
@@ -1332,7 +1350,7 @@ function setupForms() {
       cropName: `${crop.name} (${crop.popularVarieties[0]})`,
       kannadaName: crop.kannadaName,
       cultivatedAcre: acres,
-      sowingWindow: sowing,
+      sowingWindow: sowingFormatted,
       harvestWindow: crop.harvestWindow,
       budgetCostTotal: financials.totalPlotCost,
       expectedGrossRevenue: financials.expected.totalPlotGrossRevenue,
@@ -1378,6 +1396,11 @@ function openPlanModalWithCrop(cropId = null) {
     acreInput.value = getActivePlot().areaAcre;
   }
 
+  const sowInput = document.getElementById('plan-input-sow');
+  if (sowInput && !sowInput.value) {
+    sowInput.value = new Date().toISOString().split('T')[0];
+  }
+
   openModal('modal-create-plan');
 }
 
@@ -1402,6 +1425,69 @@ function showToast(message) {
   setTimeout(() => {
     toast.classList.remove('visible');
   }, 3200);
+}
+
+/**
+ * Export land parcel boundary as standard KML / CAML file
+ */
+function exportPlotAsKML(plot) {
+  if (!plot || !plot.boundary || !plot.boundary.coordinates) {
+    showToast('No boundary coordinates found for the selected plot.');
+    return;
+  }
+
+  // GeoJSON coordinates are [longitude, latitude]
+  const coordsRing = plot.boundary.coordinates[0];
+  const kmlCoordinates = coordsRing.map(pt => `${pt[0]},${pt[1]},0`).join(' ');
+
+  const kmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>${plot.name || 'Bhumi Agricultural Plot'}</name>
+    <description>Bhumi Farm Intelligence - Land Parcel: ${plot.name || ''}, Area: ${plot.areaAcre || 0} Acres (${plot.areaGuntas || 0} Guntas), District: ${plot.district || ''}, Taluk: ${plot.taluk || ''}</description>
+    <Style id="plotPolyStyle">
+      <LineStyle>
+        <color>ff166534</color>
+        <width>2.5</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>7f166534</color>
+      </PolyStyle>
+    </Style>
+    <Placemark>
+      <name>${plot.name || 'Plot Boundary'}</name>
+      <styleUrl>#plotPolyStyle</styleUrl>
+      <ExtendedData>
+        <Data name="id"><value>${plot.id || ''}</value></Data>
+        <Data name="district"><value>${plot.district || ''}</value></Data>
+        <Data name="taluk"><value>${plot.taluk || ''}</value></Data>
+        <Data name="areaAcre"><value>${plot.areaAcre || ''}</value></Data>
+        <Data name="areaGuntas"><value>${plot.areaGuntas || ''}</value></Data>
+        <Data name="irrigation"><value>${plot.irrigationType || ''}</value></Data>
+      </ExtendedData>
+      <Polygon>
+        <extrude>1</extrude>
+        <altitudeMode>clampToGround</altitudeMode>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>${kmlCoordinates}</coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+  </Document>
+</kml>`;
+
+  const blob = new Blob([kmlContent], { type: 'application/vnd.google-earth.kml+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const dl = document.createElement('a');
+  dl.href = url;
+  dl.download = `${plot.id || 'plot'}_boundary.kml`;
+  document.body.appendChild(dl);
+  dl.click();
+  dl.remove();
+  URL.revokeObjectURL(url);
+  showToast(`Exported ${plot.name} KML / CAML file (saved to downloads/home).`);
 }
 
 // Global hook for in-page navigation links
