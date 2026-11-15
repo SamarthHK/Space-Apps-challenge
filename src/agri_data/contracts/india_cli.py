@@ -9,7 +9,7 @@ import yaml
 
 COMMANDS = {"acquire-crop-profiles", "build-crop-profiles", "acquire-india-outcomes", "build-india-outcomes",
             "acquire-gaez-reference", "build-gaez-reference", "build-india-registry",
-            "acquire-india-environment", "build-india-environment"}
+            "acquire-india-environment", "build-india-environment", "build-india-dataset"}
 
 
 def register_commands(commands):
@@ -51,6 +51,10 @@ def register_commands(commands):
     build_environment.add_argument("--corpus", type=Path, required=True)
     build_environment.add_argument("--config", type=Path, required=True)
     build_environment.add_argument("--output", type=Path, required=True)
+    dataset = commands.add_parser("build-india-dataset", help="Freeze source-linked reference features and crop-covered spatial splits")
+    dataset.add_argument("--contract", type=Path, default=Path("config") / "india_model.yaml")
+    for argument in ("gaez", "nasa", "registry", "profiles", "config", "output"):
+        dataset.add_argument("--" + argument, type=Path, required=True)
 
 
 def database_store(config_path):
@@ -89,6 +93,10 @@ def run(args):
         elif args.command == "build-india-environment":
             from .india_environment import build_india_environment
             result = build_india_environment(args.corpus, args.output, database_store(args.config))
+        elif args.command == "build-india-dataset":
+            from .india_dataset import build_reference_dataset
+            result = build_reference_dataset(args.contract, args.gaez, args.nasa, args.registry,
+                                             args.profiles, args.output, database_store(args.config))
         else:
             raise ValueError("Unsupported India command")
         print(json.dumps(result, indent=2, allow_nan=False))

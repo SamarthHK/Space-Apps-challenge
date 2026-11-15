@@ -113,3 +113,10 @@ nasa_reference:
     RH2M: [HP8100, HP0120]
     WS2M: [HP8100, HP0120]
     ALLSKY_SFC_SW_DWN: [HP0120]
+reference_training:
+  seed: 20261115
+  spatial_block_degrees: 2
+  development_folds: 3
+  minimum_training_groups: 12
+  test_fraction: 0.20
+  calibration_fraction: 0.15
