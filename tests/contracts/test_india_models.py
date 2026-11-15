@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from agri_data.contracts.india_dataset import load_reference_frames
-from agri_data.contracts.india_models import fit_admitted, predict_estimator, reference_metrics, save_estimator
+from agri_data.contracts.india_models import _neural_arrays, fit_admitted, predict_estimator, reference_metrics, save_estimator
 from agri_data.contracts.model_resources import admit, snapshot
 
 
@@ -35,7 +35,8 @@ def test_real_development_fit_and_separate_process_reload(development, method, t
     model, state = fit_admitted(train, validation, manifest["features"], method, parameters)
     prediction = predict_estimator(model, state, validation)
     assert np.isfinite(prediction).all() and ((prediction >= 0) & (prediction <= 1)).all()
-    assert reference_metrics(validation, prediction)["mae_index_points"] >= 0
+    assert reference_metrics(validation, prediction)["mae_index_points"] == pytest.approx(
+        np.abs(prediction - validation.target.to_numpy()).mean() * 100)
     assert not state["resource_telemetry"]["training"]["reserve_breached"]
     save_estimator(model, state, tmp_path, "candidate")
     sample = validation.iloc[:19]
@@ -54,6 +55,12 @@ print(json.dumps(predict_estimator(model,state,pd.read_parquet(p/'real-examples.
     if method == "mlp":
         assert "nasa_ALLSKY_SFC_SW_DWN" in state["numeric"]
         assert state["missing_representation"].endswith("not_stored_imputation")
+        numeric, _ = _neural_arrays(validation, state)
+        column = state["numeric"].index("nasa_ALLSKY_SFC_SW_DWN")
+        absent = validation["nasa_ALLSKY_SFC_SW_DWN"].isna().to_numpy()
+        assert absent.any()
+        assert (numeric[absent, column] == 0).all()
+        assert (numeric[:, column + len(state["numeric"])] == ~absent).all()
 
 
 def test_measured_machine_capacity_refuses_an_oversized_owned_job():

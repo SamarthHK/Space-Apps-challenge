@@ -9,7 +9,8 @@ import yaml
 
 COMMANDS = {"acquire-crop-profiles", "build-crop-profiles", "acquire-india-outcomes", "build-india-outcomes",
             "acquire-gaez-reference", "build-gaez-reference", "build-india-registry",
-            "acquire-india-environment", "build-india-environment", "build-india-dataset"}
+            "acquire-india-environment", "build-india-environment", "build-india-dataset",
+            "train-india-candidate", "finalize-india-models", "predict-india-reference", "verify-india-models"}
 
 
 def register_commands(commands):
@@ -55,6 +56,22 @@ def register_commands(commands):
     dataset.add_argument("--contract", type=Path, default=Path("config") / "india_model.yaml")
     for argument in ("gaez", "nasa", "registry", "profiles", "config", "output"):
         dataset.add_argument("--" + argument, type=Path, required=True)
+    candidate = commands.add_parser("train-india-candidate", help="Train a predeclared reference candidate on development folds only")
+    candidate.add_argument("--contract", type=Path, default=Path("config") / "india_model.yaml")
+    candidate.add_argument("--dataset", type=Path, required=True)
+    candidate.add_argument("--candidate", required=True)
+    candidate.add_argument("--output", type=Path, required=True)
+    finalize = commands.add_parser("finalize-india-models", help="Freeze development selection, calibrate and evaluate the locked reference test")
+    finalize.add_argument("--contract", type=Path, default=Path("config") / "india_model.yaml")
+    finalize.add_argument("--dataset", type=Path, required=True)
+    finalize.add_argument("--runs", type=Path, nargs="+", required=True)
+    finalize.add_argument("--output", type=Path, required=True)
+    prediction = commands.add_parser("predict-india-reference", help="Score a supported saved reference context with masked relative preferences")
+    prediction.add_argument("--models", type=Path, required=True)
+    prediction.add_argument("--input", type=Path, required=True)
+    verify = commands.add_parser("verify-india-models", help="Independently replay saved calibration and test predictions")
+    verify.add_argument("--models", type=Path, required=True)
+    verify.add_argument("--dataset", type=Path, required=True)
 
 
 def database_store(config_path):
@@ -97,6 +114,18 @@ def run(args):
             from .india_dataset import build_reference_dataset
             result = build_reference_dataset(args.contract, args.gaez, args.nasa, args.registry,
                                              args.profiles, args.output, database_store(args.config))
+        elif args.command == "train-india-candidate":
+            from .india_experiments import train_reference_candidate
+            result = train_reference_candidate(args.dataset, args.contract, args.candidate, args.output)
+        elif args.command == "finalize-india-models":
+            from .india_experiments import finalize_reference_models
+            result = finalize_reference_models(args.dataset, args.contract, args.runs, args.output)
+        elif args.command == "predict-india-reference":
+            from .india_inference import predict_reference
+            result = predict_reference(args.models, json.loads(args.input.read_bytes()))
+        elif args.command == "verify-india-models":
+            from .india_inference import verify_reference_models
+            result = verify_reference_models(args.models, args.dataset)
         else:
             raise ValueError("Unsupported India command")
         print(json.dumps(result, indent=2, allow_nan=False))

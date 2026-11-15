@@ -3,6 +3,8 @@
 import json
 import os
 from pathlib import Path
+import subprocess
+import sys
 
 import pandas as pd
 import pytest
@@ -60,3 +62,18 @@ def test_real_held_out_crop_without_training_targets_is_rejected(dataset):
     spec = manifest["split_specification"]
     with pytest.raises(ValueError, match="no target-bearing training support"):
         validate_splits(incomplete, membership, spec["development_folds"], spec["minimum_training_groups"])
+
+
+def test_full_source_view_and_sql_membership_rebuild_identically(dataset, tmp_path):
+    _, manifest, _ = dataset
+    root = Path(__file__).resolve().parents[2]
+    command = [sys.executable, "-m", "agri_data", "build-india-dataset",
+               "--contract", str(root / "config" / "india_model.yaml"),
+               "--config", str(root / "config" / "acceptance.yaml"), "--output", str(tmp_path / "replay")]
+    for role in ("gaez", "nasa", "registry", "profiles"):
+        command.extend(["--" + role, manifest["inputs"][role]["path"]])
+    process = subprocess.run(command, cwd=root, capture_output=True, text=True)
+    assert process.returncode == 0, process.stdout + process.stderr
+    replay = json.loads(process.stdout)
+    assert replay["dataset_id"] == manifest["dataset_id"]
+    assert replay["files"] == manifest["files"]

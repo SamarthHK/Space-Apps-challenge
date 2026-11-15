@@ -120,3 +120,29 @@ reference_training:
   minimum_training_groups: 12
   test_fraction: 0.20
   calibration_fraction: 0.15
+reference_experiments:
+  candidates:
+    baseline:
+      method: baseline
+      parameters: {}
+    catboost_d6:
+      method: catboost
+      parameters: {iterations: 500, depth: 6, learning_rate: 0.05, l2_leaf_reg: 5, patience: 60}
+    catboost_d8:
+      method: catboost
+      parameters: {iterations: 600, depth: 8, learning_rate: 0.045, l2_leaf_reg: 10, patience: 60}
+    mlp_128:
+      method: mlp
+      parameters: {epochs: 50, hidden: 128, batch_size: 2048, learning_rate: 0.002,
+                   dropout: 0.1, weight_decay: 0.0001, patience: 8}
+    catboost_no_nasa:
+      method: catboost
+      feature_groups: [geography, gaez_climate, soil_terrain, crop_traits, crop_identity, management]
+      parameters: {iterations: 500, depth: 6, learning_rate: 0.05, l2_leaf_reg: 5, patience: 60}
+    catboost_no_traits:
+      method: catboost
+      feature_groups: [geography, gaez_climate, nasa_climate, soil_terrain, crop_identity, management]
+      parameters: {iterations: 500, depth: 6, learning_rate: 0.05, l2_leaf_reg: 5, patience: 60}
+  calibration:
+    teacher_temperature: 0.1
+    temperatures: [0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.3, 0.5, 1.0]
