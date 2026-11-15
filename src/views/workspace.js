@@ -17,17 +17,37 @@ const display = value => value === null || value === undefined ? 'Unavailable' :
 
 export function startWorkspace(origin) {
   const fieldMap = createFieldMap(byId('api-map'), byId('tile-status'));
-  document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => {
+  function showView(name) {
     document.querySelectorAll('[data-view]').forEach(tab => {
-      tab.classList.toggle('active', tab === button);
-      if (tab === button) tab.setAttribute('aria-current', 'page');
+      const active = tab.dataset.view === name;
+      tab.classList.toggle('active', active);
+      if (active) tab.setAttribute('aria-current', 'page');
       else tab.removeAttribute('aria-current');
     });
     document.querySelectorAll('.view-section').forEach(section => {
-      section.classList.toggle('active', section.id === `view-${button.dataset.view}`);
+      section.classList.toggle('active', section.id === `view-${name}`);
     });
-    if (button.dataset.view === 'myland') fieldMap.show();
-  }));
+    if (name === 'myland') fieldMap.show();
+  }
+  document.querySelectorAll('[data-view], [data-open-view]').forEach(button =>
+    button.addEventListener('click', () => showView(button.dataset.view ?? button.dataset.openView)));
+  byId('map-basemap').addEventListener('change', event => fieldMap.setBasemap(event.target.value));
+  byId('btn-world-view').addEventListener('click', () => fieldMap.world());
+  byId('btn-fit-parcel').addEventListener('click', () => fieldMap.fit());
+  function revealTools() {
+    byId('land-cockpit').classList.remove('tools-hidden');
+    byId('toggle-plot-tools').setAttribute('aria-expanded', 'true');
+  }
+  byId('toggle-plot-tools').addEventListener('click', () => {
+    const hidden = byId('land-cockpit').classList.toggle('tools-hidden');
+    byId('toggle-plot-tools').setAttribute('aria-expanded', String(!hidden));
+  });
+  byId('btn-toggle-drawer').addEventListener('click', () => {
+    const collapsed = byId('cockpit-bottom-drawer').classList.toggle('collapsed');
+    byId('map-history').hidden = collapsed;
+    byId('btn-toggle-drawer').setAttribute('aria-expanded', String(!collapsed));
+    byId('api-map').parentElement.classList.toggle('history-open', !collapsed);
+  });
   let api;
   try {
     api = createClient(origin, { validate: validateResponse });
@@ -52,12 +72,22 @@ export function startWorkspace(origin) {
   let selectedHasBoundaries = false;
   const landActions = createLandActions(byId('land-actions'), api, fieldMap, {
     refresh: refreshFields,
+    revealTools,
     lockSelection(value) {
       fieldEditing = value;
       byId('global-plot-select').disabled = value || !fields.length;
       byId('boundary-select').disabled = value || !fieldId || !selectedHasBoundaries;
+      document.querySelectorAll('.saved-plot-button').forEach(button => { button.disabled = value; });
     },
   });
+  for (const id of ['btn-start-drawing', 'btn-dash-add-plot', 'act-draw-plot']) {
+    byId(id).addEventListener('click', () => { showView('myland'); landActions.startDrawing(); });
+  }
+  for (const id of ['btn-upload-boundary', 'btn-dash-import']) {
+    byId(id).addEventListener('click', () => { showView('myland'); landActions.openImport(); });
+  }
+  byId('btn-export-kml').addEventListener('click', () => landActions.export('kml'));
+  byId('btn-export-current-geojson').addEventListener('click', () => landActions.export('geojson'));
 
   const evidence = createResource(state => {
     byId('next-evidence').hidden = true;
@@ -135,6 +165,13 @@ export function startWorkspace(origin) {
     selectedHasBoundaries = false;
     landActions.setField(null, null);
     byId('field-details').replaceChildren();
+    byId('plot-summary-name').textContent = 'No plot selected';
+    byId('plot-storage-status').textContent = 'No selection';
+    byId('plot-summary-area').textContent = 'Select or draw a boundary';
+    byId('dash-metric-area').textContent = '--';
+    byId('dash-area-hint').textContent = 'Select a recorded boundary';
+    byId('dash-metric-boundaries').textContent = '--';
+    byId('btn-fit-parcel').disabled = true;
     fieldMap.setGeometry(null);
     byId('boundary-select').disabled = true;
     if (state.status === 'loading') byId('field-status').textContent = 'Loading stored field...';
@@ -143,6 +180,16 @@ export function startWorkspace(origin) {
       const record = state.data.data;
       selectedHasBoundaries = !!record.boundary_versions.length;
       landActions.setField(record, state.data.etag);
+      byId('plot-summary-name').textContent = record.name ?? record.field_id;
+      byId('plot-storage-status').textContent = record.geometry ? 'Backend saved' : 'Choose version';
+      const area = record.area_ha === null ? 'Choose a boundary version'
+        : `${record.area_ha.toLocaleString(undefined, { maximumFractionDigits: 3 })} ha`;
+      byId('plot-summary-area').textContent = area;
+      byId('dash-metric-area').textContent = record.area_ha === null ? '--' : area;
+      byId('dash-area-hint').textContent = record.area_m2 === null ? 'Select a recorded boundary'
+        : `${record.area_m2.toLocaleString(undefined, { maximumFractionDigits: 2 })} m2 - backend measurement`;
+      byId('dash-metric-boundaries').textContent = record.boundary_versions.length;
+      byId('btn-fit-parcel').disabled = !record.geometry;
       const select = byId('boundary-select');
       select.replaceChildren(new Option('Select a recorded boundary version', ''));
       record.boundary_versions.forEach(version => select.add(new Option(version.boundary_id, version.boundary_id)));
@@ -189,6 +236,26 @@ export function startWorkspace(origin) {
         ? `${fields.length} fields loaded${fieldsCursor ? ' (more available)' : ''}. Area totals unavailable without explicit boundary selection.`
         : 'No fields in the configured shared projects.';
       byId('more-fields').hidden = !fieldsCursor;
+      byId('dash-metric-plots').textContent = `${fields.length}${fieldsCursor ? '+' : ''}`;
+      byId('dash-plots-hint').textContent = fieldsCursor ? 'More plots available' : 'Saved in your workspace';
+      byId('dashboard-plots').replaceChildren();
+      fields.forEach(record => {
+        const button = node('button');
+        button.className = 'saved-plot-button';
+        button.disabled = fieldEditing;
+        const label = node('span');
+        label.append(node('strong', record.name ?? record.field_id),
+          node('small', `${record.boundary_versions.length} boundary versions - ${record.geometry_status === 'available'
+            ? 'stored geometry' : 'select a recorded version'}`));
+        button.append(label, node('span', 'View map'));
+        button.addEventListener('click', () => {
+          if (fieldEditing) return;
+          byId('global-plot-select').value = record.field_id;
+          selectField(record.field_id);
+          showView('myland');
+        });
+        byId('dashboard-plots').append(button);
+      });
       if (!fieldId && fields.length) {
         select.value = fields[0].field_id;
         selectField(select.value);
@@ -226,10 +293,13 @@ export function startWorkspace(origin) {
   }
   const workspace = createResource(state => {
     byId('capabilities').replaceChildren();
+    byId('connection-status').parentElement.dataset.state = state.status;
     if (state.status === 'loading') byId('connection-status').textContent = 'Connecting to backend...';
     else if (state.status === 'error') byId('connection-status').textContent = message(state.error);
     else if (state.status === 'ready') {
       byId('connection-status').textContent = 'Connected - account-free shared workspace. Source evidence remains read-only.';
+      byId('workspace-access-label').textContent = 'Shared workspace';
+      byId('workspace-notice').textContent = 'Everyone permitted to reach this shared workspace can access its profile and plots.';
       state.data.data.capabilities.forEach(capability => byId('capabilities').append(
         node('li', `${capability.capability_id}: ${capability.state}${capability.reason ? ` - ${capability.reason}` : ''}`)));
     }
@@ -249,12 +319,17 @@ export function startWorkspace(origin) {
     byId('global-plot-select').replaceChildren(new Option('No field loaded', ''));
     byId('global-plot-select').disabled = true;
     byId('fields-status').textContent = 'Not loaded';
+    byId('dash-metric-plots').textContent = '--';
+    byId('dash-plots-hint').textContent = 'Waiting for backend';
+    byId('dash-metric-source').textContent = 'Not loaded';
+    byId('dashboard-plots').replaceChildren();
     await workspace.load('workspace', signal => api.get('/workspace', { signal, schema: 'WorkspaceResponse' }));
     if (generation !== bootGeneration || workspace.state.status !== 'ready') return;
     const capabilities = workspace.state.data.data.capabilities;
     profile.setAvailable(capabilities.some(item => item.capability_id === 'profile' && item.state === 'ready'));
     landActions.setCapabilities(capabilities, workspace.state.data.data.project_ids);
     canReadObservations = capabilities.some(item => item.capability_id === 'observations' && item.state === 'ready');
+    byId('dash-metric-source').textContent = canReadObservations ? 'Connected' : 'Unavailable';
     if (capabilities.some(item => item.capability_id === 'fields' && item.state === 'ready')) await loadFields();
     else byId('fields-status').textContent = 'Field access is blocked. Configure the backend project scope and prepared database.';
   }

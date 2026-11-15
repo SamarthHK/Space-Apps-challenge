@@ -30,6 +30,12 @@ Legacy per-user authentication tasks in the original plan are superseded.
 | Field writes | Backend `2163808`: scoped create/update/archive, source bytes, explicit current boundary and immutable history | Actual PostGIS lifecycle, idempotency, concurrency and rollback cases |
 | Durable workflows | Backend `a804cd2`: raw upload preview, explicit confirmation, leased worker and GeoJSON/KML/KMZ exports | Process recovery, atomic batch rollback/retry, version conflicts, scoped downloads and geometry roundtrips |
 | Connected field workflows | This increment: map drawing, complex GeoJSON editing, imports, job resume and Blob downloads | 16 frontend unit tests, production build and 14 real-browser cases using isolated authentic records and explicitly labelled topology probes |
+| Original UI restoration | Restore the `b59a73f` satellite cockpit, typography/cards, map toolbar, Earth view, direct drawing and responsive profile/tools layout | Existing connected journeys plus always-visible satellite imagery, direct drawing/undo and mobile layout |
+
+The owner has now approved private per-person accounts/plot ownership and saving
+drawn KML, with AI explicitly unavailable until its real input pipeline exists.
+Those follow-on changes are in progress; this presentation increment does not
+claim that authentication or arbitrary-field AI is already implemented.
 
 All new code is independent of unrelated uncommitted backend modules. Read
 routes require a prepared canonical DB schema; they do not migrate it or call

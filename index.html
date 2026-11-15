@@ -4,15 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bhumi - Agricultural Intelligence</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231b5939'><path d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1 17.9A8 8 0 0 1 4 12c0-.6.1-1.2.2-1.8L9 15v1c0 1.1.9 2 2 2v1.9zM18.9 17c-.3-.8-1-1.4-1.9-1.4h-1v-3c0-.6-.4-1-1-1H9v-2h2c.6 0 1-.4 1-1v-2h2c1.1 0 2-.9 2-2v-.4A8 8 0 0 1 18.9 17z'/></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet" />
 </head>
 <body>
   <div id="app-container">
     <nav id="left-sidebar-nav" aria-label="Main navigation">
       <div class="sidebar-brand">
-        <div class="sidebar-brand-icon"></div>
+        <div class="sidebar-brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg>
+        </div>
         <div class="sidebar-brand-text">
           <div class="sidebar-brand-name">BHUMI</div>
-          <div class="sidebar-brand-sub">Shared workspace</div>
+          <div class="sidebar-brand-sub" id="workspace-access-label">Land intelligence</div>
         </div>
       </div>
       <div class="sidebar-plot-block">
@@ -30,98 +36,171 @@
         <button class="nav-tab-btn" data-view="plans">Planting Plans</button>
         <button class="nav-tab-btn" data-view="profile">My Profile</button>
       </div>
-      <p class="workspace-notice">Account-free, trusted-network access. Everyone permitted to reach this workspace shares access.</p>
+      <p class="workspace-notice" id="workspace-notice">Connect to the configured backend to load your workspace.</p>
+      <button class="sidebar-farmer-pill" id="header-farmer-pill" data-open-view="profile">
+        <span class="farmer-avatar-dot" aria-hidden="true"></span>
+        <span id="header-farmer-name">Workspace profile</span>
+      </button>
     </nav>
     <main class="main-content">
       <div class="connection-bar">
+        <span class="connection-dot" aria-hidden="true"></span>
         <p id="connection-status" role="status">Connecting to the configured backend...</p>
-        <button id="retry-connection" class="btn-secondary">Reconnect</button>
+        <button id="retry-connection" class="btn-secondary btn-sm">Reconnect</button>
       </div>
       <section id="view-dashboard" class="view-section active">
         <div class="view-wrapper">
-          <h1 class="view-header-title">Farmer Intelligence Dashboard</h1>
-          <p class="view-header-subtitle">Source inspection only. No estimated crop or financial results.</p>
-          <div class="card">
-            <h2 class="card-title">Fields</h2>
-            <p id="fields-status" role="status">Not loaded</p>
-            <button id="more-fields" class="btn-secondary" hidden>Load more fields</button>
+          <div class="view-header">
+            <div>
+              <h1 class="view-header-title">Farmer Intelligence Dashboard</h1>
+              <p class="view-header-subtitle">Your land, original boundaries and source evidence in one place.</p>
+            </div>
+            <div class="header-actions">
+              <button class="btn-secondary" data-open-view="recommendations">AI readiness</button>
+              <button class="btn-primary" id="btn-dash-add-plot" disabled>Register New Plot</button>
+            </div>
           </div>
-          <div class="card">
-            <h2 class="card-title">Backend capabilities</h2>
-            <ul id="capabilities"></ul>
+          <div class="metric-grid">
+            <div class="metric-card"><span class="metric-label">Registered Plots</span><span class="metric-value" id="dash-metric-plots">&mdash;</span><span class="metric-subtext" id="dash-plots-hint">Waiting for backend</span></div>
+            <div class="metric-card"><span class="metric-label">Active Plot Area</span><span class="metric-value" id="dash-metric-area">&mdash;</span><span class="metric-subtext" id="dash-area-hint">Select a recorded boundary</span></div>
+            <div class="metric-card"><span class="metric-label">Boundary Versions</span><span class="metric-value" id="dash-metric-boundaries">&mdash;</span><span class="metric-subtext">Original history retained</span></div>
+            <div class="metric-card"><span class="metric-label">Source Evidence</span><span class="metric-value" id="dash-metric-source">Not loaded</span><span class="metric-subtext">Pending is not verified</span></div>
+            <div class="metric-card"><span class="metric-label">AI Analysis</span><span class="metric-value">Unavailable</span><span class="metric-subtext">Field-to-model pipeline needed</span></div>
           </div>
+          <div class="alert-banner">
+            <div class="alert-content">
+              <div class="alert-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m4 18 3-12 10-2 3 13-9 3z"/><circle cx="7" cy="6" r="2"/><circle cx="17" cy="4" r="2"/></svg></div>
+              <div><div class="alert-title">Start with the land you know</div><div class="alert-desc">Explore the satellite map, place boundary pegs, then review and save your plot. No parcel is generated for you.</div></div>
+            </div>
+            <button class="btn-primary btn-sm" id="act-draw-plot" disabled>Draw a plot</button>
+          </div>
+          <div class="dash-columns">
+            <div class="card">
+              <div class="sidebar-panel-header"><div><h2 class="card-title">Your registered plots</h2><p class="card-subtitle">Saved by the backend, not in this browser</p></div><button class="btn-secondary btn-sm" data-open-view="myland">Open map &rarr;</button></div>
+              <p id="fields-status" role="status">Not loaded</p>
+              <div id="dashboard-plots" class="saved-plot-list"></div>
+              <button id="more-fields" class="btn-secondary" hidden>Load more fields</button>
+            </div>
+            <div class="dashboard-side">
+              <div class="card">
+                <h2 class="card-title">Recommended next actions</h2>
+                <div class="quick-action-list">
+                  <button class="action-card-btn" data-open-view="myland"><span>Explore the Earth and inspect your boundary</span><span>&rarr;</span></button>
+                  <button class="action-card-btn" id="btn-dash-import" disabled><span>Import a KML, KMZ or GeoJSON boundary</span><span>&rarr;</span></button>
+                  <button class="action-card-btn" data-open-view="landanalysis"><span>Inspect original observations and sources</span><span>&rarr;</span></button>
+                </div>
+              </div>
+              <div class="card"><h2 class="card-title">Planting decisions</h2><p class="card-subtitle">Plan persistence and crop recommendations are not connected yet.</p><button class="btn-secondary btn-sm" data-open-view="plans">View planning status &rarr;</button></div>
+            </div>
+          </div>
+          <details class="card capability-card"><summary>Backend connection and capabilities</summary><ul id="capabilities"></ul></details>
         </div>
       </section>
       <section id="view-myland" class="view-section">
-        <div class="view-wrapper">
-          <h1 class="view-header-title">My Land</h1>
-          <p class="view-header-subtitle">Stored geometry, not a generated parcel or analytical satellite overlay.</p>
-          <div class="card">
-            <label for="boundary-select">Recorded boundary version</label>
-            <select id="boundary-select" class="form-select" disabled><option value="">Select a field first</option></select>
-            <p id="field-status" role="status">Select a field.</p>
-            <dl id="field-details"></dl>
+        <div class="cockpit-container" id="land-cockpit">
+          <div class="cockpit-top-bar">
+            <div class="cockpit-heading"><button class="btn-secondary btn-sm" id="toggle-plot-tools" aria-expanded="true" aria-controls="plot-tools">Plot tools</button><h1>My Land</h1><span class="status-badge">Boundary workspace</span></div>
+            <div class="cockpit-tools-group">
+              <button class="btn-primary btn-sm" id="btn-start-drawing" disabled>Draw Plot Boundary</button>
+              <button class="btn-secondary btn-sm" id="btn-upload-boundary" disabled>Import boundary</button>
+              <button class="btn-secondary btn-sm" id="btn-export-kml" disabled>Export KML</button>
+              <button class="btn-secondary btn-sm" id="btn-export-current-geojson" disabled>Export GeoJSON</button>
+            </div>
           </div>
-          <div id="api-map" aria-label="Selected field boundary map"></div>
-          <p id="tile-status" role="status"></p>
-          <div id="land-actions" class="card"></div>
+          <div class="cockpit-map-area">
+            <div id="api-map" aria-label="Earth satellite map and plot boundaries"></div>
+            <div class="map-floating-overlay-top">
+              <label class="sr-only" for="map-basemap">Basemap</label>
+              <select class="hud-select-pill" id="map-basemap"><option value="satellite">Satellite imagery</option><option value="streets">Street map</option></select>
+              <button class="hud-btn-pill" id="btn-world-view">Earth view</button>
+              <button class="hud-btn-pill" id="btn-fit-parcel" disabled>Center Plot</button>
+            </div>
+            <div class="draw-helper-banner" id="draw-helper-banner" hidden>
+              <span>Place corner pegs. Drag a peg to adjust it.</span>
+              <strong id="draw-points-count">0 points</strong>
+              <button class="btn-secondary btn-sm" id="btn-undo-drawing" disabled>Undo point</button>
+              <button class="btn-primary btn-sm" id="btn-finish-drawing" disabled>Finish boundary</button>
+              <button class="btn-secondary btn-sm" id="btn-cancel-drawing">Cancel</button>
+            </div>
+            <div class="map-notices"><p id="map-guidance">Explore the Earth or zoom to your land. Imagery is a basemap, not an AI result.</p><p id="tile-status" role="status"></p></div>
+            <div class="cockpit-bottom-drawer collapsed" id="cockpit-bottom-drawer">
+              <button class="drawer-header" id="btn-toggle-drawer" aria-expanded="false" aria-controls="map-history">
+                <span class="drawer-title-group"><strong>Vegetation &amp; observation history</strong><span class="status-badge">Source not connected</span></span><span aria-hidden="true">&#8963;</span>
+              </button>
+              <div class="drawer-body" id="map-history" hidden><p>NDVI/NDWI time series and dated satellite passes are not available. Stored observations retain their original source and time standard.</p><button class="btn-secondary btn-sm" data-open-view="landanalysis">Inspect source evidence &rarr;</button></div>
+            </div>
+          </div>
+          <aside class="cockpit-sidebar-right" id="plot-tools" aria-label="Plot information and tools">
+            <div class="sidebar-panel-card">
+              <div class="sidebar-panel-header"><h2 class="sidebar-panel-title">Plot information</h2><span class="status-badge" id="plot-storage-status">No selection</span></div>
+              <h3 id="plot-summary-name">No plot selected</h3><p id="plot-summary-area" class="plot-area">Select or draw a boundary</p>
+              <label class="form-label" for="boundary-select">Recorded boundary version</label>
+              <select id="boundary-select" class="form-select" disabled><option value="">Select a field first</option></select>
+              <p id="field-status" role="status">Select a field.</p>
+              <details class="record-details"><summary>Boundary measurements and provenance</summary><dl id="field-details"></dl></details>
+            </div>
+            <div id="land-actions" class="sidebar-panel-card land-tools"></div>
+            <div class="sidebar-panel-card"><div class="sidebar-panel-header"><h2 class="sidebar-panel-title">Satellite passes</h2><span class="status-badge">Unavailable</span></div><p class="panel-note">The satellite basemap is available for drawing. Dated scenes, cloud filtering and vegetation indices require a connected source service.</p></div>
+            <div class="sidebar-panel-card"><div class="sidebar-panel-header"><h2 class="sidebar-panel-title">Weather &amp; agro-met</h2><span class="status-badge">Unavailable</span></div><p class="panel-note">No field forecast is connected. Source observations are available in Land Analysis when the backend has records for this plot.</p></div>
+          </aside>
         </div>
       </section>
       <section id="view-landanalysis" class="view-section">
         <div class="view-wrapper">
-          <h1 class="view-header-title">Land Analysis</h1>
-          <p class="view-header-subtitle">Canonical source records. Pending records are not verified field measurements or recommendations.</p>
+          <div class="view-header"><div><h1 class="view-header-title">Farm Profile &amp; Land Analysis</h1><p class="view-header-subtitle">Original source records, explicit missingness and traceable evidence.</p></div><button class="btn-secondary" disabled title="Laboratory submission API is not implemented">Update Soil Health Card</button></div>
+          <div class="analysis-grid">
+            <div class="card"><div class="sidebar-panel-header"><h2 class="card-title">Soil Health Card</h2><span class="status-badge">Not connected</span></div><p class="card-subtitle">Laboratory records, sample depth, nutrients and units</p><p class="panel-note">No lab submission service is implemented. Satellite imagery cannot supply underground N/P/K measurements.</p></div>
+            <div class="card"><div class="sidebar-panel-header"><h2 class="card-title">Water &amp; irrigation</h2><span class="status-badge">Not connected</span></div><p class="card-subtitle">Declared water sources and measured availability</p><p class="panel-note">A water audit needs real inputs and provenance. No irrigation availability or pumping cost is assumed.</p></div>
+            <div class="card"><div class="sidebar-panel-header"><h2 class="card-title">Climate &amp; coverage</h2><span class="status-badge">Source records</span></div><p class="card-subtitle">Inspect the evidence below</p><p class="panel-note">Pending canonical observations are not verified field measurements, forecasts or recommendations.</p></div>
+          </div>
           <div class="card">
-            <p>Soil/water/derived climate summaries and laboratory submissions are not implemented.</p>
+            <h2 class="card-title">Canonical observations</h2>
             <form id="observation-filters" class="api-filters">
               <label>Variable ID <input id="variable-filter" class="form-input" autocomplete="off" /></label>
-              <label>Validation
-                <select id="validation-filter" class="form-select">
-                  <option value="all">All states</option><option value="pending">Pending</option>
-                  <option value="accepted">Accepted</option><option value="rejected">Rejected</option>
-                </select>
-              </label>
+              <label>Validation<select id="validation-filter" class="form-select"><option value="all">All states</option><option value="pending">Pending</option><option value="accepted">Accepted</option><option value="rejected">Rejected</option></select></label>
               <label>From <input id="start-date" type="date" class="form-input" /></label>
               <label>Through <input id="end-date" type="date" class="form-input" /></label>
               <button class="btn-primary" type="submit">Apply filters</button>
             </form>
             <p id="observations-status" role="status">Select a field.</p>
-            <div class="table-scroll">
-              <table id="observations-table">
-                <thead><tr><th>Variable</th><th>Value</th><th>Unit / basis</th><th>Observation time</th><th>Validation</th><th>Source</th></tr></thead>
-                <tbody id="observations-body"></tbody>
-              </table>
-            </div>
-            <button id="previous-observations" class="btn-secondary" disabled>Previous page</button>
-            <button id="next-observations" class="btn-secondary" disabled>Next page</button>
+            <div class="table-scroll"><table id="observations-table"><thead><tr><th>Variable</th><th>Value</th><th>Unit / basis</th><th>Observation time</th><th>Validation</th><th>Source</th></tr></thead><tbody id="observations-body"></tbody></table></div>
+            <div class="header-actions"><button id="previous-observations" class="btn-secondary" disabled>Previous page</button><button id="next-observations" class="btn-secondary" disabled>Next page</button></div>
           </div>
-          <div class="card">
-            <h2 class="card-title">Observation and source evidence</h2>
-            <p id="evidence-status" role="status">Choose an observation's evidence.</p>
-            <pre id="evidence-details"></pre>
-            <button id="next-evidence" class="btn-secondary" hidden>Next evidence page</button>
+          <div class="card"><h2 class="card-title">Observation and source evidence</h2><p id="evidence-status" role="status">Choose an observation's evidence.</p><pre id="evidence-details"></pre><button id="next-evidence" class="btn-secondary" hidden>Next evidence page</button></div>
+        </div>
+      </section>
+      <section id="view-recommendations" class="view-section">
+        <div class="view-wrapper">
+          <div class="view-header"><div><h1 class="view-header-title">Crop Recommendations</h1><p class="view-header-subtitle">A saved boundary is the first input, not a completed crop analysis.</p></div><span class="status-badge status-pending">AI unavailable</span></div>
+          <div class="analysis-grid">
+            <div class="card"><span class="step-number">01</span><h2 class="card-title">Save your boundary</h2><p class="card-subtitle">Draw or import your plot and confirm its geometry.</p><button class="btn-primary" data-open-view="myland">Open My Land</button></div>
+            <div class="card"><span class="step-number">02</span><h2 class="card-title">Assemble real inputs</h2><p class="card-subtitle">Crop context, management, date-bounded weather and source coverage are still required.</p><span class="status-badge">Pipeline missing</span></div>
+            <div class="card"><span class="step-number">03</span><h2 class="card-title">Run a supported model</h2><p class="card-subtitle">The local research model does not accept arbitrary KML or establish suitability for arbitrary locations.</p><span class="status-badge">Not connected</span></div>
+          </div>
+          <div class="science-disclaimer-card"><h2 class="disclaimer-title">KML saved does not mean AI completed</h2><p class="disclaimer-text">No recommendation service is connected. Suitability rankings, yields, financial forecasts and sensitivity scenarios remain unavailable. No browser rules or fallback values are used.</p></div>
+        </div>
+      </section>
+      <section id="view-market" class="view-section">
+        <div class="view-wrapper">
+          <div class="view-header"><div><h1 class="view-header-title">Agricultural Market Intelligence</h1><p class="view-header-subtitle">Market sources, price dates and units must be verified before comparison.</p></div><span class="status-badge">Feeds not connected</span></div>
+          <div class="market-mandi-selector-bar"><button class="mandi-pill-btn" disabled>Market locations</button><button class="mandi-pill-btn" disabled>Commodity prices</button><button class="mandi-pill-btn" disabled>Arrivals &amp; trends</button></div>
+          <div class="card empty-state"><div class="empty-state-symbol" aria-hidden="true">&#8599;</div><h2 class="card-title">No live market feed</h2><p>Prices, arrivals, MSP and farm-gate estimates are unavailable. The original demo prices and economic assumptions are not used.</p></div>
+        </div>
+      </section>
+      <section id="view-plans" class="view-section">
+        <div class="view-wrapper">
+          <div class="view-header"><div><h1 class="view-header-title">Saved Planting Plans &amp; Farm Decisions</h1><p class="view-header-subtitle">Keep boundaries now; plan persistence is a separate upcoming capability.</p></div><button class="btn-primary" disabled title="Planting-plan API is not implemented">Create planting plan</button></div>
+          <div class="card empty-state"><div class="empty-state-symbol" aria-hidden="true">&#9783;</div><h2 class="card-title">Planting plans are not connected yet</h2><p>Private plans, crop/season choices and versioned decisions still need a backend contract. No browser demo plans, budgets or profits are loaded.</p><button class="btn-secondary" data-open-view="myland">Manage your plots &rarr;</button></div>
+        </div>
+      </section>
+      <section id="view-profile" class="view-section">
+        <div class="view-wrapper">
+          <div class="view-header"><div><h1 class="view-header-title">Farmer Profile &amp; Landholding</h1><p class="view-header-subtitle">Your declared details and preferences, persisted by the backend.</p></div></div>
+          <div id="shared-profile" class="profile-container-card">
+            <p id="profile-privacy-notice" class="profile-privacy-notice">This profile is shared in the current workspace mode. Only enter information intended to be shared; no private donor records are imported.</p>
           </div>
         </div>
       </section>
-      <section id="view-recommendations" class="view-section"><div class="view-wrapper">
-        <h1 class="view-header-title">Crop Recommendations</h1>
-        <div class="card"><p>No recommendation service is implemented. Crop suitability, scenarios and financial forecasts are unavailable; no browser rules or fallback values are used.</p></div>
-      </div></section>
-      <section id="view-market" class="view-section"><div class="view-wrapper">
-        <h1 class="view-header-title">Market Intelligence</h1>
-        <div class="card"><p>Market feeds and economic methods are deferred. Prices, arrivals, MSP and farm-gate estimates are unavailable.</p></div>
-      </div></section>
-      <section id="view-plans" class="view-section"><div class="view-wrapper">
-        <h1 class="view-header-title">Planting Plans</h1>
-        <div class="card"><p>Planting-plan persistence is not implemented. Browser demo plans are not loaded or uploaded.</p></div>
-      </div></section>
-      <section id="view-profile" class="view-section"><div class="view-wrapper">
-        <h1 class="view-header-title">My Profile</h1>
-        <div id="shared-profile" class="card">
-          <p>This profile is shared, not private. Everyone with workspace access can read and edit it.
-            Only enter information intended to be shared. No identity is seeded or imported from private accounts.</p>
-        </div>
-      </div></section>
     </main>
   </div>
   <noscript>JavaScript is required to load backend records. No agricultural data is available in this static page.</noscript>

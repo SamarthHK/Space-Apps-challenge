@@ -23,7 +23,7 @@ const control = (title, tag, id, parent) => {
 const describe = error => `${error.message}${error.requestId ? ` (Request ${error.requestId})` : ''}`;
 const newKey = submissionKey;
 
-export function createLandActions(container, api, map, { refresh, lockSelection }) {
+export function createLandActions(container, api, map, { refresh, lockSelection, revealTools = () => {} }) {
   const status = node('p', 'Connect to the backend before editing fields.', 'field-write-status');
   status.setAttribute('role', 'status');
   const create = button('New field', 'new-field');
@@ -36,7 +36,7 @@ export function createLandActions(container, api, map, { refresh, lockSelection 
   name.maxLength = 200;
   const project = control('Project', 'select', 'field-project', draftControls);
   const geometry = control('GeoJSON geometry (longitude, latitude)', 'textarea', 'field-geometry', draftControls);
-  geometry.rows = 7;
+  geometry.rows = 4;
   const draw = button('Draw replacement polygon', 'draw-field');
   const finish = button('Finish drawing', 'finish-drawing');
   const centerControls = node('div');
@@ -90,10 +90,21 @@ export function createLandActions(container, api, map, { refresh, lockSelection 
   const resumeId = control('Job ID (saved in the page URL for reload)', 'input', 'resume-job-id', resumeControls);
   const resume = button('Resume job monitoring', 'resume-job');
   resumeControls.append(resume);
-  container.append(node('h2', 'Field editing'), status, create, edit, archive, draftForm,
-    node('h2', 'Boundary imports'), node('p', 'Preview does not create fields. Review geometry, provenance and rejected features '
-      + 'before confirming. Reuse a namespace only for the same source identifiers.'),
-    uploadForm, previewPanel, confirm, node('h2', 'Boundary exports'), exportControls, jobStatus, resumeControls);
+  const actions = node('div');
+  actions.className = 'field-action-row';
+  actions.append(create, edit, archive);
+  function section(title, id, ...children) {
+    const element = node('details', undefined, id);
+    element.className = 'tool-section';
+    element.append(node('summary', title), ...children);
+    return element;
+  }
+  const importSection = section('Import a boundary', 'import-tools',
+    node('p', 'Upload original geometry, review its unsaved preview and confirm before creating fields.'),
+    uploadForm, previewPanel, confirm);
+  const exportSection = section('Download a boundary', 'export-tools', exportControls);
+  const jobSection = section('Resume a saved job', 'job-tools', resumeControls);
+  container.append(node('h2', 'Plot tools'), status, actions, draftForm, importSection, exportSection, jobStatus, jobSection);
 
   let capabilities = new Set();
   let projects = [];
@@ -102,6 +113,7 @@ export function createLandActions(container, api, map, { refresh, lockSelection 
   let draft = null;
   let writing = false;
   let drawing = false;
+  let pointCount = 0;
   let jobBusy = false;
   let jobGeneration = 0;
   let jobController;
@@ -132,6 +144,20 @@ export function createLandActions(container, api, map, { refresh, lockSelection 
     format.disabled = jobBusy || !!exportSubmission;
     download.disabled = jobBusy || !downloadId;
     resume.disabled = !capabilities.has('jobs') || jobBusy;
+    for (const id of ['btn-start-drawing', 'btn-dash-add-plot', 'act-draw-plot']) {
+      document.getElementById(id).disabled = create.disabled;
+    }
+    for (const id of ['btn-upload-boundary', 'btn-dash-import']) {
+      document.getElementById(id).disabled = upload.disabled;
+    }
+    for (const id of ['btn-export-kml', 'btn-export-current-geojson']) {
+      document.getElementById(id).disabled = exportButton.disabled;
+    }
+    document.getElementById('draw-helper-banner').hidden = !drawing;
+    document.getElementById('draw-points-count').textContent = `${pointCount} points`;
+    document.getElementById('btn-finish-drawing').disabled = finish.disabled || pointCount < 3;
+    document.getElementById('btn-undo-drawing').disabled = !drawing || !pointCount || writing;
+    document.getElementById('btn-cancel-drawing').disabled = writing;
     lockSelection(!!draft || writing);
   }
   function closeDraft() {
@@ -142,6 +168,7 @@ export function createLandActions(container, api, map, { refresh, lockSelection 
     render();
   }
   function openDraft(record, etag) {
+    revealTools();
     draft = { id: record?.field_id ?? null, etag, original: record, key: newKey() };
     name.value = record?.name ?? '';
     project.value = record?.project_id ?? projects[0] ?? '';
@@ -164,8 +191,13 @@ export function createLandActions(container, api, map, { refresh, lockSelection 
   });
   draw.addEventListener('click', () => {
     drawing = true;
+    pointCount = 0;
     geometry.value = '';
-    map.startDrawing(value => { geometry.value = value ? JSON.stringify(value, null, 2) : ''; });
+    map.startDrawing((value, count) => {
+      geometry.value = value ? JSON.stringify(value, null, 2) : '';
+      pointCount = count;
+      render();
+    });
     status.textContent = 'Drawing a replacement polygon. Click at least three map points, then finish.';
     render();
   });
@@ -174,7 +206,11 @@ export function createLandActions(container, api, map, { refresh, lockSelection 
     drawing = false;
     status.textContent = 'Geometry draft ready for review. It has not been saved.';
     render();
+    name.focus();
   });
+  document.getElementById('btn-finish-drawing').addEventListener('click', () => finish.click());
+  document.getElementById('btn-cancel-drawing').addEventListener('click', () => cancel.click());
+  document.getElementById('btn-undo-drawing').addEventListener('click', () => map.undoDrawing());
   center.addEventListener('click', () => {
     const x = Number(longitude.value), y = Number(latitude.value);
     if (!longitude.value || !latitude.value || !Number.isFinite(x) || !Number.isFinite(y) ||
@@ -241,6 +277,7 @@ export function createLandActions(container, api, map, { refresh, lockSelection 
   });
 
   function showPreview(info) {
+    importSection.open = true;
     currentPreview = info;
     confirmSubmission = null;
     previewPanel.replaceChildren(node('p',
@@ -306,6 +343,7 @@ export function createLandActions(container, api, map, { refresh, lockSelection 
           map.clearPreview();
           await refresh(finished.result.fields[0]?.field_id);
         } else {
+          exportSection.open = true;
           downloadId = finished.resource_id;
           download.hidden = false;
         }
@@ -408,9 +446,27 @@ export function createLandActions(container, api, map, { refresh, lockSelection 
   resume.addEventListener('click', resumeJob);
   render();
   return {
+    startDrawing() {
+      if (create.disabled) return;
+      openDraft(null, null);
+      draw.click();
+    },
+    openImport() {
+      revealTools();
+      importSection.open = true;
+      importSection.scrollIntoView({ block: 'nearest' });
+    },
+    export(value) {
+      revealTools();
+      exportSection.open = true;
+      if (!exportSubmission) { format.value = value; exportButton.click(); }
+    },
     setField(record, etag) { selected = record; selectedEtag = etag; render(); },
     setCapabilities(values, projectIds = []) {
       capabilities = new Set(values.filter(item => item.state === 'ready').map(item => item.capability_id));
+      if (!draft && !writing) status.textContent = capabilities.has('field_writes')
+        ? 'Draw or import a boundary to register a plot. Saved changes are retained by the backend.'
+        : 'Field editing is unavailable until the backend storage is ready.';
       projects = projectIds;
       for (const select of [project, importProject]) {
         const previous = select.value;

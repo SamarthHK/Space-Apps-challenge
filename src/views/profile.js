@@ -14,7 +14,7 @@ export function createProfile(container, api) {
   errors.setAttribute('role', 'alert');
   const form = node('form');
   const controls = node('fieldset');
-  controls.className = 'api-filters';
+  controls.className = 'profile-form-grid';
   for (const [key, title, options, limit = 200] of profileFields) {
     const label = node('label', title);
     const input = node(options ? 'select' : 'input');

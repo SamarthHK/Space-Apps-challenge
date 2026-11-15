@@ -39,12 +39,18 @@ Dashboard capability/field status, My Land stored boundary selection/map and
 Land Analysis canonical observation/evidence inspection use the API.
 Pending records retain source/units/time standards and are not called verified.
 Missing/ambiguous geometry stays unavailable until a recorded version is selected.
-Map tiles come from OpenStreetMap; tile failure is distinct from API failure.
+The original satellite cockpit from `b59a73f` is restored: Esri World Imagery,
+an optional OpenStreetMap basemap, Earth/center controls and a full-height map
+that stays available before a boundary is selected. Tile loading/failure is
+distinct from API failure. Neither basemap is presented as NDVI or AI analysis.
 
 The shared profile is explicitly visible to all workspace visitors. Conditional
 saves preserve drafts on conflicts or failed requests. My Land supports field
 create/edit/archive, map drawing, KML/KMZ/GeoJSON upload, nonmutating preview,
 explicit confirmation, durable job monitoring and real geometry downloads.
+Dashboard and map-toolbar shortcuts open drawing directly, with draggable
+corner pegs, point counts and undo/finish/cancel controls. The original dashboard
+cards, typography, profile grid and responsive cockpit surround actual API data.
 Complex geometry can be edited as GeoJSON without dropping holes or polygon
 parts. Drawing a replacement polygon is explicit; no fallback parcel is generated.
 These actions never mark source data scientifically verified.

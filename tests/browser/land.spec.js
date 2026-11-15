@@ -28,16 +28,22 @@ async function archiveOwned(request, identifier) {
 
 test('drawn geometry can be created, renamed and archived without inventing evidence', async ({ page, request }) => {
   await openLand(page);
-  await page.locator('#new-field').click();
+  await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
+  await page.locator('#btn-dash-add-plot').click();
+  await expect(page.locator('#view-myland')).toBeVisible();
+  await expect(page.locator('#draw-helper-banner')).toBeVisible();
   await page.locator('#field-name').fill('Browser-drawn boundary ' + randomUUID());
-  await page.locator('#draw-field').click();
   const map = page.locator('#api-map');
   await map.scrollIntoViewIfNeeded();
   const box = await map.boundingBox();
   for (const [x, y] of [[0.35, 0.35], [0.65, 0.35], [0.65, 0.65], [0.35, 0.65]]) {
     await map.click({ position: { x: box.width * x, y: box.height * y } });
   }
-  await page.locator('#finish-drawing').click();
+  await expect(page.locator('#draw-points-count')).toHaveText('4 points');
+  await page.locator('#btn-undo-drawing').click();
+  await expect(page.locator('#draw-points-count')).toHaveText('3 points');
+  await map.click({ position: { x: box.width * .35, y: box.height * .65 } });
+  await page.locator('#btn-finish-drawing').click();
   const createdResponse = page.waitForResponse(response =>
     response.url() === `${api}/api/v1/fields` && response.request().method() === 'POST');
   await page.locator('#save-field').click();
@@ -72,6 +78,7 @@ test('preview requires confirmation and real KMZ downloads resume across page re
   const content = { type: 'FeatureCollection', features: [{ type: 'Feature', id: 'unchanged-provider-shape',
     geometry: record.geometry, properties: { name: 'Browser import ' + randomUUID(),
       source_note: 'Unchanged real geometry, explicitly copied for integration acceptance' } }] };
+  await page.locator('#btn-upload-boundary').click();
   await page.locator('#boundary-file').setInputFiles({
     name: 'reference.geojson', mimeType: 'application/geo+json', buffer: Buffer.from(JSON.stringify(content)),
   });
@@ -91,6 +98,7 @@ test('preview requires confirmation and real KMZ downloads resume across page re
   const importedId = job.result.fields[0].field_id;
   try {
     await expect(page.locator('#global-plot-select')).toHaveValue(importedId);
+    await page.locator('#export-tools summary').click();
     await page.locator('#export-format').selectOption('kmz');
     await page.locator('#export-boundary').click();
     await expect(page.locator('#download-export')).toBeVisible();
@@ -197,6 +205,7 @@ test('explicit complex geometry retains all parts, holes and altitude through ma
     await expect(page.locator('#api-map .leaflet-overlay-pane path')).toHaveCount(1);
     const stored = (await (await request.get(`${api}/api/v1/fields/${identifier}`)).json()).data;
     expect(stored.geometry.coordinates.map(polygon => polygon.length)).toEqual([2, 1]);
+    await page.locator('#export-tools summary').click();
     await page.locator('#export-format').selectOption('geojson');
     await page.locator('#export-boundary').click();
     await expect(page.locator('#download-export')).toBeVisible();

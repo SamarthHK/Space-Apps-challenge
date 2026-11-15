@@ -19,7 +19,8 @@ test('field geometry and canonical values reconcile with actual API records', as
   await expect(page.locator('#boundary-select')).toBeEnabled();
   if (field.boundary_versions.length > 1) {
     await expect(page.locator('#field-status')).toContainText('Select one explicitly');
-    await expect(page.locator('#api-map')).toBeHidden();
+    await expect(page.locator('#api-map')).toBeVisible();
+    await expect(page.locator('#api-map .leaflet-overlay-pane path')).toHaveCount(0);
   }
   await page.locator('#boundary-select').selectOption(field.boundary_versions[0].boundary_id);
   await expect(page.locator('#field-status')).toHaveText('Stored boundary loaded.');
@@ -85,10 +86,42 @@ test('network failure is explicit and reconnect restores real data', async ({ pa
   await expect(page.locator('#connection-status')).toContainText('unreachable');
   await expect(page.locator('#global-plot-select')).toBeDisabled();
   await expect(page.locator('#observations-body tr')).toHaveCount(0);
+  await page.getByRole('button', { name: 'My Land', exact: true }).click();
+  await expect(page.locator('#api-map')).toBeVisible();
+  await expect(page.locator('#btn-start-drawing')).toBeDisabled();
   await page.unroute(`${apiOrigin}/api/v1/**`);
   await page.getByRole('button', { name: 'Reconnect', exact: true }).click();
   await expect(page.locator('#connection-status')).toContainText('Connected');
   await expect(page.locator('#global-plot-select')).toBeEnabled();
+});
+
+test('restored satellite cockpit stays usable without a selected plot', async ({ page }, testInfo) => {
+  await page.goto('/');
+  await expect(page.locator('#connection-status')).toContainText('Connected');
+  await expect(page.locator('#dashboard-plots .saved-plot-button').first()).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('restored-dashboard.png'), fullPage: true });
+  await page.getByRole('button', { name: 'My Land', exact: true }).click();
+  await page.locator('#global-plot-select').selectOption('');
+  await expect(page.locator('#api-map')).toBeVisible();
+  await expect(page.locator('#api-map .leaflet-overlay-pane path')).toHaveCount(0);
+  await expect(page.locator('#btn-fit-parcel')).toBeDisabled();
+  await expect(page.locator('#map-basemap')).toHaveValue('satellite');
+  await expect.poll(() => page.locator('#api-map img[src*="World_Imagery"]').evaluateAll(images =>
+    images.length > 0 && images.every(image => image.complete && image.naturalWidth > 0)),
+  { timeout: 20000 }).toBe(true);
+  const box = await page.locator('#api-map').boundingBox();
+  expect(box.width).toBeGreaterThan(400);
+  expect(box.height).toBeGreaterThan(400);
+  await page.screenshot({ path: testInfo.outputPath('restored-land.png'), fullPage: true });
+  await page.locator('#map-basemap').selectOption('streets');
+  await expect(page.locator('#api-map img[src*="openstreetmap"]').first()).toBeAttached();
+  await page.locator('#btn-world-view').click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator('#api-map')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await page.locator('#plot-tools').scrollIntoViewIfNeeded();
+  await expect(page.locator('#new-field')).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('restored-land-mobile.png'), fullPage: true });
 });
 
 test('browser origin and request failures cannot become fake scientific data', async ({ page }) => {
