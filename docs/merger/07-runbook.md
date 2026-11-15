@@ -1,5 +1,10 @@
 # 07. Independent startup and integration runbook
 
+**Historical shared-mode runbook.** The current private UI/KML deployment is
+documented in [09-ui-restoration.md](09-ui-restoration.md). Do not use shared mode
+as a fallback for private accounts. The deployment statements below describe
+the earlier shared handoff, not the current hosted state.
+
 This runbook describes the implemented release in
 [08-implementation.md](08-implementation.md), not the authenticated donor pair.
 The existing live services were not restarted or reconfigured. Provisioning

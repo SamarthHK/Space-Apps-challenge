@@ -1,5 +1,9 @@
 # 08. Implemented two-application release
 
+**Historical shared release.** The restored private UI, KML pipeline and current
+1080/8080 hosting are recorded in [09-ui-restoration.md](09-ui-restoration.md).
+The following source pair and deployment statements are retained as history.
+
 The owner authorized Milestones **A and B**, with tested commits before moving
 to subsequent implementation steps. They are implemented locally: an account-free
 shared profile, preserved field/evidence reads, versioned field editing, durable

@@ -93,13 +93,15 @@ account sees none of its private records. Lost acknowledgments must not create
 duplicates. AI stays explicitly unavailable; no nonfunctional analysis job is
 described as successfully queued or completed.
 
-### U4. Publish and host the verified pair
+### U4. Package and host the verified pair
 
 Export/pin the implemented OpenAPI artifact, run focused API/unit/browser
 regressions, and commit the backend and frontend increments. Build into an
 owned deployment directory rather than replacing another server's artifact.
 Start and verify API 8080, frontend 1080 and the account-aware worker before
-retiring only this session's superseded services.
+retiring only this session's superseded services. Use separate private canonical
+and application schemas, not a canonical schema served by another unauthenticated
+instance. Packaging/hosting does not imply pushing commits to GitHub.
 
 ## Missing feature plans after this restoration
 
@@ -111,15 +113,16 @@ retiring only this session's superseded services.
 | P2 | Soil and water submissions | Account-scoped lab reports, units/depth/date/source validation, revisions and observation linkage; no remotely inferred N/P/K |
 | P2 | Satellite scene/index products | Acquire real scene metadata and imagery, cloud masks, explicit boundary/date selection, NDVI/NDWI processing and unavailable coverage; independent geometry/product readback |
 | P2 | Weather and trends | Field-matched observed versus forecast data with units/time standards/freshness; render actual time series without fabricated gaps |
+| P2 | Saved source/job inventory | Add private upload/job history, cross-device discovery, storage quotas and explicit retention/deletion controls; currently saved field originals and known job URLs are retrievable, not a complete file-management UI |
 | P3 | Manual planting plans | Private CRUD, crop/season/boundary snapshots and version conflicts independent of AI output; no invented costs or profits |
 | P3 | Markets and economics | Authorized fresh market feeds, price units/source dates, reviewed economic methods and explicit uncertainty before restoring rankings/sliders |
 | P3 | Account operations | Password recovery/administration and deployment lifecycle policy; cross-host HTTPS/session configuration before public or broader deployment |
 
 ### Why the current model is not a KML analysis service
 
-The concurrently developed backend's `contracts\outcome_model.py:330-362`
-accepts a fully assembled feature record. It checks crop, categorical support
-and numeric training ranges. Its report explicitly sets
+The model inspected during this audit, `contracts\outcome_model.py:330-362`,
+accepted a fully assembled feature record. It checked crop, categorical support
+and numeric training ranges. Its report explicitly set
 `operational_recommendation_ready` to false (`outcome_model.py:297-312`).
 The training context is two English research sites, not arbitrary parcels.
 
@@ -130,5 +133,66 @@ pretend that a boundary upload has produced a crop recommendation.
 
 ## Delivery status
 
-Planning and source comparison are complete. U1-U4 implementation and their
-verification results will be recorded here as each tested increment is committed.
+U1-U4 are implemented and hosted. Each code increment was committed after its
+affected checks passed; no source has been pushed.
+
+| Gate | Committed implementation | Evidence |
+| --- | --- | --- |
+| U1 presentation | Frontend `2f50c0f` | Actual satellite imagery, persistent Earth view, direct drawing/pegs/undo, responsive theme and existing read/write flows; 16 units and 15 browser cases |
+| U2 ownership | Backend `711d1e1`, harness `bd01afe`, frontend `ca647d6` | 84 API cases; 18 frontend units, 15 shared and 3 private browser journeys, including real session revocation and missed account-switch notifications |
+| U3 KML and originals | Backend `e221e98`, frontend `e46343d` | 61 affected API cases plus focused corruption/filename checks; 22 units, build, 16 shared and 4 private browser journeys |
+| U4 separate hosting | Frozen backend `e221e98`, built frontend `e46343d` | The private browser suite also passed against empty fully migrated schemas from the wheel; live HTTP/OpenAPI, private worker heartbeat and desktop/mobile entry verified before retiring the old owned services |
+
+The KML cases capture real uploaded bytes, parse their XML, compare original
+downloads/checksums, explicitly confirm, reload/sign in again and deny a second
+account access to fields, source files, jobs and exports. They also exercise
+same-key/byte recovery after lost acknowledgments, read-only resume after an
+acknowledged job, rejected-draft correction, and multipart/hole/altitude exports.
+Diagnostic browser drawings are explicitly labelled test inputs, not provider
+observations or agronomic evidence.
+
+### Current runtime and provenance
+
+Frontend: `http://<tailscale-ip>:1080`.
+Backend health: `http://<same-tailscale-ip>:8080/api/v1/health`.
+Use the same hostname on both ports and create an account; no default credentials
+or user plots were seeded. The deployment is tailnet-only, not public/Funnel.
+
+The running code pair is backend `e221e9894186949d520b0918d93136f5404df10b`
+and frontend `e46343d7c309bdaa2ff833daacf7f76fc23a7c5b`.
+Contract `private-workspace-2` retains explicit
+`shared-workspace-1` compatibility. The pinned OpenAPI SHA-256 is:
+
+```text
+0786d409b6f108ae39aa36253570e6131c5cb2f112aac1313bf79e61da44eb06
+```
+
+Owned artifacts and backend environment loading are in
+`Space-Apps-challenge\.local\integration-backend\.local\hosted-private-release`.
+The API/worker import the extracted wheel in `backend-e221e98`, not mutable
+worktree source. The independent static artifact is `frontend-e46343d`.
+The ignored `environment.ps1` reads the current PostgreSQL port and existing
+secret storage; credentials are neither embedded in the frontend nor committed.
+`release.json` records local artifact provenance and owned service identities.
+
+Private data uses `agri_spaceapps_private_data` plus
+`agri_spaceapps_private_workspace`. Both were newly provisioned from the packaged
+migrations, without copying shared/donor records. Preserve and back up both
+schemas together. The old shared/reference schemas remain intact. Only the
+superseded owned 1081 frontend, 8001 API and shared worker were stopped, after
+checking for unfinished jobs; the unrelated 8000 listener was left untouched.
+
+For a restart, check port/process ownership first, load the ignored backend
+environment in separate API/worker terminals, and run the frozen package with
+the integration environment's Python interpreter. Serve the existing static
+artifact on 1080 without handing DB credentials to the frontend process.
+Database migrations/restores remain explicit operator actions. Do not switch
+account storage to shared mode to work around a configuration failure.
+
+Validation artifacts remain under the integration backend's
+`.local\workspace-acceptance`: combined run
+`7a63d264a20b4a0cac6de297efe54772` and frozen/empty-schema run
+`77c9fc1ea6b045578507b42b3a0d673f`. Actual satellite/KML preview and saved-plot
+screenshots were inspected, as were the live deployment's desktop/mobile account
+screens. This establishes the delivered engineering workflows, not operational
+AI readiness, complete scientific acceptance or a tested backup/restore policy.
