@@ -57,7 +57,7 @@ random SCRAM credentials and refuses to replace an existing cluster. Start via
 ```powershell
 & .\.local\postgresql\pgsql\bin\pg_ctl.exe -D .\.local\pgdata -l .\.local\postgresql.log -o "-h 127.0.0.1 -p 55432" -w start
 uv run --no-sync python scripts\local_database.py configure
-uv run --no-sync python -m agri_data.services.database
+uv run --no-sync python -m agri_data.api.admin migrate
 uv run --no-sync pytest tests\api -q
 ```
 
@@ -74,4 +74,47 @@ is unavailable. The native server is not installed as a machine-wide service.
 
 ```powershell
 & .\.local\postgresql\pgsql\bin\pg_ctl.exe -D .\.local\pgdata -w stop
+```
+
+## Sessions and profiles
+
+Create an actual local login explicitly; no default accounts or passwords ship:
+
+```powershell
+uv run --no-sync python -m agri_data.api.admin create-user YOUR_LOGIN
+uv run --no-sync python -m agri_data.api.admin revoke-sessions YOUR_LOGIN
+```
+
+Passwords are entered through a hidden prompt and stored using Argon2id. The API
+uses hashed opaque server sessions, not browser localStorage credentials. Sessions
+expire after 12 hours by default; pre-login CSRF contexts after 10 minutes.
+Login and CSRF bootstrap are database-rate-limited; retries receive 429 with
+`Retry-After`. Adjust `AGRI_LOGIN_ATTEMPT_LIMIT` / `AGRI_LOGIN_WINDOW_SECONDS`
+deliberately for deployments with shared client IPs.
+
+Browser flow, always using `credentials: "include"` and the same hostname:
+
+1. `GET /api/v1/auth/csrf` with the allowed browser `Origin`; keep the returned
+   `csrf_token` in memory. The browser receives a HttpOnly context cookie.
+2. `POST /api/v1/auth/session` with JSON `{login, password}` and `X-CSRF-Token`.
+   On success the context is consumed, the session cookie rotates and the response
+   includes user identity, expiry and a new session CSRF token.
+3. `GET /api/v1/auth/session` restores session state after refresh; 401 means login
+   is required. `GET /api/v1/me/profile` returns the authenticated user's empty or
+   saved profile, with no seeded personal data.
+4. `PATCH /api/v1/me/profile` requires `version`, at least one mutable property,
+   allowed Origin and session `X-CSRF-Token`. Omitted fields remain unchanged;
+   explicit null clears a field. Stale writes return 409; revisions persist.
+5. `DELETE /api/v1/auth/session` requires the same Origin/CSRF protection, revokes
+   the session and returns 204. Revocation and account deactivation are checked
+   against PostgreSQL on every request.
+
+Only session/profile plus health/meta routes are operational. Fields, scientific
+data, recommendations, markets, plans and the frontend migration remain pending.
+`docs\openapi.json` is generated from implemented routes, not the entire planned
+surface. Regenerate and compare it when changing a route:
+
+```powershell
+uv run --no-sync python -m agri_data.api.admin openapi docs\openapi.json
+uv run --no-sync pytest tests\api -q
 ```

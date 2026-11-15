@@ -1,8 +1,10 @@
 """Transport schemas; these contain no agricultural defaults."""
 
 from typing import Literal
+from datetime import datetime
+from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
 
 
 class StrictModel(BaseModel):
@@ -55,3 +57,51 @@ class ProfilePatch(StrictModel):
             ):
                 raise ValueError("Enter a valid contact phone number or null")
         return value
+
+
+class Profile(ProfilePatch):
+    id: UUID
+    created_at: datetime
+    updated_at: datetime
+
+
+class LoginRequest(StrictModel):
+    login: str = Field(min_length=3, max_length=100)
+    password: SecretStr = Field(min_length=1, max_length=1024)
+
+
+class SessionUser(StrictModel):
+    id: UUID
+    login: str
+
+
+class Session(StrictModel):
+    user: SessionUser
+    expires_at: datetime
+    csrf_token: str
+
+
+class CsrfContext(StrictModel):
+    csrf_token: str
+
+
+class Health(StrictModel):
+    status: Literal["ok", "ready"]
+
+
+class Capability(StrictModel):
+    resource: str
+    implementation_status: Literal["not_started", "in_progress", "blocked", "failed", "complete"]
+    reason: str | None
+    next_action: str | None
+
+
+class PublicLimits(StrictModel):
+    max_request_bytes: int
+
+
+class Metadata(StrictModel):
+    api_version: str
+    schema_version: str
+    limits: PublicLimits
+    capabilities: list[Capability]

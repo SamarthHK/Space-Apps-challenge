@@ -3,7 +3,7 @@
 import re
 from uuid import uuid4
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -11,8 +11,10 @@ from starlette.exceptions import HTTPException
 import psycopg
 
 from agri_data.services.database import DatabaseUnavailable, verify_schema
+from agri_data.services.errors import ServiceError
 
-from .schemas import ErrorResponse
+from .schemas import ErrorResponse, Health, Metadata
+from .identity import reject_query, router as identity_router
 from .settings import ApiSettings
 
 SCHEMA_VERSION = "1.0.0"
@@ -37,9 +39,13 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
     app = FastAPI(
         title="AgriData API",
         version=SCHEMA_VERSION,
-        responses={422: {"model": ErrorResponse}, 503: {"model": ErrorResponse}},
+        responses={
+            status: {"model": ErrorResponse}
+            for status in (401, 403, 404, 409, 413, 422, 429, 500, 503)
+        },
     )
     app.state.settings = settings
+    app.include_router(identity_router)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.allowed_origins,
@@ -108,11 +114,24 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
             "Resource not found" if exc.status_code == 404 else "Request rejected",
         )
 
-    @app.get("/health")
+    @app.exception_handler(ServiceError)
+    async def service_error(request, exc):
+        response = error_response(request, exc.status, exc.code, exc.message)
+        response.headers.update(exc.headers)
+        return response
+
+    @app.exception_handler(DatabaseUnavailable)
+    @app.exception_handler(psycopg.Error)
+    async def database_error(request, exc):
+        return error_response(
+            request, 503, "database_unavailable", "Database operation is unavailable"
+        )
+
+    @app.get("/health", response_model=Health)
     def health():
         return {"status": "ok"}
 
-    @app.get("/ready")
+    @app.get("/ready", response_model=Health)
     def ready(request: Request):
         try:
             verify_schema(settings)
@@ -123,7 +142,7 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
             )
         return {"status": "ready"}
 
-    @app.get("/api/v1/meta")
+    @app.get("/api/v1/meta", response_model=Metadata, dependencies=[Depends(reject_query)])
     def metadata():
         return {
             "api_version": "v1",
@@ -131,8 +150,10 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
             "limits": {"max_request_bytes": settings.max_request_bytes},
             "capabilities": [
                 {
-                    "resource": resource, "implementation_status": "not_started",
-                    "reason": "This capability is not implemented", "next_action": "Follow the implementation ledger",
+                    "resource": resource,
+                    "implementation_status": "complete" if resource in {"session", "profile"} else "not_started",
+                    "reason": None if resource in {"session", "profile"} else "This capability is not implemented",
+                    "next_action": None if resource in {"session", "profile"} else "Follow the implementation ledger",
                 }
                 for resource in [
                     "session", "profile", "fields", "analysis", "forecast",
