@@ -1,4 +1,4 @@
-"""Read-only foundation; network isolation is not per-user authentication."""
+"""Shared workspace API; network isolation is not per-user authentication."""
 
 import uuid
 from datetime import date
@@ -17,6 +17,9 @@ from .schemas import (
 )
 from .data import DataStore, DataUnavailable, ResourceNotFound
 from .pagination import Pagination, InvalidCursor, ChangedSnapshot
+from .profile import router as profile_router
+from agri_data.workspace.errors import WorkspaceError, WorkspaceUnavailable
+from agri_data.workspace.store import WorkspaceStore
 
 
 def error_response(request, status, code, message, *, details=None, retryable=False):
@@ -26,22 +29,29 @@ def error_response(request, status, code, message, *, details=None, retryable=Fa
     })
 
 
-def create_app(settings=None, data_settings=None):
+def create_app(settings=None, data_settings=None, workspace_settings=None):
+    if data_settings and workspace_settings and (
+        data_settings.database == workspace_settings.database and data_settings.schema == workspace_settings.schema
+    ):
+        raise ValueError("Canonical data and shared application state require separate schemas")
     settings = settings or Settings.from_env()
     app = FastAPI(
         title="AgriData shared workspace API", version="1.0.0",
         docs_url=None, redoc_url=None, openapi_url="/api/v1/openapi.json",
-        responses={code: {"model": ErrorResponse} for code in (400, 403, 404, 405, 409, 422, 500, 503)},
+        responses={code: {"model": ErrorResponse} for code in (400, 403, 404, 405, 409, 412, 413, 422, 428, 500, 503)},
     )
     store = DataStore(data_settings)
+    workspace_store = WorkspaceStore(workspace_settings)
+    app.state.workspace_store = workspace_store
+    app.include_router(profile_router)
     pagination = Pagination()
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.allowed_origins),
         allow_credentials=False,
-        allow_methods=["GET"],
-        allow_headers=["X-Request-ID"],
-        expose_headers=["X-Request-ID"],
+        allow_methods=["GET", "PATCH"],
+        allow_headers=["X-Request-ID", "Content-Type", "If-Match"],
+        expose_headers=["X-Request-ID", "ETag"],
     )
 
     @app.middleware("http")
@@ -54,8 +64,19 @@ def create_app(settings=None, data_settings=None):
                 response = error_response(request, 400, "invalid_host", "Host is not configured for this API")
             elif supplied_origin is not None and supplied_origin not in settings.allowed_origins:
                 response = error_response(request, 403, "origin_not_allowed", "Origin is not allowed")
+            elif request.method in {"POST", "PATCH", "DELETE"} and supplied_origin is None:
+                response = error_response(request, 403, "origin_required", "A configured browser Origin is required")
             else:
-                response = await call_next(request)
+                body = bytearray()
+                async for chunk in request.stream():
+                    body.extend(chunk)
+                    if len(body) > 16 * 1024 * 1024:
+                        break
+                if len(body) > 16 * 1024 * 1024:
+                    response = error_response(request, 413, "request_too_large", "Request exceeds 16 MiB")
+                else:
+                    request._body = bytes(body)
+                    response = await call_next(request)
         except Exception:
             response = error_response(request, 500, "internal_error", "Request could not be completed")
         response.headers["X-Request-ID"] = request.state.request_id
@@ -63,7 +84,7 @@ def create_app(settings=None, data_settings=None):
         response.headers["X-Content-Type-Options"] = "nosniff"
         if request.headers.get("origin") in settings.allowed_origins:
             response.headers["Access-Control-Allow-Origin"] = request.headers["origin"]
-            response.headers["Access-Control-Expose-Headers"] = "X-Request-ID"
+            response.headers["Access-Control-Expose-Headers"] = "X-Request-ID, ETag"
             response.headers.add_vary_header("Origin")
         return response
 
@@ -84,6 +105,14 @@ def create_app(settings=None, data_settings=None):
     @app.exception_handler(DataUnavailable)
     async def data_unavailable(request, error):
         return error_response(request, 503, "data_unavailable", str(error), retryable=True)
+
+    @app.exception_handler(WorkspaceUnavailable)
+    async def workspace_unavailable(request, error):
+        return error_response(request, 503, "workspace_unavailable", str(error), retryable=True)
+
+    @app.exception_handler(WorkspaceError)
+    async def workspace_error(request, error):
+        return error_response(request, error.status, error.code, error.message)
 
     @app.exception_handler(ResourceNotFound)
     async def resource_missing(request, error):
@@ -127,6 +156,9 @@ def create_app(settings=None, data_settings=None):
             if capability.capability_id in ("fields", "observations"):
                 capability.state = "ready" if ready else "blocked"
                 capability.reason = None if ready else "Explicit project data configuration and prepared database required"
+            elif capability.capability_id == "profile":
+                capability.state = "ready" if workspace_store.ready() else "blocked"
+                capability.reason = None if capability.state == "ready" else "Configure and provision shared workspace storage"
         return WorkspaceResponse(
             data=Workspace(project_ids=list(data_settings.project_ids) if data_settings else [], capabilities=capabilities),
             meta=Meta(request_id=request.state.request_id),
