@@ -90,18 +90,23 @@ class DataStore:
         with self.session() as connection:
             rows = connection.execute(
                 "SELECT field_id,project_id,metadata FROM canonical_fields "
-                "WHERE project_id=ANY(%s) ORDER BY field_id", (list(self.settings.project_ids),),
+                "WHERE project_id=ANY(%s) AND metadata->>'archived' IS DISTINCT FROM 'true' ORDER BY field_id",
+                (list(self.settings.project_ids),),
             ).fetchall()
             return [self._field(connection, row, None) for row in rows]
 
     def get_field(self, field_id, boundary_id=None):
+        return self.get_field_versioned(field_id, boundary_id)[0]
+
+    def get_field_versioned(self, field_id, boundary_id=None):
         with self.session() as connection:
             row = self._require_field(connection, field_id)
-            return self._field(connection, row, boundary_id)
+            return self._field(connection, row, boundary_id), row[2].get("workspace_version", 1)
 
     def _require_field(self, connection, field_id):
         row = connection.execute(
-            "SELECT field_id,project_id,metadata FROM canonical_fields WHERE field_id=%s AND project_id=ANY(%s)",
+            "SELECT field_id,project_id,metadata FROM canonical_fields WHERE field_id=%s AND project_id=ANY(%s) "
+            "AND metadata->>'archived' IS DISTINCT FROM 'true'",
             (field_id, list(self.settings.project_ids)),
         ).fetchone()
         if row is None:
@@ -122,12 +127,15 @@ class DataStore:
         chosen = next((item for item in boundaries if item[0] == boundary_id), None)
         if boundary_id and chosen is None:
             raise ResourceNotFound()
-        if not boundary_id and len(boundaries) == 1:
-            chosen = boundaries[0]
+        current = next((item for item in boundaries if item[0] == metadata.get("current_boundary_id")), None)
+        if current is None and len(boundaries) == 1:
+            current = boundaries[0]
+        if not boundary_id:
+            chosen = current
         return {
             "field_id": identifier, "project_id": project_id,
             "name": metadata.get("name") if isinstance(metadata.get("name"), str) else None,
-            "current_boundary_id": boundaries[0][0] if len(boundaries) == 1 else None,
+            "current_boundary_id": current[0] if current else None,
             "selected_boundary_id": chosen[0] if chosen else None,
             "geometry_status": "available" if chosen else "selection_required" if boundaries else "unavailable",
             "boundary_versions": [{"boundary_id": item[0], "source_asset_id": item[2]} for item in boundaries],

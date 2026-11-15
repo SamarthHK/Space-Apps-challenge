@@ -68,3 +68,37 @@ only an isolated application schema, builds to its own artifact directory, and
 terminates only processes it started. It never replaces the normal frontend
 build or stops existing services. Logs/results remain under the ignored
 `.local\workspace-acceptance` directory.
+
+## Versioned field writes
+
+Re-run explicit provisioning after upgrading to apply additional migrations.
+Field writes require the canonical and application schemas on the same
+PostgreSQL endpoint/database, allowing one transaction across them. The workspace
+writer needs canonical project/field reads, field INSERT/UPDATE, and boundary/
+source-asset INSERT; it never writes scientific observations or validation.
+Keep the canonical API connection read-only. Field-write readiness is independent
+of profile readiness and checks these permissions.
+
+`POST /api/v1/fields` accepts `project_id`, nullable `name`, and GeoJSON `geometry`.
+It requires an `Idempotency-Key`; replaying the same input returns the saved
+result, while using that key for different input returns 409. Only configured,
+existing projects are writable. The server assigns field and boundary IDs.
+
+`GET /api/v1/fields/{id}` retains its existing JSON schema and now exposes an ETag
+from the same read snapshot. `PATCH` accepts a name and/or replacement geometry
+with `If-Match`. `DELETE` archives with `If-Match`; it never deletes boundary or
+evidence history. Missing/stale preconditions return 428/412. Archived fields
+are hidden from normal reads, including field-scoped observations.
+
+Writes preserve all previous boundary versions and record an explicit current
+boundary. Legacy ambiguous fields still require explicit selection. Polygons
+and MultiPolygons preserve holes; unclosed, invalid, nonfinite, out-of-range,
+mixed-dimension, polar/unwrapped-antimeridian, or over-10000-position geometries
+are rejected without implicit repair. Measurements are recomputed by PostGIS in
+the selected metric CRS. Original bytes and altitude-bearing geometry remain in
+application storage; analysis uses the 2D footprint.
+
+Small original uploads/GeoJSON are stored transactionally in PostgreSQL rather
+than a browser-visible filesystem. Canonical source assets use opaque
+`workspace-asset://` locators, not download URLs. User-supplied geometry is never
+labelled a surveyed or scientifically verified measurement.

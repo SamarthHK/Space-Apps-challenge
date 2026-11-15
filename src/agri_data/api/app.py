@@ -4,7 +4,7 @@ import uuid
 from datetime import date
 from typing import Literal
 
-from fastapi import FastAPI, Query, Request
+from fastapi import FastAPI, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -18,6 +18,8 @@ from .schemas import (
 from .data import DataStore, DataUnavailable, ResourceNotFound
 from .pagination import Pagination, InvalidCursor, ChangedSnapshot
 from .profile import router as profile_router
+from .field_writes import router as field_router
+from agri_data.workspace.fields import FieldStore, field_etag
 from agri_data.workspace.errors import WorkspaceError, WorkspaceUnavailable
 from agri_data.workspace.store import WorkspaceStore
 
@@ -43,15 +45,18 @@ def create_app(settings=None, data_settings=None, workspace_settings=None):
     store = DataStore(data_settings)
     workspace_store = WorkspaceStore(workspace_settings)
     app.state.workspace_store = workspace_store
+    field_store = FieldStore(workspace_store, data_settings)
+    app.state.field_store = field_store
     app.include_router(profile_router)
+    app.include_router(field_router)
     pagination = Pagination()
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.allowed_origins),
         allow_credentials=False,
-        allow_methods=["GET", "PATCH"],
-        allow_headers=["X-Request-ID", "Content-Type", "If-Match"],
-        expose_headers=["X-Request-ID", "ETag"],
+        allow_methods=["GET", "POST", "PATCH", "DELETE"],
+        allow_headers=["X-Request-ID", "Content-Type", "If-Match", "Idempotency-Key"],
+        expose_headers=["X-Request-ID", "ETag", "Location"],
     )
 
     @app.middleware("http")
@@ -84,7 +89,7 @@ def create_app(settings=None, data_settings=None, workspace_settings=None):
         response.headers["X-Content-Type-Options"] = "nosniff"
         if request.headers.get("origin") in settings.allowed_origins:
             response.headers["Access-Control-Allow-Origin"] = request.headers["origin"]
-            response.headers["Access-Control-Expose-Headers"] = "X-Request-ID, ETag"
+            response.headers["Access-Control-Expose-Headers"] = "X-Request-ID, ETag, Location"
             response.headers.add_vary_header("Origin")
         return response
 
@@ -139,7 +144,7 @@ def create_app(settings=None, data_settings=None, workspace_settings=None):
                 "profile": ["getProfile", "updateProfile"],
                 "fields": ["listFields", "getField"],
                 "observations": ["listObservations", "getObservation", "listObservationEvidence"],
-                "field_writes": ["createField", "updateField"],
+                "field_writes": ["createField", "updateField", "archiveField"],
                 "analysis": ["getAnalysis", "listSoilRecords", "createSoilRecord"],
                 "imports": ["createBoundaryImport", "getBoundaryImport", "confirmBoundaryImport"],
                 "jobs": ["getJob", "createAcquisition"],
@@ -159,6 +164,9 @@ def create_app(settings=None, data_settings=None, workspace_settings=None):
             elif capability.capability_id == "profile":
                 capability.state = "ready" if workspace_store.ready() else "blocked"
                 capability.reason = None if capability.state == "ready" else "Configure and provision shared workspace storage"
+            elif capability.capability_id == "field_writes":
+                capability.state = "ready" if field_store.ready() else "blocked"
+                capability.reason = None if capability.state == "ready" else "Scoped canonical storage and an authorized workspace writer required"
         return WorkspaceResponse(
             data=Workspace(project_ids=list(data_settings.project_ids) if data_settings else [], capabilities=capabilities),
             meta=Meta(request_id=request.state.request_id),
@@ -175,8 +183,10 @@ def create_app(settings=None, data_settings=None, workspace_settings=None):
         return page(request, store.fields(), ["fields"], limit, cursor)
 
     @app.get("/api/v1/fields/{field_id}", operation_id="getField", response_model=FieldResponse)
-    def field_record(request: Request, field_id: str, boundary_id: str | None = None):
-        return {"data": store.get_field(field_id, boundary_id),
+    def field_record(request: Request, response: Response, field_id: str, boundary_id: str | None = None):
+        record, version = store.get_field_versioned(field_id, boundary_id)
+        response.headers["ETag"] = field_etag(field_id, version)
+        return {"data": record,
                 "meta": {"request_id": request.state.request_id, "api_version": "v1"}}
 
     @app.get("/api/v1/fields/{field_id}/observations", operation_id="listObservations",
