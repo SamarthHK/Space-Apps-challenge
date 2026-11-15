@@ -55,11 +55,11 @@ export function createClient(origin, { fetcher = fetch, timeoutMs = 15000, valid
           if (!['application/geo+json', 'application/vnd.google-earth.kml+xml',
             'application/vnd.google-earth.kmz'].includes(mediaType) ||
             !/^attachment; filename="[^"\\/\x00-\x1f]+"$/.test(metadata.disposition ?? '')) {
-            throw new ApiError('invalid_response', 'Export response has invalid download headers.', { requestId });
+            throw new ApiError('invalid_response', 'Download response has invalid attachment headers.', { requestId });
           }
           const blob = await response.blob();
           if (!blob.size || blob.size > 32 * 1024 * 1024) {
-            throw new ApiError('invalid_response', 'Export response has an invalid size.', { requestId });
+            throw new ApiError('invalid_response', 'Download response has an invalid size.', { requestId });
           }
           return { body: blob, ...metadata };
         }

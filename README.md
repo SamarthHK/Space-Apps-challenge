@@ -55,6 +55,14 @@ warning and uses no authentication cookies. Conditional
 saves preserve drafts on conflicts or failed requests. My Land supports field
 create/edit/archive, map drawing, KML/KMZ/GeoJSON upload, nonmutating preview,
 explicit confirmation, durable job monitoring and real geometry downloads.
+New drawings use **Save KML for preview**: actual KML bytes go to the backend,
+which retains the original before any field exists. Review the orange preview
+and explicitly confirm to register the plot. Existing field edits continue to
+use conditional PATCH and retain boundary history. KML preserves polygon parts,
+holes and supplied altitude; it does not invent a name or zero elevation.
+The preview's original and each saved version's original can be downloaded
+byte-for-byte, independently of the worker. Generated exports are separate;
+missing legacy source bytes are reported rather than read from server paths.
 Dashboard and map-toolbar shortcuts open drawing directly, with draggable
 corner pegs, point counts and undo/finish/cancel controls. The original dashboard
 cards, typography, profile grid and responsive cockpit surround actual API data.
@@ -68,7 +76,11 @@ actual capability/worker readiness. Job IDs are saved in the page URL so
 monitoring and downloads can resume after reload. No profile or agricultural
 state is written to localStorage or sessionStorage. Lost field/job POST responses
 reuse the same submission key only after an explicit retry; PATCH conflicts
-require a deliberate reload. Authentication is not blindly replayed: an uncertain
+require a deliberate reload. Once a job is acknowledged, resume reads that job
+instead of posting again. Rejected drawings retain editable geometry for a fresh
+preview. Close preview/job releases the local controls without cancelling server
+work or deleting originals; keep the displayed job ID to resume elsewhere.
+Authentication is not blindly replayed: an uncertain
 signup offers explicit sign-in recovery.
 
 Crop recommendations, markets, plans and
@@ -100,7 +112,8 @@ its `AGRI_TEST_*` settings and Playwright Chromium installed. It copies scoped
 authentic data into an owned test schema, provisions isolated application storage,
 builds once, and starts its own API/worker/static preview for both access modes.
 It also checks two-account privacy, session revocation, account-switch guards
-and cross-tab state clearing. It sets the required
+and cross-tab state clearing, plus real private drawing/KML capture, original-file
+readback after sign-in, lost acknowledgments and rejected-geometry recovery. It sets the required
 `TEST_WRITES_ISOLATED=1` guard. It refuses occupied ports, retains logs, and never
 replaces your normal build or modifies the original canonical data.
 

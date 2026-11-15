@@ -1,6 +1,6 @@
 # Frontend implementation handoff
 
-Integration update: Milestones A and B implemented locally. Branch: `frontend`.
+Integration update: restored private UI and drawn-KML workflows implemented locally. Branch: `frontend`.
 
 ## Current scope and decisions
 
@@ -32,12 +32,15 @@ The earlier account-free decision is superseded by the approved private UI plan.
 | Durable workflows | Backend `a804cd2`: raw upload preview, explicit confirmation, leased worker and GeoJSON/KML/KMZ exports | Process recovery, atomic batch rollback/retry, version conflicts, scoped downloads and geometry roundtrips |
 | Connected field workflows | This increment: map drawing, complex GeoJSON editing, imports, job resume and Blob downloads | 16 frontend unit tests, production build and 14 real-browser cases using isolated authentic records and explicitly labelled topology probes |
 | Original UI restoration | Frontend `2f50c0f`: restore the `b59a73f` satellite cockpit, typography/cards, map toolbar, Earth view, direct drawing and responsive profile/tools layout | 16 units, production build and 15 browser cases, including actual satellite tile loading |
-| Private accounts | Backend `711d1e1` plus the themed frontend sign-up/sign-in/logout, CSRF/owner-bound requests and private profile labels | 84 backend API cases; 18 frontend units, production build, 15 shared and 3 private browser journeys |
+| Private accounts | Backend `711d1e1`, frontend `ca647d6`: themed sign-up/sign-in/logout, CSRF/owner-bound requests and private profile labels | 84 backend API cases; 18 frontend units, production build, 15 shared and 3 private browser journeys |
+| Drawn KML and originals | Backend `e221e98`, current frontend increment: real KML preview/confirmation, byte-exact originals, retained rejected drafts and safe retry/resume controls | 61 affected backend API cases plus focused corruption/filename cases; 22 frontend units, production build, 16 shared and 4 private browser journeys |
 
 The owner has now approved private per-person accounts/plot ownership and saving
 drawn KML, with AI explicitly unavailable until its real input pipeline exists.
-Account isolation and session UI are implemented. Default drawn-KML submission
-is the next increment; arbitrary-field AI is not implemented.
+Account isolation, session UI and default drawn-KML submission are implemented.
+The private browser journey captures actual uploaded KML, confirms it, reloads/
+signs in again, and downloads the same original while a second account is denied.
+Arbitrary-field AI is not implemented or represented as a queued analysis.
 
 All new code is independent of unrelated uncommitted backend modules. Read
 routes require a prepared canonical DB schema; they do not migrate it or call
@@ -60,13 +63,21 @@ canonical observations and evidence remain read-only.
   localStorage, seeded profile or initial HTML scientific values.
 - Profile saves preserve drafts on ordinary validation/conflict/transport failures.
   Logout or a revoked/changed identity clears private data and drafts instead.
-- Field draws and name/geometry edits use server versions and computed metrics;
+- New field draws submit actual KML for preview and explicit confirmation.
+  Name/geometry edits use conditional server versions and computed metrics;
   archived fields disappear without deleting their history or observations.
 - Imports require a nonmutating preview and explicit selection. Raw bytes and
   source metadata survive; no implicit geometry repair or scientific approval.
 - Jobs survive backend/worker restarts; the page URL permits monitoring/download
   resume after reload. Lost POST acknowledgments reuse the same submission key
-  only on explicit retry, including on plain-HTTP Tailscale origins.
+  and original bytes only on explicit retry, including on plain-HTTP Tailscale
+  origins. Acknowledged jobs resume through GET, not another POST. Rejected
+  drawings retain editable input and corrected submissions receive fresh keys.
+- Incompatible drafts/previews/jobs lock other writes and selection. Closing
+  a preview/job releases local controls, not server files or running jobs.
+- Preview originals and selected saved-version originals are byte-exact backend
+  downloads. The original-file capability is independent of worker readiness;
+  generated geometry exports remain a separate operation.
 - GeoJSON/KML/KMZ downloads use checked MIME/attachment headers and binary bodies,
   not JSON envelope parsing. Worker-dependent actions remain blocked if no
   matching heartbeat is present.
@@ -77,8 +88,8 @@ Karnataka. POWER reference evidence is from a Dutch parcel.
 
 ## Remaining work
 
-The requested profile and field/import/export milestones and private accounts are complete.
-Default drawn-KML submission and the new 1080/8080 private hosting release are next.
+The requested profile, field/import/export, private accounts and drawn-KML milestones are complete.
+The new 1080/8080 private hosting release is next.
 Still deferred: B05/F05 soil submissions/analysis, B06/F06 acquisition/satellite, B07/F07/F08 crop and
 market services, B08/F09 planting plans, then cleanup and full deployment gates.
 No full scientific or platform-completion claim: additional authentic geometry
