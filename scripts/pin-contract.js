@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const backend = process.argv[2];
@@ -8,7 +8,7 @@ if (!backend) throw new Error('Usage: node scripts\\pin-contract.js <backend-che
 const root = resolve(backend);
 execFileSync('git', ['-C', root, 'diff', '--quiet', 'HEAD', '--', 'docs/openapi.json']);
 const backendCommit = execFileSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
-const bytes = readFileSync(resolve(root, 'docs', 'openapi.json'));
+const bytes = execFileSync('git', ['-C', root, 'show', `${backendCommit}:docs/openapi.json`]);
 const contract = JSON.parse(bytes);
 if (!contract.paths['/api/v1/workspace'] || !contract.components.schemas.WorkspaceResponse) {
   throw new Error('Not a shared-workspace API contract');

@@ -17,7 +17,8 @@ export class ApiError extends Error {
 export function createClient(origin, { fetcher = fetch, timeoutMs = 15000, validate = () => true } = {}) {
   const base = parseApiOrigin(origin);
   const client = {
-    async request(path, { method = 'GET', body: payload, headers = {}, params = {}, signal, schema } = {}) {
+    async request(path, { method = 'GET', body: payload, rawBody, responseType = 'json',
+      headers = {}, params = {}, signal, schema } = {}) {
       if (!path.startsWith('/') || path.startsWith('//') || path.includes('..') || path.includes('\\')) {
         throw new ApiError('invalid_path', 'Invalid API resource path.');
       }
@@ -33,12 +34,28 @@ export function createClient(origin, { fetcher = fetch, timeoutMs = 15000, valid
       const timer = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
       try {
         const response = await fetcher(url, {
-          method, body: payload === undefined ? undefined : JSON.stringify(payload),
+          method, body: rawBody ?? (payload === undefined ? undefined : JSON.stringify(payload)),
           signal: controller.signal, credentials: 'omit', cache: 'no-store',
           redirect: 'error', headers: { Accept: 'application/json',
             ...(payload === undefined ? {} : { 'Content-Type': 'application/json' }), ...headers },
         });
         const requestId = response.headers.get('X-Request-ID');
+        const metadata = { etag: response.headers.get('ETag'), requestId,
+          location: response.headers.get('Location'), disposition: response.headers.get('Content-Disposition') };
+        if (response.ok && responseType === 'blob') {
+          const mediaType = response.headers.get('Content-Type')?.split(';')[0];
+          if (!['application/geo+json', 'application/vnd.google-earth.kml+xml',
+            'application/vnd.google-earth.kmz'].includes(mediaType) ||
+            !/^attachment; filename="[^"\\/\x00-\x1f]+"$/.test(metadata.disposition ?? '')) {
+            throw new ApiError('invalid_response', 'Export response has invalid download headers.', { requestId });
+          }
+          const blob = await response.blob();
+          if (!blob.size || blob.size > 32 * 1024 * 1024) {
+            throw new ApiError('invalid_response', 'Export response has an invalid size.', { requestId });
+          }
+          return { body: blob, ...metadata };
+        }
+        if (response.status === 204 && !schema) return { body: null, ...metadata };
         let body;
         try {
           body = await response.json();
@@ -59,7 +76,7 @@ export function createClient(origin, { fetcher = fetch, timeoutMs = 15000, valid
             (schema && !validate(schema, body))) {
           throw new ApiError('invalid_response', 'Backend response does not match the pinned API contract.', { requestId });
         }
-        return { body, etag: response.headers.get('ETag'), requestId };
+        return { body, ...metadata };
       } catch (error) {
         if (controller.signal.aborted) {
           throw new ApiError(timedOut ? 'timeout' : 'aborted',
@@ -77,7 +94,7 @@ export function createClient(origin, { fetcher = fetch, timeoutMs = 15000, valid
         signal?.removeEventListener('abort', abort);
       }
     },
-    async get(path, options) { return (await client.request(path, options)).body; },
+    async get(path, options) { return (await client.request(path, { ...options, method: 'GET' })).body; },
   };
   return client;
 }

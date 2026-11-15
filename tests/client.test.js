@@ -120,3 +120,29 @@ test('lost write responses are ambiguous and are never replayed', async () => {
     error => error.outcomeUncertain && error.code === 'network_error');
   assert.equal(calls, 1);
 });
+
+test('raw uploads are not JSON encoded and binary exports bypass envelope parsing', async () => {
+  const bytes = new Uint8Array([1, 2, 3]);
+  const upload = createClient('http://localhost:8000', { fetcher: async (_, options) => {
+    assert.equal(options.body, bytes);
+    assert.equal(options.headers['Content-Type'], 'application/octet-stream');
+    return Response.json(envelope({}), { status: 202, headers: { Location: '/api/v1/jobs/opaque-job' } });
+  } });
+  assert.equal((await upload.request('/imports', { method: 'POST', rawBody: bytes,
+    headers: { 'Content-Type': 'application/octet-stream' } })).location, '/api/v1/jobs/opaque-job');
+  const download = createClient('http://localhost:8000', { fetcher: async () => new Response(bytes, {
+    headers: { 'Content-Type': 'application/vnd.google-earth.kmz',
+      'Content-Disposition': 'attachment; filename="export.kmz"' },
+  }) });
+  const response = await download.request('/exports/opaque/download', { responseType: 'blob' });
+  assert.deepEqual(new Uint8Array(await response.body.arrayBuffer()), bytes);
+});
+
+test('binary failures still use error envelopes and no-content responses are handled explicitly', async () => {
+  const failure = createClient('http://localhost:8000', { fetcher: async () => Response.json({
+    error: { code: 'export_not_ready', message: 'Wait for completion' },
+  }, { status: 409 }) });
+  await assert.rejects(failure.request('/exports/pending/download', { responseType: 'blob' }), { code: 'export_not_ready' });
+  const noContent = createClient('http://localhost:8000', { fetcher: async () => new Response(null, { status: 204 }) });
+  assert.equal((await noContent.request('/resource', { method: 'DELETE' })).body, null);
+});

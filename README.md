@@ -1,7 +1,7 @@
 # Bhumi agricultural intelligence frontend
 
 Vite, vanilla JavaScript and Leaflet. The frontend now connects to a separately
-deployed Python API for **read-only source inspection**, not demo forecasts.
+deployed Python API for **shared profile/field workflows and read-only source evidence**, not demo forecasts.
 Read [progress.md](progress.md) for exact implemented and blocked capabilities,
 and [frontendplan.md](frontendplan.md) for the remaining migration tasks.
 
@@ -41,7 +41,22 @@ Pending records retain source/units/time standards and are not called verified.
 Missing/ambiguous geometry stays unavailable until a recorded version is selected.
 Map tiles come from OpenStreetMap; tile failure is distinct from API failure.
 
-Crop recommendations, markets, plans, profiles, writes/imports/exports and
+The shared profile is explicitly visible to all workspace visitors. Conditional
+saves preserve drafts on conflicts or failed requests. My Land supports field
+create/edit/archive, map drawing, KML/KMZ/GeoJSON upload, nonmutating preview,
+explicit confirmation, durable job monitoring and real geometry downloads.
+Complex geometry can be edited as GeoJSON without dropping holes or polygon
+parts. Drawing a replacement polygon is explicit; no fallback parcel is generated.
+These actions never mark source data scientifically verified.
+
+The backend must provision its separate workspace schema and run its import/
+export worker; see `docs/shared_workspace.md` in the backend. Controls follow
+actual capability/worker readiness. Job IDs are saved in the page URL so
+monitoring and downloads can resume after reload. No profile or agricultural
+state is written to localStorage. Lost POST responses reuse the same submission
+key only after an explicit retry; PATCH conflicts require a deliberate reload.
+
+Crop recommendations, markets, plans and
 analytical satellite layers are still unavailable. Their navigation remains,
 but old synthetic values and browser calculations no longer run.
 Unused legacy data/service source files are retained for subsequent F10 cleanup;
@@ -53,16 +68,28 @@ they are not imported into the production build.
 npm test
 npm run build
 $env:TEST_API_ORIGIN = $env:VITE_API_BASE_URL
-npm run test:browser
+npm run test:browser -- workspace.spec.js
 ```
 
-Browser tests start the production preview on `127.0.0.1:1080`, so the actual
+The read-only browser cases start the production preview on `127.0.0.1:1080`, so the actual
 API must also allow that origin. They need a prepared authentic field/canonical
 evidence corpus and a build made with the same API origin. If Chromium is not
 installed, run `npx playwright install chromium` after the runner reports it
 missing. Tests check real API/geometry/evidence agreement, pagination, empty and
 failure states, racing filters, all seven views, mobile navigation and inert
 untrusted text. No fabricated agricultural provider response qualifies as evidence.
+
+For the complete write suite, run the backend's
+`python scripts\workspace_browser_acceptance.py --frontend <this-checkout>` with
+its `AGRI_TEST_*` settings and Playwright Chromium installed. It copies scoped
+authentic data into an owned test schema, provisions an isolated shared workspace,
+starts its own API/worker/static preview, and sets the required
+`TEST_WRITES_ISOLATED=1` guard. It refuses occupied ports, retains logs, and never
+replaces your normal build or modifies the original canonical data.
+
+To update the contract after a tested backend commit:
+`node scripts\pin-contract.js <backend-checkout>`. This developer-only command
+records the source commit and exact artifact checksum; deployments remain independent.
 
 ## Trust and limitations
 

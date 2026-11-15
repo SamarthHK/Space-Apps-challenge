@@ -3,6 +3,7 @@ import { validateResponse } from '../api/validation.js';
 import { createResource } from '../state/resource.js';
 import { createFieldMap } from '../map/fieldMap.js';
 import { createProfile } from './profile.js';
+import { createLandActions } from './landActions.js';
 
 const byId = id => document.getElementById(id);
 const node = (tag, text) => {
@@ -47,6 +48,16 @@ export function startWorkspace(origin) {
   let filters = {};
   let canReadObservations = false;
   let bootGeneration = 0;
+  let fieldEditing = false;
+  let selectedHasBoundaries = false;
+  const landActions = createLandActions(byId('land-actions'), api, fieldMap, {
+    refresh: refreshFields,
+    lockSelection(value) {
+      fieldEditing = value;
+      byId('global-plot-select').disabled = value || !fields.length;
+      byId('boundary-select').disabled = value || !fieldId || !selectedHasBoundaries;
+    },
+  });
 
   const evidence = createResource(state => {
     byId('next-evidence').hidden = true;
@@ -121,6 +132,8 @@ export function startWorkspace(origin) {
       api.get(`/fields/${encode(selected)}/observations`, { signal, params, schema: 'ObservationsResponse' }));
   }
   const field = createResource(state => {
+    selectedHasBoundaries = false;
+    landActions.setField(null, null);
     byId('field-details').replaceChildren();
     fieldMap.setGeometry(null);
     byId('boundary-select').disabled = true;
@@ -128,11 +141,13 @@ export function startWorkspace(origin) {
     else if (state.status === 'error') byId('field-status').textContent = message(state.error);
     else if (state.status === 'ready') {
       const record = state.data.data;
+      selectedHasBoundaries = !!record.boundary_versions.length;
+      landActions.setField(record, state.data.etag);
       const select = byId('boundary-select');
       select.replaceChildren(new Option('Select a recorded boundary version', ''));
       record.boundary_versions.forEach(version => select.add(new Option(version.boundary_id, version.boundary_id)));
       select.value = record.selected_boundary_id ?? '';
-      select.disabled = !record.boundary_versions.length;
+      select.disabled = fieldEditing || !record.boundary_versions.length;
       byId('field-status').textContent = record.geometry_status === 'selection_required'
         ? 'Multiple versions exist. Select one explicitly; no current boundary is assumed.'
         : record.geometry_status === 'available' ? 'Stored boundary loaded.' : 'No stored geometry is available.';
@@ -154,7 +169,7 @@ export function startWorkspace(origin) {
     if (!fieldId) { field.clear(); return; }
     const selected = fieldId;
     await Promise.all([
-      field.load(selected, signal => api.get(`/fields/${encode(selected)}`, { signal, schema: 'FieldResponse' })),
+      field.load(selected, signal => readField(selected, {}, signal)),
       loadObservations(),
     ]);
   }
@@ -163,13 +178,13 @@ export function startWorkspace(origin) {
     if (state.status === 'loading') byId('fields-status').textContent = 'Loading fields...';
     else if (state.status === 'error') byId('fields-status').textContent = `${message(state.error)} Reconnect to restart.`;
     else if (state.status === 'ready' || state.status === 'empty') {
-      fields = [...fields, ...state.data.data];
+      fields = [...new Map([...fields, ...state.data.data].map(record => [record.field_id, record])).values()];
       fieldsCursor = state.data.meta.next_cursor;
       const select = byId('global-plot-select');
       select.replaceChildren(new Option('Select a field', ''));
       fields.forEach(record => select.add(new Option(record.name ?? record.field_id, record.field_id)));
       select.value = fieldId ?? '';
-      select.disabled = !fields.length;
+      select.disabled = fieldEditing || !fields.length;
       byId('fields-status').textContent = fields.length
         ? `${fields.length} fields loaded${fieldsCursor ? ' (more available)' : ''}. Area totals unavailable without explicit boundary selection.`
         : 'No fields in the configured shared projects.';
@@ -184,6 +199,31 @@ export function startWorkspace(origin) {
     return fieldList.load(fieldsCursor ?? 'first', signal =>
       api.get('/fields', { signal, schema: 'FieldsResponse', params: { cursor: fieldsCursor } }));
   }
+  async function readField(id, params, signal) {
+    const response = await api.request(`/fields/${encode(id)}`, { signal, params, schema: 'FieldResponse' });
+    return { ...response.body, etag: response.etag };
+  }
+  async function refreshFields(preferred) {
+    fields = [];
+    fieldsCursor = null;
+    fieldId = null;
+    fieldList.clear();
+    field.clear();
+    observations.clear();
+    evidence.clear();
+    await loadFields();
+    if (preferred) {
+      await selectField(preferred);
+      if (field.state.status === 'ready') {
+        const record = field.state.data.data;
+        if (!fields.some(item => item.field_id === preferred)) {
+          fields.push(record);
+          byId('global-plot-select').add(new Option(record.name ?? preferred, preferred));
+        }
+        byId('global-plot-select').value = preferred;
+      }
+    }
+  }
   const workspace = createResource(state => {
     byId('capabilities').replaceChildren();
     if (state.status === 'loading') byId('connection-status').textContent = 'Connecting to backend...';
@@ -197,6 +237,7 @@ export function startWorkspace(origin) {
   async function connect() {
     const generation = ++bootGeneration;
     profile.setAvailable(false);
+    landActions.setCapabilities([]);
     fieldList.clear();
     field.clear();
     observations.clear();
@@ -212,6 +253,7 @@ export function startWorkspace(origin) {
     if (generation !== bootGeneration || workspace.state.status !== 'ready') return;
     const capabilities = workspace.state.data.data.capabilities;
     profile.setAvailable(capabilities.some(item => item.capability_id === 'profile' && item.state === 'ready'));
+    landActions.setCapabilities(capabilities, workspace.state.data.data.project_ids);
     canReadObservations = capabilities.some(item => item.capability_id === 'observations' && item.state === 'ready');
     if (capabilities.some(item => item.capability_id === 'fields' && item.state === 'ready')) await loadFields();
     else byId('fields-status').textContent = 'Field access is blocked. Configure the backend project scope and prepared database.';
@@ -221,7 +263,7 @@ export function startWorkspace(origin) {
   byId('boundary-select').addEventListener('change', event => {
     const params = { boundary_id: event.target.value };
     field.load(`${fieldId}/${event.target.value}`, signal =>
-      api.get(`/fields/${encode(fieldId)}`, { signal, params, schema: 'FieldResponse' }));
+      readField(fieldId, params, signal));
   });
   byId('more-fields').addEventListener('click', loadFields);
   byId('observation-filters').addEventListener('submit', event => {

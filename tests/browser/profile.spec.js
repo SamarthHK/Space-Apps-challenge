@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const api = process.env.TEST_API_ORIGIN;
 const origin = process.env.TEST_FRONTEND_ORIGIN || 'http://127.0.0.1:1080';
+if (process.env.TEST_WRITES_ISOLATED !== '1') throw new Error('Run write acceptance through the backend isolated-workspace harness.');
 
 async function openProfile(page) {
   await page.goto('/');
