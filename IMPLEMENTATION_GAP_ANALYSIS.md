@@ -1,5 +1,7 @@
 # backendplan.md implementation gap analysis and execution plan
 
+> **Historical analysis, not an implementation roadmap.** The 2026-11-15 revision of [backendplan.md](backendplan.md) and [docs/frontend_api_contract.md](docs/frontend_api_contract.md) supersedes every phase/order and acceptance suggestion below. References here to notebooks, synthetic fixtures/simulations, SQLite acceptance and permissive completion are obsolete. Retained only to explain the older prototype; do not execute its Phase 0-7 sequence or count its status claims as current verification.
+
 **Prepared:** 2026-11-14  
 **Branch:** `backend`  
 **Purpose:** establish the differences between the specification and the current repository before expanding implementation.
@@ -439,7 +441,7 @@ Acceptance criteria:
 5. Tests cover zero filters, each filter dimension, compound filters, empty results,
    checksums, row counts, and reruns.
 
-## Implementation plan
+## Historical implementation proposal (superseded; do not execute)
 
 ### Phase 0 — Baseline, contracts, and safety
 
@@ -590,7 +592,7 @@ Deliverables:
 **Acceptance:** a clean environment can run the documented workflow, reproduce the
 fixture outputs, and distinguish complete, partial, and unavailable data domains.
 
-## Dependency order
+## Historical dependency order (superseded)
 
 The order is intentional:
 
@@ -612,7 +614,7 @@ The source adapters should be implemented in parallel only after the common adap
 contract and provenance foundation are stable. Live integrations should always have
 fixture/import paths so tests do not depend on network access or credentials.
 
-## Definition of complete against backendplan.md
+## Historical completion definition (superseded)
 
 The project should not be called complete until all of the following are true:
 
