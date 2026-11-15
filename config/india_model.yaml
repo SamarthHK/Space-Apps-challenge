@@ -70,3 +70,46 @@ des:
   start_year: 1997
   end_year: 2022
   years_per_request: 5
+gaez:
+  crops: [RCW, RCD, WHE, MZE, SRG, PML, FIML, FML, BCK, BRL, CHK, PIG, COW, PEA, PHB,
+          GRD, SOY, RSD, SES, SFL, CST, COT, SUC, WPO, ONI, TOM, CAB, CAR, OKRA,
+          SPO, CSV, TAROD, TAROW, YAM, BAN, MNG, CIT, CSH, CON, TEA, COF, ALF, NAP, MZS, WMEL]
+  periods:
+    HP8100: [1981, 2000]
+    HP0120: [2001, 2020]
+  inputs: [HRLM, HILM, LRLM, LILM]
+  climate_variables: [RES01-PRC, RES01-TMP, RES01-ET0, RES01-ETA,
+                      RES01-RQ1, RES01-RQ2, RES01-RQ3, RES01-RQ4,
+                      RES01-NDD, RES01-NDR, RES01-TS2, RES01-TS3,
+                      RES01-X35, RES01-X40, RES01-X45, RES01-N00,
+                      RES01-N10, RES01-N15, RES01-LGD, RES01-LGB,
+                      RES01-LT2, RES01-LT3, RES01-LT4, RES01-LT5]
+  static_variables: [HWSDV201, SLOPE-MED, ELEV-ALOS-30M]
+  grid_stride: 8
+  maximum_asset_bytes: 600000000
+crop_profile_links:
+  "1574": {scientific_name: Oryza sativa, gaez: [RCW], des: ["1"], trait_eligible_gaez: [RCW]}
+  "2114": {scientific_name: Triticum aestivum, gaez: [WHE], des: ["2"], trait_eligible_gaez: [WHE]}
+  "2175": {scientific_name: Zea mays, gaez: [MZE, MZS], des: ["5"], trait_eligible_gaez: [MZE]}
+  "48747": {scientific_name: Sorghum bicolor, gaez: [SRG], des: ["3"], trait_eligible_gaez: [SRG]}
+  "8418": {scientific_name: Pennisetum glaucum, gaez: [PML], des: ["4"], trait_eligible_gaez: [PML]}
+  "5657": {scientific_name: Eleusine coracana ssp. coracana, gaez: [FIML], des: ["6"], trait_eligible_gaez: [FIML]}
+  "2479": {scientific_name: Cicer arietinum, gaez: [CHK], des: ["13"], trait_eligible_gaez: [CHK]}
+  "576": {scientific_name: Cajanus cajan, gaez: [PIG], des: ["14"], trait_eligible_gaez: [PIG]}
+  "2150": {scientific_name: Vigna radiata, des: ["65"]}
+  "2199": {scientific_name: Arachis hypogaea, gaez: [GRD], des: ["15"], trait_eligible_gaez: [GRD]}
+  "1150": {scientific_name: Glycine max, gaez: [SOY], des: ["24"], trait_eligible_gaez: [SOY]}
+  "548": {scientific_name: Brassica juncea, des: ["17"]}
+  "1379": {scientific_name: Lycopersicon esculentum, gaez: [TOM], trait_eligible_gaez: [TOM]}
+  "289": {scientific_name: Abelmoschus esculentus, gaez: [OKRA], trait_eligible_gaez: [OKRA]}
+  "364": {scientific_name: Allium cepa, gaez: [ONI], des: ["49"], trait_eligible_gaez: [ONI]}
+  "1971": {scientific_name: Solanum tuberosum, gaez: [WPO], des: ["45"], trait_eligible_gaez: [WPO]}
+  "554": {scientific_name: Brassica oleracea var. capitata, gaez: [CAB], trait_eligible_gaez: [CAB]}
+  "1416": {scientific_name: Mangifera indica, gaez: [MNG], trait_eligible_gaez: [MNG]}
+  "7849": {scientific_name: Musa acuminata x balbisiana, gaez: [BAN], des: ["124"]}
+nasa_reference:
+  bounds: [68, 6, 98, 38]
+  parameters:
+    RH2M: [HP8100, HP0120]
+    WS2M: [HP8100, HP0120]
+    ALLSKY_SFC_SW_DWN: [HP0120]

@@ -7,7 +7,9 @@ import sys
 import yaml
 
 
-COMMANDS = {"acquire-crop-profiles", "build-crop-profiles", "acquire-india-outcomes", "build-india-outcomes"}
+COMMANDS = {"acquire-crop-profiles", "build-crop-profiles", "acquire-india-outcomes", "build-india-outcomes",
+            "acquire-gaez-reference", "build-gaez-reference", "build-india-registry",
+            "acquire-india-environment", "build-india-environment"}
 
 
 def register_commands(commands):
@@ -25,6 +27,30 @@ def register_commands(commands):
     build_outcomes.add_argument("--corpus", type=Path, required=True)
     build_outcomes.add_argument("--config", type=Path, required=True)
     build_outcomes.add_argument("--output", type=Path, required=True)
+    acquire_reference = commands.add_parser("acquire-gaez-reference", help="Acquire real, comparable GAEZ reference products")
+    acquire_reference.add_argument("--contract", type=Path, default=Path("config") / "india_model.yaml")
+    acquire_reference.add_argument("--output", type=Path, required=True)
+    acquire_reference.add_argument("--resume", action="store_true")
+    build_reference = commands.add_parser("build-gaez-reference", help="Normalize matched native-grid Indian reference evidence")
+    build_reference.add_argument("--corpus", type=Path, required=True)
+    build_reference.add_argument("--config", type=Path, required=True)
+    build_reference.add_argument("--output", type=Path, required=True)
+    registry = commands.add_parser("build-india-registry", help="Link source-qualified crop identities without relabelling outcomes")
+    registry.add_argument("--contract", type=Path, default=Path("config") / "india_model.yaml")
+    registry.add_argument("--profiles", type=Path, required=True)
+    registry.add_argument("--outcomes", type=Path, required=True)
+    registry.add_argument("--gaez-corpus", type=Path, required=True)
+    registry.add_argument("--config", type=Path, required=True)
+    registry.add_argument("--output", type=Path, required=True)
+    environment = commands.add_parser("acquire-india-environment", help="Acquire exact-period NASA monthly reference histories")
+    environment.add_argument("--contract", type=Path, default=Path("config") / "india_model.yaml")
+    environment.add_argument("--gaez-corpus", type=Path, required=True)
+    environment.add_argument("--output", type=Path, required=True)
+    environment.add_argument("--resume", action="store_true")
+    build_environment = commands.add_parser("build-india-environment", help="Persist complete-period NASA normals on native grids")
+    build_environment.add_argument("--corpus", type=Path, required=True)
+    build_environment.add_argument("--config", type=Path, required=True)
+    build_environment.add_argument("--output", type=Path, required=True)
 
 
 def database_store(config_path):
@@ -47,6 +73,22 @@ def run(args):
         elif args.command == "build-india-outcomes":
             from .india_outcomes import build_india_outcomes
             result = build_india_outcomes(args.corpus, args.output, database_store(args.config))
+        elif args.command == "acquire-gaez-reference":
+            from .gaez import acquire_gaez
+            result = {"corpus": str(acquire_gaez(args.contract, args.output, args.resume).resolve())}
+        elif args.command == "build-gaez-reference":
+            from .gaez import build_gaez
+            result = build_gaez(args.corpus, args.output, database_store(args.config))
+        elif args.command == "build-india-registry":
+            from .india_registry import build_india_registry
+            result = build_india_registry(args.contract, args.profiles, args.outcomes, args.gaez_corpus,
+                                          args.output, database_store(args.config))
+        elif args.command == "acquire-india-environment":
+            from .india_environment import acquire_india_environment
+            result = {"corpus": str(acquire_india_environment(args.contract, args.gaez_corpus, args.output, args.resume).resolve())}
+        elif args.command == "build-india-environment":
+            from .india_environment import build_india_environment
+            result = build_india_environment(args.corpus, args.output, database_store(args.config))
         else:
             raise ValueError("Unsupported India command")
         print(json.dumps(result, indent=2, allow_nan=False))
