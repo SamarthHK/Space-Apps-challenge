@@ -3,6 +3,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Header, Query, Request, Response
 from pydantic import Field, model_validator
+from starlette.concurrency import run_in_threadpool
 
 from agri_data.workspace.errors import WorkspaceError
 from .schemas import DTO, Meta
@@ -92,6 +93,9 @@ class ExportRequest(DTO):
 
 
 router = APIRouter(prefix="/api/v1")
+IDEMPOTENCY_DESCRIPTION = (
+    "Workspace-wide submission key. Receipts are retained without expiry; different input or operation returns 409."
+)
 
 
 def envelope(request, data):
@@ -114,13 +118,12 @@ def get_job(job_id: str, request: Request):
 async def create_import(request: Request, response: Response, filename: str = Query(..., max_length=160),
                         project_id: str = Query(..., min_length=1, max_length=200),
                         source_namespace: str = Query(..., min_length=1, max_length=80),
-                        key: str | None = Header(None, alias="Idempotency-Key")):
+                        key: str | None = Header(None, alias="Idempotency-Key", description=IDEMPOTENCY_DESCRIPTION)):
     media_type = request.headers.get("content-type", "").split(";")[0].strip().lower()
     if media_type not in {"application/octet-stream", "application/geo+json", "application/json",
                           "application/vnd.google-earth.kml+xml", "application/vnd.google-earth.kmz"}:
         raise WorkspaceError(415, "unsupported_media_type", "Send the original file bytes, not multipart or a filesystem path")
     content = await request.body()
-    from starlette.concurrency import run_in_threadpool
     job = await run_in_threadpool(request.app.state.job_store.submit_import,
                                   content, filename, project_id, source_namespace, key)
     return submitted(request, response, job)
@@ -134,14 +137,14 @@ def get_import(import_id: str, request: Request):
 @router.post("/imports/{import_id}/confirm", operation_id="confirmBoundaryImport",
              response_model=JobResponse, status_code=202)
 def confirm_import(import_id: str, body: ImportConfirmation, request: Request, response: Response,
-                   key: str | None = Header(None, alias="Idempotency-Key")):
+                   key: str | None = Header(None, alias="Idempotency-Key", description=IDEMPOTENCY_DESCRIPTION)):
     return submitted(request, response, request.app.state.job_store.confirm(
         import_id, body.model_dump(), key))
 
 
 @router.post("/exports", operation_id="createExport", response_model=JobResponse, status_code=202)
 def create_export(body: ExportRequest, request: Request, response: Response,
-                  key: str | None = Header(None, alias="Idempotency-Key")):
+                  key: str | None = Header(None, alias="Idempotency-Key", description=IDEMPOTENCY_DESCRIPTION)):
     return submitted(request, response, request.app.state.job_store.submit_export(body.model_dump(), key))
 
 

@@ -115,3 +115,21 @@ def test_field_http_contract_and_geometry_rejections(field_store, actual_geometr
         assert http.delete(path, headers={"If-Match": saved.headers["ETag"]}).status_code == 200
         assert http.get(path).status_code == 404
         assert http.get(path + "/observations").status_code == 404
+
+
+def test_disabling_workspace_writes_keeps_reads_tombstones_and_saved_profile(field_store, actual_geometry):
+    archived = create(field_store, actual_geometry, key="archived")
+    remaining = create(field_store, actual_geometry, key="remaining")
+    field_store.update(archived["field_id"], None, field_etag(archived["field_id"], 1), "archive", archive=True)
+    profile = field_store.workspace.get_profile()
+    settings = Settings.from_env({"AGRI_ALLOWED_ORIGINS": ORIGIN})
+    with TestClient(create_app(settings, field_store.settings), base_url="http://127.0.0.1",
+                    headers={"Origin": ORIGIN}) as http:
+        capabilities = {item["capability_id"]: item["state"]
+                        for item in http.get("/api/v1/workspace").json()["data"]["capabilities"]}
+        assert capabilities["fields"] == "ready"
+        assert capabilities["profile"] == capabilities["field_writes"] == capabilities["imports"] == "blocked"
+        assert [row["field_id"] for row in http.get("/api/v1/fields").json()["data"]] == [remaining["field_id"]]
+        assert http.get("/api/v1/fields/" + archived["field_id"]).status_code == 404
+        assert http.get("/api/v1/profile").status_code == 503
+    assert field_store.workspace.get_profile() == profile
