@@ -1,91 +1,96 @@
-# 05. Acceptance and release checklist
+# 05. Audit evidence and integration acceptance
 
-This document specifies future checks. No API, worker, provider, database or
-browser integration test was executed during the documentation audit.
+## Checks actually performed during this restarted audit
 
-## Gate matrix
-
-| Gate | Exercise | Required result |
+| Check | Result | What it establishes |
 | --- | --- | --- |
-| G01 Reproducibility | Clean prefixed checkout; Python package/config discovery; independent frontend install/build | Reconciled locked dependencies; backend not required to build frontend; no workstation paths |
-| G02 Contract/transport | OpenAPI compatibility; 200/201/202/204, errors, invalid JSON, timeout, abort, conflict, rate limit | One versioned schema, stable error envelope; no unsafe blind write retries |
-| G03 Sessions/ownership | Two provisioned accounts, expiry/logout, CSRF, direct private field/job/asset/download URLs | No cross-account read/write; correct auth handling under actual frontend/API origins |
-| G04 Empty bootstrap | Fresh user, zero fields/plans, previously cleared local arrays, backend offline | No crash, seed recreation, random first-field selection or sample-value flash before response |
-| G05 Geometry | Authentic approved polygons with holes/multiple components; GeoJSON and KML/KMZ import/export | Same rings/components and geometry revision survive DB/browser/download; documented area tolerance |
-| G06 Preview/idempotency | Parse, decline repair, accept selected candidates, repeat request, stale preview, worker/API restart | Preview alone creates no fields; exact replay returns same result; no partial/duplicate confirmation |
-| G07 Measurement semantics | Inspected lab/SoilGrids records with units, basis, depth, dates and original bytes | Display -> API -> observation -> source reconciliation; total N not available N; modelled not lab-verified |
-| G08 Missing/zero/quality | Authentic zero/censored/missing/rejected inputs; missing provider credentials | Distinct availability and validation; no fallback measurements or zero-as-missing substitution |
-| G09 Context/races | Switch fields/scenes/periods while earlier requests finish | Responses cannot update another context; scene controls actual overlay; old field data not relabelled |
-| G10 Series/forecast | Authentic negative NDVI and gaps, empty/single-point state; explicit forecast validity | No clipping/interpolation across gaps; separate rainfall time basis; history never masquerades as forecast |
-| G11 Manual plans | Create/update/archive without recommendation; reload in another browser; stale version; excess area | Durable owned plan, real crop reference, ISO dates, 409 on lost update; unavailable finance is not zero |
-| G12 Summaries/markets | Multiple pages and filters; dated observations, policy price, absent trend/costs | Complete filtered summaries; correct currency/quantity; no first-record recency assumption or invented deductions |
-| G13 Persistence/jobs | Independent DB read after process restart; worker lease expiry/retry and export snapshot | Committed records survive; recoverable jobs; immutable versioned outputs and authorized download |
-| G14 Production cleanup | Inspect source, built bundle and initial HTML; render API/user text | No legacy scientific seeds/local domain storage/reset/financial rules; safe rendering and honest unavailable panels |
-| G15 Independent deployment | Static frontend on configured origin, API/worker/DB separately started; tile host/API outages | No shared filesystem assumption; CORS/auth/downloads work; basemap failure distinct from evidence failure |
-| G16 Recovery | Restore integration-owned backup and prior compatible artifact in isolation | Documented recovery without deleting source work, shared volumes or new user data |
+| Read current source, generated schemas, Git/worktree status and selected build-artifact metadata | Completed | Four distinct trees/two compatible pairs; implementation and dirty prerequisites identified |
+| Compare A OpenAPI with F pinned bytes/source metadata | Exact matching SHA-256 | F is pinned to A, not B |
+| F `npm test` | 8 passed, 0 skipped | Current transport/configuration/resource-state/contract tests pass |
+| B `.venv\Scripts\python.exe -m pytest -p no:cacheprovider tests\api\test_foundation.py tests\api\test_openapi.py -q` | 21 passed | Donor API foundation, profile DTO behavior and published schema agree; no DB fixture used |
+| A native `.venv` invocation of `tests\api\test_foundation.py` | Failed before collection: missing `pluggy` | Existing local environment is not sufficient evidence of reproducible runtime/test setup |
+| A foundation tests using B's existing Python 3.12.13 interpreter with `PYTHONPATH` explicitly set to A `src` | 30 passed | A source foundation and actual temporary loopback HTTP tests work in that environment; not proof of A's own lock/venv |
 
-G05 must include the specific parser regression: a MultiGeometry containing
-multiple Polygon children must not return the first child early, and holes must
-survive in each component. Do not accept a simple rectangle area test as coverage.
+Both Python test runs that completed emitted an existing Starlette TestClient
+deprecation warning. No dependency installation or environment repair was
+performed. Temporary foundation HTTP helpers were scoped to the tests and
+terminated by their fixtures.
 
-G07/G08 positive scientific acceptance uses authentic records with inspected
-provenance, consistent with the existing backend contract. Missing authentic
-cases remain blocked; do not fabricate provider records to claim acceptance.
-Pure transport/schema checks and intentionally invalid requests are separate
-from evidence that scientific acquisition works.
+No prepared-data DB suite, live provider acquisition, current production build,
+current browser suite, private profile read or source-data migration was run.
+Prior progress files report additional DB/browser checks; those are historical
+evidence, not fresh passes from this audit. Artifact existence and passing
+foundation tests do not establish field/evidence data readiness.
 
-## Commands and test placement
+## Milestone A mandatory gates
 
-Existing commands, after entering the respective source checkout:
+| Gate | Scenario | Required result / evidence |
+| --- | --- | --- |
+| G01 Clean reproduction | Approved backend/frontend SHAs in separate clean checkouts, fresh isolated environments and prepared canonical schema | No untracked module/migration dependency, no cross-checkout Python environment; own lock/package data works |
+| G02 Correct pairing | F connects to selected API origin; wrong B endpoint/schema deliberately selected in a controlled check | Shared revision/envelope accepted; incompatible backend produces clear error, not silent "empty" or guessed fallback |
+| G03 Existing reads | Workspace -> fields -> explicit boundary -> observations -> evidence with authentic prepared records | Real browser/API/PostGIS/source agreement; preserve canonical IDs, geometry and source evidence |
+| G04 Empty/dependency states | Empty project result, missing DB configuration/schema, invalid project scope, tile host outage | Empty versus blocked/failed distinct; unknown nested IDs inaccessible; basemap outage not a data failure |
+| G05 No accounts | Fresh browser/context uses all implemented reads and shared profile with no cookies/tokens/login | Shared access is explicit; no requests to `/auth/*` or `/me/profile` |
+| G06 Profile persistence | Save declared non-scientific input; reload API/browser; read from a second context and independent DB connection | Same shared resource, version and committed fields; no browser authority or private-profile auto-copy |
+| G07 Profile concurrency | Two clients read same ETag and attempt divergent saves; missing/malformed preconditions | Exactly one accepted competing update; stale write 412, missing If-Match 428; no silent overwrite; one revision per successful update |
+| G08 Input semantics | Omitted versus null, empty patch, invalid phone/enum, server-owned fields, markup as text | Donor validation preserved where intended; stable shared error details; safe rendering; no changed scientific state |
+| G09 Transport/CORS | Real browser cross-origin GET/PATCH and OPTIONS; ETag read after GET/save; timeout or lost response | Headers accessible, credentials omitted, no blind retries, edits retained; denied origins stay denied |
+| G10 Read/write isolation | Failed or rolled-back profile write while data reads run | Canonical transactions still reject writes; no change to observations/assets/aliases or profile revision after rollback |
+| G11 UI coexistence | Navigate profile -> map -> evidence and save while read requests complete | Field/boundary/filter state not reset by imported bootstrap; late responses cannot update another context |
+| G12 Schema compatibility | Backend-exported artifact, F pin/hash, actual read and profile responses | Same schema/operation shapes; strict additional-property and provider-time behavior retained; old read responses remain valid |
+| G13 Independent deployment | Static frontend artifact on one origin/machine; backend/DB private elsewhere | No sibling paths/imports/filesystem dependency; one API origin; correct configured Host/Origin |
+| G14 Recovery/handoff | Disable profile after failed rollout; restore compatible release in isolation | Reads remain available; data/revisions retained; no source resets or shared-service/volume deletion |
 
-```powershell
-# Frontend: existing package-lock.json and build script.
-npm ci
-npm run build
+Do not make accepted scientific status a Milestone A requirement: inspecting
+pending authentic evidence is the current approved behavior. Authentic geometry/
+provider bytes are still required to claim a positive data roundtrip. A model,
+forecast or recommendation is neither executed nor accepted here.
 
-# Backend: existing pytest configuration provides src on the Python path.
-python -m pytest tests\test_geo_and_processing.py tests\test_acquisition_modes.py
-```
+## Focused test additions
 
-These illustrate existing interfaces, not commands executed for this
-documentation-only change. Run installs only when establishing the chosen
-validation environment or dependencies are missing. Existing backend tests
-include synthetic/demo cases and prove legacy behavior only; they do not satisfy
-authentic PostGIS/provider/API acceptance.
+**Backend:** extend A `tests\api\test_foundation.py` for profile capability,
+errors, mutation Origin checks and preflight. Add shared-profile API/storage
+tests using an integration-owned application schema on real PostgreSQL.
+Adapt relevant B tests for real atomic updates/revision rollback; do not reuse
+session fixtures or call authenticated functions with a fabricated user.
+Retain A data reconciliation tests and their read-only transaction assertion.
 
-There is currently no frontend test or lint script and no backend API entrypoint.
-Do not claim `npm test`, `uvicorn agri_data.api:app`, or the planned
-`python -m agri_data validate` suites already work. Their exact interfaces must
-be implemented, documented, and exercised in the owning phase.
+**Frontend:** retain current eight unit/contract tests. Add profile form/payload,
+ETag/header access, 412/428, unknown/invalid response, network ambiguity and
+capability tests. Keep `createResource` generation protection. Add combined
+browser cases that use the actual prepared read API and real shared profile
+persistence; do not run two separate passing suites as a substitute for a
+single combined app journey.
 
-Proposed additions: focused frontend client/adapter/state tests in P2, geometry
-and import service/API tests in P3, record semantics tests in P4, plan tests in
-P5, and browser journeys for the release. Use existing pytest; select minimal
-frontend unit/browser tooling when introduced. Keep legacy tests distinct from
-new real-DB/API acceptance.
+Parameterize browser ports/origin and authentic corpus expectations. Current
+tests assume 50 rows and no accepted records; make the test contract explicit
+rather than silently relying on one mutable database snapshot. Authentication
+donor tests remain donor regressions, not acceptance of the chosen access model.
 
-Record exact command, source SHA, contract checksum, environment, outcome,
-artifact references and blocker for each gate. Test status is
-`not_run/pass/fail/blocked`; no check is passed merely because its file exists.
-Do not commit raw personal farm reports, contact records or credentials as test
-evidence. Store controlled evidence privately and commit non-sensitive manifests.
+Do not create fake agricultural records to prove provider/scientific success.
+Pure client transport cases, invalid inputs and application-profile text are
+not agricultural evidence and should be labelled accordingly.
 
-## Release definition
+## Later field/import/export gates
 
-The non-AI integration is releasable only when:
+T7-T9 require real Polygon/MultiPolygon/holes, stable IDs across edits, explicit
+boundary revisions, server metric agreement, refusal/approval of repair,
+non-mutating preview, repeated/stale confirmations, durable retry/restart,
+scoped download, 204/binary parsing and complete format roundtrip.
 
-- Approved source trees are consolidated with preserved history and independent
-  frontend/backend builds.
-- Authentication/profile, field/import/export, accepted first evidence slice and
-  manual plans persist through real API/PostGIS readback and process restarts.
-- All seven existing screen families remain navigable. Recommendation/scenario
-  surfaces are explicitly deferred; source-blocked forecast/satellite/market
-  panels are clearly unavailable under approved scope, not deceptively populated.
-- No production screen, initial HTML or fallback supplies fabricated data.
-- Relevant G01-G16 gates pass, with explicit approval for source-dependent panels
-  remaining unavailable. Mandatory persistence/ownership/geometry gates cannot
-  be waived by calling those core features unavailable.
+The current browser assertion of one Leaflet path is not sufficient proof that
+all components/holes survived. Compare geometry content and independent area
+checks for the chosen authentic cases. Existing geography helpers are reusable,
+but missing authentic contexts remain blocked rather than passed.
 
-Report integration readiness separately from complete scientific coverage.
-Authentic source integration still blocked after release remains on the backlog;
-AI/model readiness is not evaluated in this milestone.
+## Commands and evidence policy
+
+Use [runbook](07-runbook.md) for current runnable interfaces and prerequisites.
+Do not claim future `/profile` or migration/setup commands exist before their
+implementation. No configured lint script was found in the current frontend
+manifest; use existing tests/build and add tooling only for a concrete need.
+
+Each gate records source SHAs, artifact hash, exact command, environment,
+`not_run/pass/fail/blocked`, and non-sensitive evidence references. Keep raw
+farmer reports, contacts, passwords, DSNs and screenshots containing private
+records out of commits. A failed/skipped/blocked required gate is not a pass.

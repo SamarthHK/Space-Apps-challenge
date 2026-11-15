@@ -1,129 +1,162 @@
-# 03. Shared API and data contract
+# 03. Actual contracts and the shared-profile bridge
 
-**Proposed, not implemented or approved.** Start from the inspected local backend
-`docs\frontend_api_contract.md`; commit and reconcile it before generating the
-single `contracts\openapi.json` artifact. This document narrows delivery to the
-non-AI milestone rather than creating a competing schema.
+**Existing baseline:** A/F `shared-workspace-1`, hash recorded in the audit.
+**Proposed additions:** the profile/write contracts below. These routes do not
+currently exist in A and must not be advertised as ready by documentation alone.
 
-## Wire rules
+## Preserve the implemented read API exactly
 
-- Application prefix `/api/v1`; `/health` and `/ready` remain origin-root service
-  probes. JSON is snake_case; frontend adapters may expose camelCase.
-- Server-created resource IDs are opaque UUID strings. Provider IDs, species
-  codes, legacy plot IDs, observation IDs and geometry revisions are separate.
-- Single resources are objects; lists use
-  `{items, next_cursor, total_count}` with nullable total count. Specify stable
-  cursor ordering and filter binding. Proposed limit: default 20, maximum 100.
-- Writes return 201 for creation, 200 for updates, 202 plus `Location` for jobs;
-  204 responses have no body. Client parsing must handle all four.
-- Versioned PATCH bodies contain `version`; atomic stale updates return 409.
-  Creates/import confirmations/job submissions carry persisted
-  `Idempotency-Key`; conflicting reuse returns 409, not a duplicate field.
-- Errors: `{error: {code, message, field_errors, request_id}}`, where field errors
-  have JSON Pointer paths. Normalize framework validation errors.
-- Define 401/403/404, 409, 413/415/422, 429 and 503 behavior. Inaccessible private
-  IDs use 404; outages and unimplemented capabilities must not look like empty
-  successful collections.
-- RFC 3339 timestamps have timezone; sample/planned dates use `YYYY-MM-DD`.
-  Unknown observation time stays null, separate from retrieval time.
-- Scientific numbers are finite; money uses decimal strings plus currency and
-  quantity basis. No formatted currency as numeric data.
-- Proposed cookie auth follows existing D01: opaque HttpOnly sessions, approved
-  same-site HTTPS origins, CSRF protection including login, and provisioned
-  accounts. Freeze actual deployment/auth choice before implementing this.
-- CORS permits only approved origins and required headers; expose request/schema
-  IDs, `Location`, `Retry-After`, and download disposition. Never use wildcard
-  credentialed CORS or browser-stored provider/session secrets.
+All listed paths have `/api/v1` prefix.
 
-## Keep independent state dimensions
-
-| Dimension | Values / meaning |
-| --- | --- |
-| Browser transport | `idle`, `loading`, `ready`, `empty`, `error` |
-| Capability | `not_started`, `in_progress`, `blocked`, `failed`, `complete` |
-| Job | `queued`, `running`, `failed`, `blocked`, `complete` |
-| Data availability | `available`, `not_collected`, `not_available_from_source`, `outside_source_coverage`, `access_restricted`, `collection_failed`, `insufficient_inputs`, `insufficient_quality`, `not_applicable`, `below_detection_limit` |
-| Validation | `accepted`, `unverified`, `rejected`, `not_evaluated` |
-| Freshness | `current`, `stale`, `unknown`, under an explicit policy |
-
-A metric carries `value`, `unit`, `measurement_basis`, `availability`, `reason`,
-`evidence_type`, validation/quality, date/depth/spatial support as applicable,
-source/observation references, and method/uncertainty metadata. Unavailable
-metrics have null values; authentic zero is not missing. Detection limits need
-their own censoring metadata, not zero. UI freshness does not change evidence
-type: modelled SoilGrids remains modelled, never laboratory measured.
-
-Unimplemented operations return 503 `capability_unavailable`; `/meta` explains
-their state. Implemented resources with no accepted evidence return explicit
-metric availability. No production fallback to bundled data.
-
-## Consumer-to-resource mapping
-
-All routes below are proposals relative to `/api/v1`. Auth and ownership apply
-to private records, jobs, assets and downloads, not just field list requests.
-
-| UI / existing input | Proposed resource and adaptation | Delivery |
+| Operation | Path | Actual response/behavior |
 | --- | --- | --- |
-| Bootstrap/login | `GET /meta`, `GET /auth/csrf`; `POST/GET/DELETE /auth/session`; new login/no-fields screens | P2 |
-| Header/profile | `GET/PATCH /me/profile`; preserve name/localized name/contact/location, category, language, risk/objective; versioned write | P2 |
-| Field selector/drawing | `GET/POST /fields`, `GET/PATCH /fields/{id}`; map `boundary` to `geometry`, `coordinates` to representative Point, areas to server values | P3 |
-| KML/KMZ import | `POST /boundary-imports`, `GET /boundary-imports/{id}`, `POST /boundary-imports/{id}/confirm`; preview creates no fields | P3 |
-| Import/export progress | `GET /jobs/{id}`; queued/running/failed/blocked/complete; bounded polling and resume after refresh | P3 |
-| GeoJSON/KML/KMZ/full export | `POST /exports`, `GET /exports/{id}`, `GET /exports/{id}/download`; authenticated Blob with safe filename | P3 |
-| Soil form | `POST /record-assets`, `GET/POST /fields/{id}/records`, `GET/PATCH /records/{id}`; actual report metadata, unverified until accepted | P4 |
-| Land analysis | `GET /fields/{id}/analysis`, `/observations`, `/feature-status`; metric adapters, source and period detail | P4 |
-| Acquisition refresh | `POST /fields/{id}/acquisitions`; configured bindings/variables/period, not arbitrary URLs; returns job | P4 |
-| My Land imagery/chart | `GET /fields/{id}/scenes`, `/scenes/{scene_id}/overlay`, `/vegetation-series`, `/climate-series`; bind field, scene and geometry revision | P6 |
-| Forecast panel | `GET /fields/{id}/forecast`; issue/valid times plus genuine forecast source, otherwise unavailable | P6 |
-| Crop selection | `GET /crops`, `GET /crops/{id}`; distinguish species/cultivars, source-backed references; no recommendation required | P5 |
-| Market intelligence | `GET /markets`, `/commodities`, `/market-observations`, `/support-prices`; authentic dated records and quantity/currency basis | P6 |
-| Manual planting plans | `GET/POST /plans`, `GET/PATCH /plans/{id}`, `GET /plans/summary`; drafts work without recommendation/economics | P5 |
-| Dashboard | `GET /dashboard`; owned field/area/verified counts and plan previews; recommendation metrics explicitly deferred | P5 |
-| Provenance details | `GET /provenance/assets/{id}`; metadata/checksum, not internal path or unrestricted private original | P4 |
-| Recommendations/scenarios/sliders | Reserve existing proposed `/recommendation-runs` and `/economic-scenarios`; do not implement them for this milestone | Deferred |
+| `getHealth` | `/health` | `{data: {status, contract_revision}, meta}`; liveness only |
+| `getWorkspace` | `/workspace` | Access mode, contract revision, configured project IDs, capabilities |
+| `listFields` | `/fields` | Page of FieldRecord; `limit` defaults to 50, maximum 200 |
+| `getField` | `/fields/{field_id}` | Optional `boundary_id`; no current geometry guessed with multiple versions |
+| `listObservations` | `/fields/{field_id}/observations` | `variable_id`, `validation_status` (all, pending, accepted, rejected), paired inclusive `start_date/end_date`, cursor/limit |
+| `getObservation` | `/fields/{field_id}/observations/{canonical_observation_id}` | Canonical scientific record, validation, conflict flag, evidence count |
+| `listObservationEvidence` | `/fields/{field_id}/observations/{canonical_observation_id}/evidence` | Paginated original source observations with provenance/time basis |
 
-## Geometry, imports and identity
+`GET /api/v1/openapi.json` is also served, but is not one of those seven
+registered OpenAPI operations. Do not confuse B `/health`, `/ready`, `/meta`
+or `/me/profile` with these paths.
 
-Accept Polygon/MultiPolygon in GeoJSON longitude/latitude order. Render via
-`L.geoJSON`; only explicit Leaflet point calls convert order. Fields return
-`id`, `version`, `geometry_version`, full geometry, representative Point,
-area/hectares/acres/guntas, perimeter and calculation method.
+Success: `{data: T, meta: {request_id, api_version: "v1"}}`.
+Pages: same envelope with `data: T[]` and `meta.next_cursor`.
+Errors: `{error: {code, message, details: [{path,code,message}], retryable}, meta}`.
+Do not change this to the earlier merger plan's `{items,...}` or bare objects.
 
-Persist geometry revisions, not new field IDs on each edit. Area is calculated
-server-side under the approved projected/geodesic method and tolerance, stored
-with method/version; browser drawing values are labelled provisional. Reported
-acreage is a separate submission, not an override.
+Capabilities currently use `capability_id`, `state: ready|blocked|not_implemented`,
+`operation_ids`, `reason`. `profile` already reserves `getProfile/updateProfile`.
+Keep the entry not implemented until the route exists, blocked if configured
+storage is unavailable, and ready only after the required storage is usable.
+Do not gate all existing reads on new profile configuration.
 
-Import flow: bounded upload -> durable parsing job -> immutable candidates
-(original/proposed geometry, notes, repair flag) -> explicit candidate selection
-and repair consent -> atomic field creation. Confirmation checks preview version
-and idempotency. Refusal, stale previews and worker retry must not create fields.
-Preserve all polygon components and holes on map and export.
+### Existing field/evidence semantics
 
-## Scientific mappings that must not be simple renames
+- Field IDs are opaque source-based strings, not necessarily UUIDs. Keep
+  `field_id`, `project_id`, `current_boundary_id`, `selected_boundary_id`,
+  `boundary_versions` and `geometry_status`.
+- Current geometry/metrics can legitimately be null. Geometry is stored
+  GeoJSON; metric CRS, area and perimeter come from the backend. Selecting a
+  boundary is a read choice, not an update of a persisted current pointer.
+- Current observation requests are field-scoped, not filtered by the selected
+  boundary. Keep their recorded geometry/spatial support visible; changing the
+  map boundary must not imply observations were recomputed for that version.
+- Observations are canonical records, not individual download receipts. Several
+  source evidence records may support one canonical observation; conflicting
+  scientific revisions stay distinct.
+- `pending/accepted/rejected` must not become B's proposed validation vocabulary
+  or a browser Boolean `hasSoilTest`.
+- Provider-local times retain their `timezone`/time-standard context. Do not
+  apply `Date(...).toISOString()` and invent UTC. Dates used for filters remain
+  civil dates; interval-only filtering needs a separately specified extension.
+- Canonical normalization can differ from the raw source representation. Keep
+  original units/basis and exact lineage visible; do not blindly assert equality
+  between normalized values and provider raw values.
+- Transport state, capability state, validation and geometry availability are
+  different axes. A ready API with only pending data is a valid inspection state.
+- Missing source values are not Observation objects with null in every value
+  column. Gap/feature-status persistence is later work; an empty filtered page
+  does not establish complete source coverage.
 
-| Frontend property | Backend meaning / required rule |
+## Proposed profile contract
+
+Use `GET /api/v1/profile` (`getProfile`) and
+`PATCH /api/v1/profile` (`updateProfile`), following A's existing proposed
+operation registry. No `/auth/*`, `/me/profile`, cookies or CSRF session flow.
+
+| Element | Proposed rule |
 | --- | --- |
-| `organicCarbonPct` | Canonical organic carbon g/kg divided by 10 only with registered conversion and matching measurement basis |
-| `nitrogenKgHa` | Available nitrogen, not backend `total_nitrogen` g/kg; require authentic compatible report/method |
-| `phosphorusKgHa`, `potassiumKgHa` | Preserve available/total and elemental/oxide basis; do not manufacture kg/ha from concentration without required depth/density/method |
-| `hasSoilTest` | Replace with evidence/validation state; a submitted form or modelled map does not imply verified lab evidence |
-| `soilDepth` | Reported effective/root-zone category is not the sample's depth interval |
-| `groundwaterYieldInches` | Original ambiguous text; normalized flow unavailable until real quantity/time basis is supplied |
-| `irrigationCostPerHour` | Actual monetary amount and period/area/time basis; annual cess cannot become hourly cost |
-| `annualRainfallMm` | Aggregate with exact coverage/period; distinguish one year, normal and forecast |
-| NDWI canopy control | Approve exact bands/index definition; if selecting NDMI, rename UI and variable explicitly |
-| `cropId` | Map explicit species/cultivar IDs; do not parse browser slugs or select first variety |
+| Ownership | Server-configured shared workspace; no caller-supplied owner, project reassignment or hidden user |
+| Response | `ProfileResponse = {data: SharedProfile, meta}` plus strong `ETag` |
+| Resource | Server-owned `workspace_id`, `version >= 1`, audit timestamps and the nullable fields below; retain A's proposed workspace key rather than B's user/profile ID contract |
+| GET | 200 for provisioned profile, stable ETag; no seed/create side effect. Missing setup is 503 with actionable capability reason |
+| PATCH body | At least one permitted property; omitted means unchanged, explicit null clears nullable field; reject server-owned/unknown fields |
+| PATCH precondition | Required `If-Match` from last successful profile read/write. 428 when absent; 412 for a stale/nonmatching version; define malformed header validation explicitly |
+| Transaction | Atomic compare-and-update plus revision snapshot; one commit increments version once. No last-writer-wins fallback |
+| PATCH success | 200 with new ProfileResponse and ETag |
+| Invalid data | 422 in the shared error envelope with field details; limits/enums retain donor validation unless explicitly revised |
+| Ambiguous network result | Preserve form edits; reload current server state before deliberate retry. No automatic PATCH retries |
 
-## Manual plan minimum
+Retain donor fields and limits: name/localized name/location strings (up to 200),
+phone (32, existing syntax validation), soil-card reference (100), category
+`small_marginal|medium|large`, language `en|kn`, risk
+`conservative|balanced|progressive`, objective
+`profit_maximization|low_water_risk|household_security`. All may be null.
+These preferences are stored, not claims that recommendation methods use them.
+The soil-card reference is not scientific verification.
 
-Require owned `field_id`, authentic `crop_id`, positive `cultivated_area` with
-unit, and `planned_sowing_date`. Optional cultivar/harvest/notes/user budget are
-explicit inputs. Validate area against the field and date ordering; include
-geometry revision. Preserve draft/planned/archived state and optimistic version.
+Separate the response model from the patch model: B currently inherits Profile
+from a patch requiring body `version`. In the shared contract, concurrency is
+from `If-Match`; do not accept a second conflicting body version/ownership field.
+An ETag format such as `"profile:<workspace-id>:<version>"` is a proposal to freeze in the
+schema/tests, not a string clients should calculate themselves.
 
-Recommendation/scenario references are nullable. Financial snapshot, predicted
-yield, optimized dates and agronomic advice remain unavailable when deferred.
-Do not call `recommendationEngine.calculateCropFinancials` merely to save a plan.
-Archive preserves history. A later geometry change marks dependent snapshots
-stale rather than rewriting their history.
+## Frontend adaptation, not replacement
+
+Extend F's transport while preserving the existing `api.get()` response shape
+and all current call sites. Add a response-aware path for profile GET/PATCH that
+returns validated body plus ETag/header metadata. Do not inject hidden headers
+into JSON or use P's incompatible callable client/ApiError constructor.
+
+The profile adapter stores the last ETag and builds writable fields only.
+On 412, preserve the user's edits and offer an explicit reload/compare; do not
+blindly reapply them. Show server field errors from `error.details` and retain
+request ID. After saving, update resource state/version without rerendering or
+clearing the field/map/evidence state.
+
+Extract P field definitions and safe DOM form rendering into a profile component
+inside F's existing seven-view shell. Label it a **shared workspace profile**;
+do not show a login page, "my private profile", or misleading user attribution.
+Disabled/unimplemented profile state is replaced only when its capability is
+ready. Other deferred screens remain unchanged.
+
+## CORS and mutation rules
+
+Keep `credentials: "omit"` and explicit trusted-network hosts/origins.
+For profile integration, permit GET/PATCH/OPTIONS as appropriate and
+`Content-Type`, `If-Match`, `X-Request-ID`; expose `ETag` and request ID.
+Check Host and Origin, including Origin on state-changing browser requests;
+do not rely on CORS alone as authorization. Preserve no-store responses and
+sanitized errors, including preflight/412/428/503 paths.
+
+POST/idempotency, multipart uploads, `Location`, `Content-Disposition` and Blob
+downloads are introduced only with actual import/export/create operations.
+Existing client code always parses JSON; it cannot yet consume 204 or binary
+responses. Add those cases before exposing operations that use them.
+
+All allowed clients share access; this mode is not suitable for public exposure.
+Restrict canonical project scope on every nested read and later mutation.
+
+## Versioning and compatibility gate
+
+Both current validators forbid extra properties in their strict DTOs. An
+"additive" field on an existing response can therefore break the deployed
+frontend. Merely matching OpenAPI `info.version=1.0.0` is insufficient.
+
+For the first profile increment, add new operation/schema definitions without
+changing existing read responses. Updating the existing profile capability to
+ready fits its current schema. Keep the deployed `shared-workspace-1` literal
+compatible while those reads remain unchanged, and record the new artifact
+hash/source commit. If a revision literal or old response shape must change,
+ship an explicitly compatible client first or version the API; do not silently
+invalidate bootstrap.
+
+Backend exports its actual schemas, frontend pins identical bytes and consumes
+the new ProfileResponse. CI checks both artifact provenance and representative
+real responses. The same rule applies to error envelopes and provider-time
+formats, not just endpoint names.
+
+## Later operations: retain shared naming
+
+Future jobs/imports/exports/soil/crops/plans follow A's operation registry:
+`/boundary-imports`, `/jobs/{job_id}`, `/fields/{field_id}/exports`,
+`/exports/{export_id}/download`, `/fields/{field_id}/soil-records`, `/crops`,
+`/planting-plans`. Do not reintroduce the earlier `/plans` or global `/exports`
+create paths from the superseded plan.
+
+These remain proposals until implemented. Do not list routes as operational
+because a CLI helper or capability ID exists. Model/recommendation/economic
+contracts are not expanded in this integration.
