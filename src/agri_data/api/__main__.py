@@ -19,8 +19,8 @@ def main():
     settings = Settings.from_env()
     app = create_app(settings, DataSettings.from_env(), WorkspaceSettings.from_env())
     if args.export_openapi:
-        args.export_openapi.write_text(
-            json.dumps(app.openapi(), indent=2, ensure_ascii=True) + "\n", encoding="utf-8",
+        args.export_openapi.write_bytes(
+            (json.dumps(app.openapi(), indent=2, ensure_ascii=True) + "\n").encode("utf-8"),
         )
     else:
         uvicorn.run(app, host=settings.bind_host, port=settings.port, proxy_headers=False)

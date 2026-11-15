@@ -141,6 +141,7 @@ def test_openapi_export_is_deterministic_and_matches_live_routes(server, tmp_pat
     )
     assert result.returncode == 0, result.stderr
     assert json.loads(output.read_text(encoding="utf-8")) == live
+    assert b"\r\n" not in output.read_bytes(), "Contract checksums must not depend on checkout platform"
 
 
 def test_unexpected_failures_are_redacted_and_readable_by_allowed_frontend():
