@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
+from hashlib import sha256
 import os
 import subprocess
 import sys
@@ -11,7 +12,7 @@ from agri_data.api.app import create_app
 from agri_data.api.config import Settings
 from agri_data.api.profile import ProfilePatch
 from agri_data.workspace.errors import WorkspaceError, WorkspaceUnavailable
-from agri_data.workspace.store import WorkspaceStore, profile_etag
+from agri_data.workspace.store import WorkspaceStore, migration_files, profile_etag
 from agri_data.workspace.settings import WorkspaceSettings
 
 
@@ -145,3 +146,18 @@ def test_workspace_configuration_cannot_fall_back():
     assert WorkspaceSettings.from_env({}) is None
     with pytest.raises(ValueError):
         WorkspaceSettings.from_env({"AGRI_WORKSPACE_ID": "only-one-setting"})
+
+
+def test_legacy_windows_migration_checksums_remain_valid_without_rewriting_history(workspace_store):
+    original = workspace_store.get_profile()
+    entry = migration_files()[0]
+    content = entry.read_bytes().replace(b"\r\n", b"\n")
+    legacy = sha256(content.replace(b"\n", b"\r\n")).hexdigest()
+    with workspace_store.session() as connection:
+        connection.execute("UPDATE workspace_migrations SET sha256=%s WHERE name=%s", (legacy, entry.name))
+    assert workspace_store.ready()
+    workspace_store.provision()
+    assert workspace_store.get_profile() == original
+    with workspace_store.session() as connection:
+        assert connection.execute("SELECT sha256 FROM workspace_migrations WHERE name=%s",
+                                  (entry.name,)).fetchone()["sha256"] == legacy

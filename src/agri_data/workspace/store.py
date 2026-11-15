@@ -15,6 +15,11 @@ def migration_files():
                    if entry.name.endswith(".sql")), key=lambda entry: entry.name)
 
 
+def migration_checksums(content):
+    normalized = content.replace(b"\r\n", b"\n")
+    return {sha256(normalized).hexdigest(), sha256(normalized.replace(b"\n", b"\r\n")).hexdigest()}
+
+
 def profile_etag(profile):
     return f'"profile:{profile["workspace_id"]}:{profile["version"]}"'
 
@@ -57,10 +62,10 @@ class WorkspaceStore:
             if recorded.keys() - {entry.name for entry in migrations}:
                 raise WorkspaceUnavailable("Workspace schema is newer than this application")
             for entry in migrations:
-                content = entry.read_bytes()
+                content = entry.read_bytes().replace(b"\r\n", b"\n")
                 digest = sha256(content).hexdigest()
                 if entry.name in recorded:
-                    if recorded[entry.name] != digest:
+                    if recorded[entry.name] not in migration_checksums(content):
                         raise WorkspaceUnavailable("Workspace migration checksum differs")
                     continue
                 connection.execute(content.decode("utf-8"))
@@ -82,8 +87,8 @@ class WorkspaceStore:
             with self.session() as connection:
                 recorded = {row["name"]: row["sha256"] for row in connection.execute(
                     "SELECT name,sha256 FROM workspace_migrations")}
-                expected = {entry.name: sha256(entry.read_bytes()).hexdigest() for entry in migration_files()}
-                if recorded != expected:
+                expected = {entry.name: migration_checksums(entry.read_bytes()) for entry in migration_files()}
+                if recorded.keys() != expected.keys() or any(recorded[name] not in expected[name] for name in recorded):
                     return False
                 permissions = connection.execute(
                     "SELECT has_table_privilege(current_user,%s,'SELECT') "

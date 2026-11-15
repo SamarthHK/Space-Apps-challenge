@@ -1,1 +1,2 @@
 /docs/openapi.json text eol=lf
+/src/agri_data/workspace/migrations/*.sql text eol=lf

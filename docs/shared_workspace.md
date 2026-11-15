@@ -25,6 +25,8 @@ an empty shared profile. Repeating it does not reset values. GET never provision
 records. `python -m agri_data.workspace.admin check` fails if setup is incomplete
 or migration checksums differ. The application ledger is independent of the
 canonical scientific schema and its migrations.
+Application migrations use canonical LF bytes; exact legacy CRLF checksums are
+also accepted without rewriting their ledger. Other content drift is rejected.
 
 Launch using `python -m agri_data.api` with `AGRI_ALLOWED_ORIGINS` and the existing
 loopback/Tailscale host settings. Environment files are not implicitly loaded.
