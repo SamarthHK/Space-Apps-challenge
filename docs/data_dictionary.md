@@ -1,5 +1,9 @@
 # Data dictionary
 
+> Historical documentation; the referenced baseline variable registry was removed.
+> Current typed observations are defined in `src/agri_data/contracts/observation.py`.
+> The full atomic-variable registry required by `Plan.md` is still incomplete.
+
 The platform stores raw source responses separately from normalized observations.
 Canonical variables and units are defined in [`config/variables.yaml`](../config/variables.yaml).
 

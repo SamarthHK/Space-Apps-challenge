@@ -1,5 +1,9 @@
 # Complete output and import workflow
 
+> Historical documentation. These commands and modules have been retired.
+> Do not run the sample workflow below as acceptance evidence. Current preparation
+> commands and the unfinished full-export contract are documented in `README.md`.
+
 Run the current source adapters:
 
 ```sh

@@ -1,5 +1,9 @@
 # Methodology and limitations
 
+> Historical documentation for the retired backend, not current methodology.
+> The scoring and baseline calculations below have been removed. See `Plan.md`
+> and `README.md`; scientific normalization and domain acceptance remain incomplete.
+
 Field area and perimeter are calculated after projecting each plot to a local UTM
 CRS. Soil values retain depth intervals. Climate indicators are calculated from
 daily records, while vegetation metrics are derived from dated spectral-index

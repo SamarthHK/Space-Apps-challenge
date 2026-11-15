@@ -1,5 +1,9 @@
 # KML workflow
 
+> Historical documentation; the pipeline named below has been removed.
+> The replacement provides `ingest-boundaries`, validated against one authentic
+> provider parcel. The full S03 corpus is not yet verified. See `README.md`.
+
 `agri_data.pipeline.run_pipeline` accepts a `.kml` or `.kmz` file, extracts polygon
 placemarks, repairs validatable geometries, assigns stable `FIELD_XXXX` identifiers,
 calculates metric area/perimeter, and uses each field's representative point for

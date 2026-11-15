@@ -1,5 +1,9 @@
 # Source catalog
 
+> Historical documentation for the retired backend, not current functionality.
+> The generated/fallback adapters below have been removed. See `Plan.md` and
+> `README.md` for the replacement's requirements, verified preparation and blockers.
+
 | Adapter | Domain | Default behavior |
 |---|---|---|
 | SoilGrids 2.0 | Soil | REST point query with local synthetic fallback |
