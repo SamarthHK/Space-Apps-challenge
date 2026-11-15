@@ -1,60 +1,66 @@
 """Versioned, offline reference inference; unsupported field/time claims fail closed."""
 
-from datetime import date
 import json
 from pathlib import Path
-from typing import Literal
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from .identity import fingerprint
 from .india_dataset import TASK, load_reference_frames
 from .india_experiments import masked_softmax
+from .india_inference_contract import ReferenceContextNotFound, ReferenceIntervalMismatch, ReferenceRequest
 from .india_models import load_estimator, predict_estimator
 from .model_records import verify_model_bundle
 from .storage_proof import require
 
 
-class ReferenceRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+class ReferenceModel:
+    def __init__(self, model_path, expected_model_id=None):
+        path = Path(model_path)
+        self.manifest = verify_model_bundle(path, "india_reference_models")
+        manifest = self.manifest
+        require(manifest["task"] == TASK, "Wrong trained task")
+        require(expected_model_id is None or manifest["model_id"] == expected_model_id,
+                "Configured reference model identity differs")
+        require(manifest["model_id"] == fingerprint({
+            "selection": manifest["selection_id"], "code": manifest["code"],
+            "files": manifest["files"], "dependencies": manifest["dependencies"],
+        }), "Reference model identity does not match its artifacts")
+        method = manifest["champion"]
+        require(method in ("baseline", "catboost", "mlp"), "Unsupported reference model method")
+        required = {"contexts.parquet", "crops.parquet", method + ".state.json", method + ".calibration.json"}
+        if method != "baseline":
+            required.add(method + (".cbm" if method == "catboost" else ".pt"))
+        require(required <= manifest["files"].keys(), "Reference model has unverified serving files")
+        self.contexts = pd.read_parquet(path / "contexts.parquet").set_index("context_id", drop=False)
+        self.crops = pd.read_parquet(path / "crops.parquet").set_index("crop_id")
+        require(self.contexts.index.is_unique and self.crops.index.is_unique, "Repeated serving context or crop")
+        self.model, self.state = load_estimator(path, method)
+        require(self.state["method"] == method, "Reference checkpoint method differs from its manifest")
+        self.calibration = json.loads((path / (method + ".calibration.json")).read_bytes())
 
-    schema_version: Literal["1"]
-    task: Literal["india_published_reference_suitability"]
-    mode: Literal["historical_reference_analysis"]
-    comparison_scope: Literal["reference_climate_only"]
-    context_id: str = Field(pattern=r"^[0-9a-f]{64}$")
-    analysis_start: date
-    analysis_end: date
-    production_system: Literal["HRLM", "HILM", "LRLM", "LILM"]
-    crop_ids: list[str]
-    excluded_crop_ids: list[str] = Field(default_factory=list)
-    minimum_reference_score: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
-
-    @model_validator(mode="after")
-    def validate_scope(self):
-        if self.analysis_start > self.analysis_end:
-            raise ValueError("Analysis interval is reversed")
-        if len(set(self.crop_ids)) != len(self.crop_ids):
-            raise ValueError("Repeated candidates would distort preference mass")
-        return self
+    def predict(self, payload):
+        return _predict_reference(self, payload)
 
 
 def predict_reference(model_path, payload):
+    return ReferenceModel(model_path).predict(payload)
+
+
+def _predict_reference(loaded, payload):
     request = ReferenceRequest.model_validate(payload)
-    path = Path(model_path)
-    manifest = verify_model_bundle(path, "india_reference_models")
+    manifest = loaded.manifest
     require(manifest["task"] == request.task == TASK, "Wrong trained task")
-    contexts = pd.read_parquet(path / "contexts.parquet")
-    selected = contexts[contexts.context_id == request.context_id]
-    require(len(selected) == 1, "Unknown reference context; arbitrary fields and dates are not supported")
-    context = selected.iloc[0].to_dict()
-    require(context["analysis_start"] == request.analysis_start.isoformat() and
-            context["analysis_end"] == request.analysis_end.isoformat(), "Requested interval differs from the reference context")
-    crops = pd.read_parquet(path / "crops.parquet").set_index("crop_id")
+    if request.context_id not in loaded.contexts.index:
+        raise ReferenceContextNotFound("Unknown reference context; arbitrary fields and dates are not supported")
+    context = loaded.contexts.loc[request.context_id].to_dict()
+    if (context["analysis_start"] != request.analysis_start.isoformat() or
+            context["analysis_end"] != request.analysis_end.isoformat()):
+        raise ReferenceIntervalMismatch("Requested interval differs from the reference context")
+    crops = loaded.crops
     method = manifest["champion"]
-    model, state = load_estimator(path, method)
-    calibration = json.loads((path / (method + ".calibration.json")).read_bytes())
+    model, state, calibration = loaded.model, loaded.state, loaded.calibration
     support = {tuple(pair) for pair in state["crop_system_support"]}
     withheld, records = [], []
     for crop in request.crop_ids:

@@ -11,7 +11,7 @@ import pandas as pd
 from pydantic import ValidationError
 import pytest
 
-from agri_data.contracts.india_inference import predict_reference
+from agri_data.contracts.india_inference import ReferenceModel, predict_reference
 
 
 @pytest.fixture(scope="module")
@@ -34,6 +34,27 @@ def test_saved_real_request_replays_in_a_clean_cli_process(artifact):
     )
     assert process.returncode == 0, process.stdout + process.stderr
     assert json.loads(process.stdout) == expected
+
+
+def test_cached_reference_loader_preserves_scores_and_rejects_a_wrong_model_pin(artifact):
+    path, request = artifact
+    manifest = json.loads((path / "manifest.json").read_bytes())
+    loaded = ReferenceModel(path, manifest["model_id"])
+    expected = predict_reference(path, request)
+    assert loaded.predict(request) == loaded.predict(request) == expected
+    with pytest.raises(ValueError, match="Configured reference model identity differs"):
+        ReferenceModel(path, manifest["dataset_id"])
+
+
+def test_request_schema_import_does_not_require_optional_model_packages():
+    script = """
+import sys
+from agri_data.contracts.india_inference_contract import ReferenceRequest
+assert not {'torch', 'catboost', 'psutil', 'pandas', 'agri_data.contracts.india_models'} & set(sys.modules)
+assert ReferenceRequest.model_json_schema()['additionalProperties'] is False
+"""
+    process = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True)
+    assert process.returncode == 0, process.stdout + process.stderr
 
 
 def test_known_but_untrained_crop_and_empty_candidate_set_abstain(artifact):
