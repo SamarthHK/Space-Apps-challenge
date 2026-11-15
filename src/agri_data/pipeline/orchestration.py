@@ -4,6 +4,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
 import json
+import hashlib
+import uuid
+import pandas as pd
 
 from agri_data.config import settings
 from agri_data.geo.kml import load_kml
@@ -21,20 +24,40 @@ from agri_data.reporting import write_project_report
 
 def run_pipeline(kml_path: str | Path, project_name: Optional[str] = None,
                  domains: Optional[Iterable[str]] = None,
-                 persist: bool = True) -> Dict[str, Any]:
+                 persist: bool = True, mode: str = "live",
+                 start_date: str = "2025-01-01", end_date: str = "2025-12-31") -> Dict[str, Any]:
+    if mode not in {"live", "demo"}:
+        raise ValueError("mode must be live or demo")
+    if pd.Timestamp(start_date) > pd.Timestamp(end_date):
+        raise ValueError("start_date must precede end_date")
+    domains = list(domains) if domains is not None else None
+    input_bytes = Path(kml_path).read_bytes()
+    checksum = hashlib.sha256(input_bytes).hexdigest()
+    raw_input = settings.raw_dir / "inputs" / (checksum + Path(kml_path).suffix.lower())
+    raw_input.parent.mkdir(parents=True, exist_ok=True)
+    if not raw_input.exists():
+        raw_input.write_bytes(input_bytes)
+    run_id = uuid.uuid4().hex
+    output_dir = settings.exports_dir / run_id
+    output_dir.mkdir(parents=True)
     fields = calculate_centroids(calculate_area_and_perimeter(load_kml(kml_path)))
-    export_paths = export_fields_spatial(fields, settings.processed_dir / "fields")
+    fields["field_id"] = ["FIELD_" + hashlib.sha256(((project_name or "default") + geom.normalize().wkb_hex).encode()).hexdigest()[:24] for geom in fields.geometry]
+    fields = fields.drop_duplicates("field_id")
+    export_paths = export_fields_spatial(fields, output_dir / "fields")
     init_db() if persist else None
     profiles: Dict[str, Any] = {}
     acquired_by_field: Dict[str, Any] = {}
 
     if persist:
         with get_db_session() as session:
+            register_source_asset(session, raw_input, raw_input.suffix.lstrip("."))
             project = Project(name=project_name or settings.project_cfg.get("project", {}).get("name", "AgriData"),
                               region=settings.project_cfg.get("project", {}).get("region", "Unknown"))
             session.add(project)
             session.flush()
             for _, row in fields.iterrows():
+                if session.query(Field).filter_by(field_id=row.field_id).first():
+                    continue
                 metadata = row.get("extended_data")
                 if isinstance(metadata, str):
                     try: metadata = json.loads(metadata)
@@ -48,20 +71,30 @@ def run_pipeline(kml_path: str | Path, project_name: Optional[str] = None,
             session.flush()
 
     for _, row in fields.iterrows():
-        acquired = acquire_field_data(row, domains=domains)
+        acquired = acquire_field_data(row, domains=domains, start_date=start_date, end_date=end_date, mode=mode)
         profile = extract_field_profile(row, acquired)
+        profile["sources"] = {domain: {key: value for key, value in result.items() if key in {"status", "reason", "mode", "raw_file", "valid"}} for domain, result in acquired.items()}
         profiles[row.field_id] = profile
         acquired_by_field[row.field_id] = acquired
-        export_agricultural_profile(row.field_id, profile)
+        export_agricultural_profile(row.field_id, profile, output_dir / row.field_id)
         for result in acquired.values():
             raw_file = result.get("raw_file")
             if raw_file and Path(raw_file).exists() and persist:
                 with get_db_session() as session:
-                    register_source_asset(session, Path(raw_file), Path(raw_file).suffix.lstrip(".") or "json")
-        if persist:
-            with get_db_session() as session:
-                record_batch_observations(session, flatten_observations(row.field_id, acquired))
+                    asset = register_source_asset(session, Path(raw_file), Path(raw_file).suffix.lstrip(".") or "json")
+                    key = hashlib.sha256((row.field_id + str(asset.id) + mode + "processing-v2").encode()).hexdigest()
+                    if not session.query(ExtractionJob).filter_by(job_id=key).first():
+                        observations = flatten_observations(row.field_id, {"result": result})
+                        for observation in observations:
+                            observation["source_asset_id"] = asset.id
+                        record_batch_observations(session, observations)
+                        session.add(ExtractionJob(job_id=key, source_id=result["source_id"], field_ids_json=[row.field_id], status="COMPLETED", completed_at=datetime.utcnow()))
+        observations = flatten_observations(row.field_id, acquired)
+        (output_dir / row.field_id / "observations.json").write_text(json.dumps(observations, indent=2, default=str))
+        if observations:
+            pd.DataFrame(observations).to_parquet(output_dir / row.field_id / "observations.parquet", index=False)
 
-    report_path = write_project_report(profiles.values())
+    report_path = write_project_report(profiles.values(), output_dir / "project_summary.json")
+    (output_dir / "manifest.json").write_text(json.dumps({"run_id": run_id, "kml_checksum": checksum, "input_asset": str(raw_input), "mode": mode, "domains": domains, "start_date": start_date, "end_date": end_date, "processing_version": "2", "profiles": list(profiles)}, indent=2))
     return {"fields": fields, "profiles": profiles, "acquired": acquired_by_field,
             "exports": export_paths, "project_report": report_path}
