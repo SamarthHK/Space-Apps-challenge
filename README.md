@@ -306,6 +306,11 @@ experiment below. Neither command claims an operational crop recommendation.
 
 AI/ML development and its data-preparation dependencies live on `backend-ai`.
 
+The [India model plan](INDIA_MODEL_PLAN.md) covers Indian crops and fruits,
+source-backed growing requirements, time-aligned features, competing model
+architectures and crop-covered evaluation. It is a source-audited roadmap,
+not a claim that Indian models have already been trained.
+
 `outcome_data.py` acquires the official Broadbalk wheat, field bean, oat, forage
 maize and potato spreadsheets plus the Woburn wheat trial. It preserves all
 original fields, reference tables, missing yields and source notes. NASA POWER
