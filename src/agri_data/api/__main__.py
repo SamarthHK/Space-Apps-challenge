@@ -1,0 +1,28 @@
+"""Run with python -m agri_data.api; no import-time connection or migration."""
+
+import argparse
+import json
+from pathlib import Path
+
+import uvicorn
+
+from .app import create_app
+from .config import Settings
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Trusted-network shared workspace API")
+    parser.add_argument("--export-openapi", type=Path)
+    args = parser.parse_args()
+    settings = Settings.from_env()
+    app = create_app(settings)
+    if args.export_openapi:
+        args.export_openapi.write_text(
+            json.dumps(app.openapi(), indent=2, ensure_ascii=True) + "\n", encoding="utf-8",
+        )
+    else:
+        uvicorn.run(app, host=settings.bind_host, port=settings.port, proxy_headers=False)
+
+
+if __name__ == "__main__":
+    main()
