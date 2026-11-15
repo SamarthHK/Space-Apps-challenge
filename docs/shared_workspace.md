@@ -1,7 +1,9 @@
 # Shared application state
 
-Run the existing API and frontend as separate instances. No accounts, sessions,
-cookies, private-user profile migration, or model inference are introduced.
+Run the existing API and frontend as separate instances. This workspace-state
+slice introduces no accounts, sessions, cookies or private-user profile migration.
+Optional read-only reference inference is configured separately in
+[api-running.md](api-running.md); it does not read or mutate workspace fields.
 Every visitor permitted by the loopback/Tailscale configuration sees the same
 profile. A soil-card reference is not verified laboratory evidence.
 
@@ -118,7 +120,8 @@ project settings as the API. This is backend infrastructure, not another
 browser-facing API. `--once` processes at most one queued job for operational
 checks. Provisioning does not start a worker. Import/export capabilities require
 a matching worker heartbeat from the last 30 seconds; job status remains readable
-while workers are offline. Acquisition and model capabilities remain unavailable.
+while workers are offline. Acquisition and field-recommendation capabilities
+remain unavailable; optional reference suitability does not use this job worker.
 
 Submit original bytes to `POST /api/v1/imports?filename=...&project_id=...&source_namespace=...`
 with `Content-Type: application/octet-stream` and an `Idempotency-Key`.

@@ -1,6 +1,7 @@
 """Real saved-model HTTP checks; no mocked providers or manufactured crop examples."""
 
 from copy import deepcopy
+from hashlib import sha256
 import json
 import os
 from pathlib import Path
@@ -231,11 +232,39 @@ def test_real_loopback_server_loads_operator_configuration_and_serves_saved_pred
             metadata = requests.get(root + "/reference-model", timeout=30)
             assert metadata.status_code == 200, metadata.text
             assert metadata.json()["data"]["model_id"] == manifest["model_id"]
-            response = requests.post(root + "/reference-model/predictions", json=request, headers=ORIGIN, timeout=15)
-            assert response.status_code == 200, response.text
-            expected = predict_reference(path, {key: value for key, value in request.items() if key != "model_id"})
-            assert response.json()["data"] == expected
+            data = metadata.json()["data"]
+            checks = []
+            for period in data["periods"]:
+                page = requests.get(root + "/reference-model/contexts", params={
+                    "model_id": data["model_id"], "period_id": period["period_id"], "limit": 1,
+                }, timeout=15)
+                assert page.status_code == 200, page.text
+                context = page.json()["data"][0]
+                systems = sorted({system for crop in data["crops"] for system in crop["production_systems"]})
+                for system in systems:
+                    selected = {**request, "context_id": context["context_id"],
+                                "analysis_start": context["analysis_start"], "analysis_end": context["analysis_end"],
+                                "production_system": system,
+                                "crop_ids": [crop["crop_id"] for crop in data["crops"] if system in crop["production_systems"]]}
+                    response = requests.post(root + "/reference-model/predictions", json=selected,
+                                             headers=ORIGIN, timeout=15)
+                    assert response.status_code == 200, response.text
+                    expected = predict_reference(path, {key: value for key, value in selected.items() if key != "model_id"})
+                    assert response.json()["data"] == expected
+                    assert sum(row["relative_preference"] for row in expected["ranked"]) == pytest.approx(1)
+                    checks.append({"period_id": period["period_id"], "production_system": system,
+                                   "context_id": context["context_id"], "candidates": len(expected["ranked"]),
+                                   "http_status": response.status_code, "cli_parity": "exact"})
             assert requests.get(root + "/health", timeout=2).status_code == 200
+            proof = os.environ.get("AGRI_REFERENCE_HTTP_PROOF")
+            if proof:
+                proof = Path(proof)
+                proof.parent.mkdir(parents=True, exist_ok=True)
+                with proof.open("x", encoding="utf-8") as output:
+                    json.dump({"model_id": data["model_id"], "checks": checks,
+                               "model_manifest_sha256": sha256((path / "manifest.json").read_bytes()).hexdigest(),
+                               "live_openapi_sha256": sha256(requests.get(root + "/openapi.json", timeout=5).content).hexdigest(),
+                               "private_fields_used": False, "model_training_performed": False}, output, indent=2)
         finally:
             if process.poll() is None:
                 process.terminate()
