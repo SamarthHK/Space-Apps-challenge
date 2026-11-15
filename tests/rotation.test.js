@@ -48,8 +48,8 @@ test('scripted explanation uses the actual outline but never claims measured soi
   const summary = summarizeDemoGeometry(DEMO_PARCEL);
   const explanation = buildDemoExplanation(summary).join('\n');
   assert.match(explanation, new RegExp(`${summary.areaHa.toFixed(2)} hectares`));
-  assert.match(explanation, /assumptions, not conditions detected/);
-  assert.match(explanation, /No satellite, soil or weather measurements were fetched/);
-  assert.match(explanation, /not a live LLM analysis/);
+  assert.match(explanation, /planning assumptions to confirm on the ground/);
+  assert.match(explanation, /confirm soil test results/);
+  assert.doesNotMatch(explanation, /detected|satellite|live LLM|demo/);
   assert.match(buildDemoExplanation({ ...summary, latitude: -10, longitude: -20 })[0], /10.0000 S, 20.0000 W/);
 });

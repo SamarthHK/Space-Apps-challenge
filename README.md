@@ -38,9 +38,11 @@ filesystem. The generated API contract is pinned in `contracts/openapi.json`;
 Open **Crop Recommendations** (or `http://127.0.0.1:1080/?demo=rotation`) for the
 standalone demo. Use the example parcel, draw a polygon with the existing Leaflet
 drawing controls, or use a recorded field boundary after loading it in My Land.
-Click **Generate demo rotation** for the simulated scan, seasonal calendar and
+Click **Generate crop rotation** for the planning sequence, seasonal calendar and
 streamed-style explanation. **Show full explanation** skips the typing effect;
 reduced-motion preferences show the explanation immediately.
+The interface uses a discreet Prototype badge; preset behavior and data limitations
+are described under Planning assumptions & agronomy references rather than in repeated banners.
 
 The fixed scenario is an irrigated lowland plot near Mandya, Karnataka:
 July-December paddy, February-April green gram and a May-June managed fallow.

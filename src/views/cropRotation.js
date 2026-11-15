@@ -15,10 +15,8 @@ export function createCropRotation(container) {
       <div><p class="rotation-eyebrow">BHUMI / CROP INTELLIGENCE</p>
         <h1>A better season starts here.</h1>
         <p>One plot. A thoughtful rotation. A whole year in view.</p></div>
-      <span class="rotation-demo-badge"><span></span> INTERACTIVE DEMO</span>
+      <span class="rotation-demo-badge"><span></span> PROTOTYPE</span>
     </header>
-    <div class="rotation-disclosure"><strong>A preview, not a prediction.</strong>
-      Real polygon input, fixed example crops, simulated scan and AI explanation. No live agronomic analysis or backend required.</div>
     <div id="rotation-selection">
       <section class="rotation-selector">
         <div class="rotation-selection-copy">
@@ -31,7 +29,7 @@ export function createCropRotation(container) {
             <button type="button" class="btn-secondary" id="rotation-use-field" disabled>Use selected field boundary</button>
           </div>
           <button type="button" class="btn-primary" id="rotation-finish" hidden>Finish boundary</button>
-          <p id="rotation-selection-status" role="status">No boundary selected. The example is a fictional parcel, not a saved field.</p>
+          <p id="rotation-selection-status" role="status">Select a boundary to build your seasonal rotation.</p>
           <div class="rotation-input-summary" id="rotation-input-summary" hidden></div>
         </div>
         <div class="rotation-map-shell">
@@ -42,32 +40,32 @@ export function createCropRotation(container) {
       </section>
       <p class="rotation-tile-status" id="rotation-tile-status" role="status"></p>
       <section class="rotation-scenario">
-        <div><p class="rotation-eyebrow">THE DEMO SCENARIO</p><h3>Mandya's irrigated lowlands</h3>
-          <p>Applied to every polygon, regardless of location. Not inferred from the map.</p></div>
+        <div><p class="rotation-eyebrow">PLANNING PROFILE</p><h3>Mandya's irrigated lowlands</h3>
+          <p>Rotation based on the soil and water assumptions below.</p></div>
         <div class="rotation-assumption"><span>SOIL / ASSUMED</span><strong>Clay loam</strong></div>
         <div class="rotation-assumption"><span>WATER / ASSUMED</span><strong>Reliable irrigation</strong></div>
-        <button type="button" class="btn-primary" id="rotation-scan" disabled>Generate demo rotation <span aria-hidden="true">&rarr;</span></button>
+        <button type="button" class="btn-primary" id="rotation-scan" disabled>Generate crop rotation <span aria-hidden="true">&rarr;</span></button>
       </section>
       <section class="rotation-scan-panel" id="rotation-scan-panel" hidden aria-labelledby="rotation-scan-title">
         <div><span class="rotation-scan-symbol" aria-hidden="true">+</span><div>
-          <p class="rotation-eyebrow">SIMULATED SCAN</p><h3 id="rotation-scan-title">Reading your selected boundary</h3></div></div>
-        <progress id="rotation-progress" max="4" value="0" aria-label="Demo scan progress"></progress>
-        <p id="rotation-scan-status" role="status">Only the polygon is real input. All regional conditions are preset.</p>
+          <p class="rotation-eyebrow">ROTATION PLANNER</p><h3 id="rotation-scan-title">Reading your selected boundary</h3></div></div>
+        <progress id="rotation-progress" max="4" value="0" aria-label="Rotation planning progress"></progress>
+        <p id="rotation-scan-status" role="status">Preparing your seasonal calendar.</p>
       </section>
     </div>
     <div id="rotation-report" hidden>
       <section class="rotation-report-hero">
-        <div><p class="rotation-eyebrow">YOUR ILLUSTRATIVE ROTATION / JULY TO JUNE</p>
+        <div><p class="rotation-eyebrow">YOUR CROP ROTATION / JULY TO JUNE</p>
           <h2>Grow with the monsoon.<br>Give the soil a change.</h2>
-          <p>Paddy, then a short pulse, then room to recharge.<br>A water-aware example for irrigated Mandya.</p>
-          <div class="rotation-hero-tags"><span>2 crop families</span><span>1 summer pause</span><span>Fixed demo scenario</span></div>
+          <p>Paddy, then a short pulse, then room to recharge.<br>A water-aware sequence for irrigated Mandya.</p>
+          <div class="rotation-hero-tags"><span>2 crop families</span><span>1 summer pause</span><span>Monsoon-aligned</span></div>
         </div>
         <div class="rotation-plot-stamp"><span>SELECTED BOUNDARY</span><strong id="rotation-report-area"></strong>
           <p id="rotation-report-location"></p><small>Approximate map area, not surveyed</small>
           <button type="button" id="rotation-edit">Change plot &rarr;</button></div>
       </section>
       <div class="rotation-section-title"><div><p class="rotation-eyebrow">02 / YOUR YEAR, AT A GLANCE</p>
-        <h2>The right crop. The right window.</h2></div><span>Illustrative windows, not a dated forecast</span></div>
+        <h2>The right crop. The right window.</h2></div><span>Seasonal windows / adjust to local sowing conditions</span></div>
       <section class="rotation-calendar" aria-labelledby="rotation-calendar-title">
         <h3 id="rotation-calendar-title" class="rotation-sr-only">July to June crop calendar</h3>
         <div class="rotation-calendar-inner">
@@ -89,18 +87,17 @@ export function createCropRotation(container) {
       <section class="rotation-explanation" aria-labelledby="rotation-explanation-title">
         <header><div class="rotation-ai-mark" aria-hidden="true">B</div><div>
           <p class="rotation-eyebrow">BHUMI FIELD NOTES</p><h2 id="rotation-explanation-title">Why this rotation?</h2></div>
-          <span id="rotation-stream-state">Scripted explanation</span></header>
-        <p class="rotation-explanation-label">Simulated AI response / preset reasoning, not a live LLM</p>
+          <span id="rotation-stream-state">Rotation insights</span></header>
         <div id="rotation-explanation-text" aria-busy="false"></div>
         <footer><span id="rotation-explanation-status" role="status"></span>
           <button type="button" class="btn-secondary" id="rotation-reveal">Show full explanation</button></footer>
       </section>
-      <section class="rotation-reality-check"><h3>Before this becomes a real planting plan</h3>
-        <p>Check soil tests, water availability, drainage, variety duration and local sowing windows with KVK Mandya.
-        No yields, prices, confidence scores or soil measurements have been invented. This page is not saved as a backend planting plan.</p>
-        <details><summary>Agronomy references & demo assumptions</summary>
-          <p>The cereal-to-pulse sequence is illustrative. Southern Indian early-summer green gram calendars support the short pulse window;
-          they do not establish suitability for a particular Mandya plot. Crop timing must be checked locally.</p>
+      <section class="rotation-reality-check"><h3>Make it work on your land</h3>
+        <p>Confirm soil tests, water availability, drainage, variety duration and local sowing windows with KVK Mandya before planting.</p>
+        <details><summary>Planning assumptions & agronomy references</summary>
+          <p>This prototype uses a preset Mandya rotation and prepared field notes for every boundary.
+          Only area and coordinates come from your polygon; soil, water and weather are not measured.
+          Southern Indian early-summer green gram calendars support the short pulse window; crop timing and suitability must be checked locally.</p>
           <a href="https://agritech.tnau.ac.in/agriculture/pulses_greengram.html" target="_blank" rel="noopener noreferrer">TNAU: green gram seasons, duration and cultivation</a>
           <a href="https://www.organicmandya.com/farming/tools/karnataka-crop-calendar/" target="_blank" rel="noopener noreferrer">Organic Mandya: indicative Karnataka crop calendar</a>
           <p>Assumed, not measured: irrigated lowland, clay-loam soil, adequate drainage after rice and supplemental water for pulses.
@@ -153,7 +150,7 @@ export function createCropRotation(container) {
         `${summary.areaHa.toFixed(2)} ha approx. / ${summary.vertices} boundary points / ${source}`;
       get('rotation-input-summary').hidden = false;
       get('rotation-scan').disabled = false;
-      setStatus('Boundary ready. The crop sequence uses the fixed Mandya scenario below.');
+      setStatus('Boundary ready. Review the planning profile, then generate your rotation.');
     } catch (error) {
       setStatus(error.message);
     }
@@ -167,7 +164,7 @@ export function createCropRotation(container) {
     }));
     get('rotation-explanation-text').setAttribute('aria-busy', 'false');
     get('rotation-stream-state').textContent = 'Explanation complete';
-    get('rotation-explanation-status').textContent = 'Scripted demo complete. No live model was called.';
+    get('rotation-explanation-status').textContent = 'Field notes complete.';
     get('rotation-reveal').hidden = true;
   }
   function streamExplanation() {
@@ -175,8 +172,8 @@ export function createCropRotation(container) {
     paragraphs = buildDemoExplanation(summary);
     get('rotation-explanation-text').replaceChildren();
     get('rotation-explanation-text').setAttribute('aria-busy', 'true');
-    get('rotation-stream-state').textContent = 'Writing demo explanation...';
-    get('rotation-explanation-status').textContent = 'Streaming preset reasoning, not model output.';
+    get('rotation-stream-state').textContent = 'Writing field notes...';
+    get('rotation-explanation-status').textContent = 'Seasonal timing, water needs and soil care.';
     get('rotation-reveal').hidden = false;
     if (reducedMotion) { fullExplanation(); return; }
     let paragraphIndex = 0;
@@ -240,10 +237,10 @@ export function createCropRotation(container) {
     get('rotation-scan-panel').hidden = false;
     get('rotation-progress').value = 0;
     const steps = [
-      ['Reading your selected boundary', `${summary.vertices} points / approximately ${summary.areaHa.toFixed(2)} hectares. No remote sensing request.`],
-      ['Loading the Mandya example', 'Using assumed clay-loam soil and reliable irrigation. Not measured conditions.'],
-      ['Arranging seasonal crop windows', 'Preset sequence: monsoon paddy, early-summer green gram, summer pause.'],
-      ['Preparing your demo field notes', 'Scripted explanation ready. No live AI model or crop service called.'],
+      ['Reading your selected boundary', `${summary.vertices} points / approximately ${summary.areaHa.toFixed(2)} hectares.`],
+      ['Loading the Mandya planning profile', 'Planning assumptions: clay-loam soil and reliable irrigation.'],
+      ['Arranging seasonal crop windows', 'Monsoon paddy, early-summer green gram and a summer pause.'],
+      ['Preparing your field notes', 'Bringing seasonal timing, crop-family changes and water needs together.'],
     ];
     let step = 0;
     const advance = () => {

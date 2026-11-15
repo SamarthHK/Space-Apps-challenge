@@ -46,9 +46,10 @@ test('example parcel runs without backend or map tiles and streams a clearly lab
   await page.locator('#rotation-reveal').click();
   await expect(page.locator('#rotation-explanation-text')).toHaveAttribute('aria-busy', 'false');
   await expect(page.locator('#rotation-explanation-text p')).toHaveCount(6);
-  await expect(page.locator('#rotation-explanation-text')).toContainText('assumptions, not conditions detected');
-  await expect(page.locator('#rotation-explanation-text')).toContainText('not a live LLM');
-  await expect(page.locator('.rotation-disclosure')).toContainText('simulated scan');
+  await expect(page.locator('#rotation-explanation-text')).toContainText('planning assumptions to confirm on the ground');
+  await expect(page.locator('.rotation-demo-badge')).toHaveText('PROTOTYPE');
+  await expect(page.locator('.rotation-reality-check details')).toContainText('preset Mandya rotation');
+  await expect(page.locator('#crop-rotation-demo')).not.toContainText(/not a live LLM|simulated scan|demo rotation/i);
   await expect(page.locator('#rotation-tile-status')).toContainText('unavailable');
   expect(writes).toEqual([]);
   expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
@@ -108,7 +109,7 @@ test('mobile demo navigation, calendar scrolling and explanation remain usable',
     await expect(page.locator('.view-section.active')).toBeVisible();
   }
   await expect(page.locator('.connection-bar')).toBeVisible();
-  await page.getByRole('button', { name: /Try crop rotation demo/ }).click();
+  await page.getByRole('button', { name: /Plan your crop rotation/ }).click();
   await expect(page.locator('#rotation-map')).toBeVisible();
   await page.locator('#rotation-sample').click();
   await page.locator('#rotation-scan').click();
@@ -175,7 +176,7 @@ test('selected field input preserves holes and treats field names as text', asyn
   await expect(page.locator('#connection-status')).toContainText('Connected');
   await page.getByRole('button', { name: 'My Land', exact: true }).click();
   await expect(page.locator('#field-status')).toHaveText('Stored boundary loaded.');
-  await page.getByRole('button', { name: /Open crop rotation demo/ }).click();
+  await page.getByRole('button', { name: /Open rotation planner/ }).click();
   await page.locator('#rotation-use-field').click();
   await expect(page.locator('#rotation-input-summary')).toContainText('8 boundary points');
   await page.locator('#rotation-scan').click();
