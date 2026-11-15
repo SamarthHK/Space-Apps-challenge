@@ -14,6 +14,7 @@ class ApiSettings(BaseSettings):
 
     environment: str = "development"
     database_url: SecretStr | None = None
+    database_schema: str = Field(default="agri_app", pattern=r"^[a-z][a-z0-9_]{0,62}$")
     allowed_origins: list[str] = Field(
         default_factory=lambda: [
             "http://localhost:1080",

@@ -8,6 +8,7 @@ from agri_data.api.settings import ApiSettings
 
 
 def settings(**overrides):
+    overrides.setdefault("database_url", None)
     return ApiSettings(_env_file=None, **overrides)
 
 

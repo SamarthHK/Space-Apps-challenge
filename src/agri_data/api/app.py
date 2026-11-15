@@ -8,6 +8,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException
+import psycopg
+
+from agri_data.services.database import DatabaseUnavailable, verify_schema
 
 from .schemas import ErrorResponse
 from .settings import ApiSettings
@@ -111,10 +114,14 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
 
     @app.get("/ready")
     def ready(request: Request):
-        return error_response(
-            request, 503, "database_not_ready",
-            "PostgreSQL and required migrations have not been verified",
-        )
+        try:
+            verify_schema(settings)
+        except (DatabaseUnavailable, psycopg.Error):
+            return error_response(
+                request, 503, "database_not_ready",
+                "PostgreSQL and required migrations have not been verified",
+            )
+        return {"status": "ready"}
 
     @app.get("/api/v1/meta")
     def metadata():
