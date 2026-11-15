@@ -110,7 +110,8 @@ Browser flow, always using `credentials: "include"` and the same hostname:
    against PostgreSQL on every request.
 
 Only session/profile plus health/meta routes are operational. Fields, scientific
-data, recommendations, markets, plans and the frontend migration remain pending.
+data, recommendations, markets and plans remain pending. The separate frontend
+worktree at `.local\frontend` now integrates login/profile and gates other screens.
 `docs\openapi.json` is generated from implemented routes, not the entire planned
 surface. Regenerate and compare it when changing a route:
 
@@ -118,3 +119,15 @@ surface. Regenerate and compare it when changing a route:
 uv run --no-sync python -m agri_data.api.admin openapi docs\openapi.json
 uv run --no-sync pytest tests\api -q
 ```
+
+For browser acceptance against the independent production frontend:
+
+```powershell
+uv run --no-sync python scripts\browser_acceptance.py --frontend .local\frontend
+```
+
+The harness requires the frontend npm graph and Playwright Chromium already
+installed. It provisions a temporary account/schema and separate loopback API,
+uses the production preview, then cleans up the acceptance-owned resources and
+restores the normal frontend build. It does not contact scientific providers or
+count generated boundaries as authentic field acceptance.
