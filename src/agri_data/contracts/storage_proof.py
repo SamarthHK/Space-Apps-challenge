@@ -23,6 +23,9 @@ from shapely.ops import transform
 from .inventory import extract_inventory
 from .power import normalize_power, PARAMETERS
 from .postgres import PostgresStore
+from .identity import stable_field_id
+from .corpus import COLLECTION
+from .canonical import reconcile_reference
 
 
 def require(condition, message):
@@ -51,6 +54,16 @@ def run_storage_proof(corpus_path: Path, store: PostgresStore, output: Path, rep
             "reason": "Preparatory proof failed; no acceptance success is certified. Inspect the command error.",
         }
         (output / "failure.json").write_text(json.dumps(failure, indent=2), encoding="utf-8")
+        try:
+            corpus = json.loads(corpus_path.read_bytes())
+            with store.session() as connection:
+                connection.execute(
+                    "UPDATE extraction_jobs SET status='failed',completed_at=now() WHERE extraction_job_id=%s",
+                    (corpus["weather_asset"]["request_id"],),
+                )
+        except Exception:
+            # The file above remains available even if the database is unreachable.
+            pass
         raise
 
 
@@ -62,7 +75,17 @@ def _run_storage_proof(corpus_path, store, output, repository, started):
             raise ValueError("Authentic corpus checksum changed")
     parcel = json.loads(Path(corpus["parcel_asset"]["raw_path"]).read_bytes())
     geometry = shape(parcel["geometry"])
-    field_id = "PDOK_" + parcel["id"]
+    store.migrate()
+    field_id = stable_field_id("public_reference", COLLECTION, parcel["id"])
+    # Replaying an existing receipt retains its historic identifiers; aliases
+    # resolve those records to the shared field ID in canonical exports.
+    with store.session() as connection:
+        existing = connection.execute(
+            "SELECT acquired_record->>'field_id' FROM acquisition_observations "
+            "WHERE extraction_job_id=%s LIMIT 1", (corpus["weather_asset"]["request_id"],),
+        ).fetchone()
+        if existing:
+            field_id = existing[0]
     observations, missing, metadata = normalize_power(corpus["weather_asset"], field_id)
     if not observations:
         raise ValueError("No actual observations available for the storage proof")
@@ -84,7 +107,9 @@ def _run_storage_proof(corpus_path, store, output, repository, started):
             )
         connection.execute(
             "INSERT INTO fields VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING",
-            (field_id, "public_reference", parcel["id"], Jsonb(parcel["properties"])),
+            (field_id, "public_reference",
+             parcel["id"] if field_id.startswith("PDOK_") else json.dumps([COLLECTION, parcel["id"]], separators=(",", ":")),
+             Jsonb(parcel["properties"])),
         )
         connection.execute(
             "INSERT INTO field_boundaries VALUES (%s,%s,%s,ST_SetSRID(ST_GeomFromGeoJSON(%s),4326),true,NULL) ON CONFLICT DO NOTHING",
@@ -107,9 +132,10 @@ def _run_storage_proof(corpus_path, store, output, repository, started):
                                (f"{dataset_id}:{code}", variable_id, dataset_id,
                                 f"/properties/parameter/{code}", Jsonb(definition)))
         asset = corpus["weather_asset"]
-        connection.execute("INSERT INTO extraction_jobs VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
+        connection.execute("INSERT INTO extraction_jobs VALUES (%s,%s,%s,%s,%s,%s) "
+                           "ON CONFLICT (extraction_job_id) DO UPDATE SET status='in_progress',completed_at=NULL",
                            (asset["request_id"], asset["raw_sha256"], asset["started_at"],
-                            asset["retrieved_at"], "in_progress", Jsonb(asset)))
+                            None, "in_progress", Jsonb(asset)))
         inserted = sum(store.save_observation(connection, observation) for observation in observations)
 
     readback = store.read_observations(asset["request_id"])
@@ -151,7 +177,7 @@ def _run_storage_proof(corpus_path, store, output, repository, started):
     process = subprocess.run(
         [sys.executable, "-m", "agri_data.contracts.storage_proof",
          "--read-job", asset["request_id"], "--database", store.database,
-         "--user", store.user, "--schema", store.schema],
+         "--user", store.user, "--schema", store.schema, "--connection-env", store.connection_env],
         capture_output=True, text=True, check=True,
     )
     independent = json.loads(process.stdout)
@@ -209,6 +235,12 @@ def _run_storage_proof(corpus_path, store, output, repository, started):
     }
     temp = output / "manifest.pending"
     temp.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    reconcile_reference(store, corpus_path)
+    with store.session() as connection:
+        connection.execute(
+            "UPDATE extraction_jobs SET status='complete',completed_at=now() WHERE extraction_job_id=%s",
+            (asset["request_id"],),
+        )
     temp.replace(output / "manifest.json")
     return report
 
@@ -220,8 +252,9 @@ if __name__ == "__main__":
     parser.add_argument("--database", required=True)
     parser.add_argument("--user", required=True)
     parser.add_argument("--schema", required=True)
+    parser.add_argument("--connection-env", default="DATABASE_URL")
     args = parser.parse_args()
-    store = PostgresStore(args.database, args.user, args.schema)
+    store = PostgresStore(args.database, args.user, args.schema, args.connection_env)
     rows = store.read_observations(args.read_job)
     print(json.dumps({
         "row_count": len(rows),

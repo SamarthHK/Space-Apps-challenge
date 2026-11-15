@@ -13,16 +13,24 @@ from .geography import parse_boundaries
 from .storage_proof import require
 
 
-def ingest_boundaries(path, project, namespace, origin, store, output, raw_root, *, allow_repair=False):
+def ingest_boundaries(path, project, namespace, origin, store, output, raw_root, *, allow_repair=False,
+                      repair_reference=None, repair_area_tolerance_m2=None, repair_shape_tolerance_m2=None):
     if not origin.strip():
         raise ValueError("Original boundary provenance must be explicitly declared")
     output.mkdir(parents=True, exist_ok=False)
     import_id = None
     try:
         digest = sha256(path.read_bytes()).hexdigest()
-        context = json.dumps([project, namespace, digest, "boundary-import-1", allow_repair], separators=(",", ":"))
+        repair_options = {
+            "repair_reference": repair_reference, "repair_area_tolerance_m2": repair_area_tolerance_m2,
+            "repair_shape_tolerance_m2": repair_shape_tolerance_m2,
+        }
+        context = json.dumps([project, namespace, digest, "boundary-import-2", allow_repair,
+                             sha256(repair_reference.read_bytes()).hexdigest() if repair_reference else None,
+                             repair_area_tolerance_m2, repair_shape_tolerance_m2], separators=(",", ":"))
         import_id = sha256(context.encode()).hexdigest()
-        return _ingest(path, project, namespace, origin, store, output, raw_root, allow_repair, digest, import_id)
+        return _ingest(path, project, namespace, origin, store, output, raw_root,
+                       allow_repair, digest, import_id, repair_options)
     except Exception as error:
         failure = {
             "status": "failed", "full_acceptance": False, "error_type": type(error).__name__,
@@ -42,7 +50,7 @@ def ingest_boundaries(path, project, namespace, origin, store, output, raw_root,
         raise
 
 
-def _ingest(path, project, namespace, origin, store, output, raw_root, allow_repair, digest, import_id):
+def _ingest(path, project, namespace, origin, store, output, raw_root, allow_repair, digest, import_id, repair_options):
     payload = path.read_bytes()
     require(sha256(payload).hexdigest() == digest, "Boundary input changed before archival")
     raw_root.mkdir(parents=True, exist_ok=True)
@@ -52,7 +60,7 @@ def _ingest(path, project, namespace, origin, store, output, raw_root, allow_rep
             stream.write(payload)
     except FileExistsError:
         require(sha256(archived.read_bytes()).hexdigest() == digest, "Archived boundary bytes changed")
-    fields, rejected = parse_boundaries(path, project, namespace, allow_repair=allow_repair)
+    fields, rejected = parse_boundaries(path, project, namespace, allow_repair=allow_repair, **repair_options)
     require(sha256(path.read_bytes()).hexdigest() == digest, "Boundary input changed during parsing")
     now = datetime.now(timezone.utc).isoformat()
     status = "partial" if fields and rejected else "complete" if fields else "failed"
@@ -71,7 +79,7 @@ def _ingest(path, project, namespace, origin, store, output, raw_root, allow_rep
         connection.execute(
             "INSERT INTO boundary_imports VALUES (%s,%s,%s,%s,%s,NULL,'in_progress',%s) "
             "ON CONFLICT (import_id) DO UPDATE SET status='in_progress',completed_at=NULL",
-            (import_id, project, digest, namespace, "boundary-import-1", Jsonb(rejected)),
+            (import_id, project, digest, namespace, "boundary-import-2", Jsonb(rejected)),
         )
         for field in fields:
             record = field.record()

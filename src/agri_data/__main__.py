@@ -28,6 +28,9 @@ def main():
     ingest.add_argument("--origin", required=True)
     ingest.add_argument("--output", type=Path, required=True)
     ingest.add_argument("--allow-repair", action="store_true", help="Explicitly allow topology repair while retaining originals")
+    ingest.add_argument("--repair-reference", type=Path)
+    ingest.add_argument("--repair-area-tolerance-m2", type=float)
+    ingest.add_argument("--repair-shape-tolerance-m2", type=float)
     args = parser.parse_args()
     repository = Path.cwd()
     if args.command == "acquire-reference":
@@ -49,6 +52,9 @@ def main():
                 args.input, args.project, args.source_namespace, args.origin, store,
                 args.output, repository / "data" / "raw" / "boundary-imports",
                 allow_repair=args.allow_repair,
+                repair_reference=args.repair_reference,
+                repair_area_tolerance_m2=args.repair_area_tolerance_m2,
+                repair_shape_tolerance_m2=args.repair_shape_tolerance_m2,
             )
             print(json.dumps(result, indent=2))
             return 0 if result["status"] == "complete" else 2

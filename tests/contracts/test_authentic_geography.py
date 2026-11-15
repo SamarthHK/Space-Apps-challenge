@@ -7,6 +7,7 @@ import uuid
 
 import geopandas as gpd
 import yaml
+import pytest
 from shapely.geometry import shape
 
 from agri_data.contracts.boundary_import import ingest_boundaries
@@ -65,3 +66,9 @@ def test_real_boundary_import_is_persistent_and_idempotent():
     assert json.loads((output / "first" / "field_records.json").read_bytes()) == json.loads(
         (output / "repeat" / "field_records.json").read_bytes()
     )
+
+
+def test_repair_cannot_run_without_reviewed_reference_and_limits():
+    evidence, _ = corpus()
+    with pytest.raises(ValueError, match="authentic reviewed reference"):
+        parse_boundaries(Path(evidence["kml_path"]), "public_reference", NAMESPACE, allow_repair=True)

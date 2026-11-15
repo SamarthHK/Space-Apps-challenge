@@ -15,6 +15,8 @@ from shapely import force_2d, make_valid, normalize, transform
 from shapely.geometry import MultiPolygon, Polygon, mapping
 from shapely.validation import explain_validity
 
+from .identity import stable_field_id
+
 
 KML = "{http://www.opengis.net/kml/2.2}"
 MAX_XML_BYTES = 32 * 1024 * 1024
@@ -116,11 +118,23 @@ def _placemarks(element, parents=()):
             yield from _placemarks(child, parents)
 
 
-def parse_boundaries(path: Path, project_id: str, source_namespace: str, *, allow_repair=False):
+def parse_boundaries(path: Path, project_id: str, source_namespace: str, *, allow_repair=False,
+                     repair_reference=None, repair_area_tolerance_m2=None, repair_shape_tolerance_m2=None):
     if not project_id.strip() or not source_namespace.strip():
         raise ValueError("Project and source namespace must be explicitly supplied")
     payload = path.read_bytes()
     records, rejected, identities = [], [], set()
+    references = {}
+    if allow_repair:
+        if repair_reference is None or repair_area_tolerance_m2 is None or repair_shape_tolerance_m2 is None:
+            raise ValueError("Repair requires an authentic reviewed reference and predeclared area/shape tolerances")
+        if (not math.isfinite(repair_area_tolerance_m2) or repair_area_tolerance_m2 < 0
+                or not math.isfinite(repair_shape_tolerance_m2) or repair_shape_tolerance_m2 < 0):
+            raise ValueError("Repair tolerances must be finite and nonnegative")
+        reference_fields, reference_rejected = parse_boundaries(repair_reference, project_id, source_namespace)
+        if reference_rejected:
+            raise ValueError("Repair reference contains invalid or unsupported boundaries")
+        references = {field.source_identifier: field.geometry for field in reference_fields}
     for document_name, xml in _documents(payload, path.suffix.lower()):
         document = ET.fromstring(xml, forbid_dtd=True)
         if document.tag != KML + "kml":
@@ -152,14 +166,23 @@ def parse_boundaries(path: Path, project_id: str, source_namespace: str, *, allo
                     geometry = make_valid(geometry)
                     if geometry.geom_type not in ("Polygon", "MultiPolygon") or not geometry.is_valid:
                         raise ValueError("Repair did not produce exclusively valid polygon geometry")
+                    provider_id = placemark.get("id")
+                    if not provider_id or provider_id not in references:
+                        raise ValueError("Repair reference must match an explicit original provider placemark ID")
+                    crs, candidate = metric_geometry(geometry)
+                    transform_reference = Transformer.from_crs(4326, crs, always_xy=True)
+                    reference = transform(force_2d(references[provider_id]), lambda coords: np.column_stack(
+                        transform_reference.transform(coords[:, 0], coords[:, 1])))
+                    if (abs(candidate.area - reference.area) > repair_area_tolerance_m2
+                            or candidate.symmetric_difference(reference).area > repair_shape_tolerance_m2):
+                        raise ValueError("Repair exceeds predeclared reference area/shape tolerances")
                     repair = f"GEOS make_valid: {reason}; original coordinates retained separately"
                 name = placemark.findtext(KML + "name")
                 identifier = placemark.get("id") or json.dumps(
                     [*folders, name] if name else ["geometry_sha256", sha256(normalize(geometry).wkb).hexdigest()],
                     ensure_ascii=True, separators=(",", ":"),
                 )
-                identity = json.dumps([project_id, source_namespace, identifier], separators=(",", ":"))
-                field_id = "field_" + sha256(identity.encode()).hexdigest()
+                field_id = stable_field_id(project_id, source_namespace, identifier)
                 if field_id in identities:
                     raise ValueError("Duplicate field identity in input; disambiguate original source identifiers")
                 crs, metric = metric_geometry(geometry)
@@ -178,6 +201,11 @@ def parse_boundaries(path: Path, project_id: str, source_namespace: str, *, allo
                      "schema_data": schema_values, "source_namespace": source_namespace,
                      "description": placemark.findtext(KML + "description"),
                      "has_altitude": bool(original.has_z),
+                     "repair_validation": ({
+                         "reference_sha256": sha256(repair_reference.read_bytes()).hexdigest(),
+                         "area_tolerance_m2": repair_area_tolerance_m2,
+                         "shape_tolerance_m2": repair_shape_tolerance_m2,
+                     } if repair else None),
                      "analysis_dimensions": "2D footprint; original altitude retained in original geometry"},
                     original, geometry, repair, crs.to_string(), metric.area, metric.length,
                 ))
