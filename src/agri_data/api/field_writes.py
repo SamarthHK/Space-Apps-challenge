@@ -59,7 +59,7 @@ def result_response(request, response, result):
 def create_field(body: FieldCreate, request: Request, response: Response,
                  key: str | None = Header(None, alias="Idempotency-Key",
                     description="Workspace-wide submission key. Receipts are retained without expiry; different input or operation returns 409.")):
-    result = request.app.state.field_store.create(body, key, request.state.request_id)
+    result = request.state.field_store.create(body, key, request.state.request_id)
     response.headers["Location"] = "/api/v1/fields/" + result["field_id"]
     return result_response(request, response, result)
 
@@ -67,12 +67,12 @@ def create_field(body: FieldCreate, request: Request, response: Response,
 @router.patch("/fields/{field_id}", operation_id="updateField", response_model=FieldMutationResponse)
 def update_field(field_id: str, body: FieldPatch, request: Request, response: Response,
                  etag: str | None = Header(None, alias="If-Match")):
-    result = request.app.state.field_store.update(field_id, body, etag, request.state.request_id)
+    result = request.state.field_store.update(field_id, body, etag, request.state.request_id)
     return result_response(request, response, result)
 
 
 @router.delete("/fields/{field_id}", operation_id="archiveField", response_model=FieldMutationResponse)
 def archive_field(field_id: str, request: Request, response: Response,
                   etag: str | None = Header(None, alias="If-Match")):
-    result = request.app.state.field_store.update(field_id, None, etag, request.state.request_id, archive=True)
+    result = request.state.field_store.update(field_id, None, etag, request.state.request_id, archive=True)
     return result_response(request, response, result)

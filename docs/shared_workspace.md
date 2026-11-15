@@ -1,7 +1,12 @@
 # Shared application state
 
-Run the existing API and frontend as separate instances. No accounts, sessions,
-cookies, private-user profile migration, or model inference are introduced.
+This document describes `AGRI_AUTH_MODE=shared`, the compatibility mode.
+The newly approved private hosted target is documented in
+[private_workspace.md](private_workspace.md); it reuses the storage and geometry
+contracts below with server-resolved account scopes.
+
+Run the API and frontend as separate instances. Shared mode uses no sessions
+or authentication cookies. No private-user profile migration or model inference is introduced.
 Every visitor permitted by the loopback/Tailscale configuration sees the same
 profile. A soil-card reference is not verified laboratory evidence.
 
@@ -165,6 +170,10 @@ archives are rejected. There is no implicit geometry repair, provider acquisitio
 scientific acceptance, or fabricated observation generation in these workflows.
 
 ## Staged rollout and write-disable recovery
+
+The write-disable procedure below applies only to shared mode. Never downgrade
+a private deployment to shared access or remove its ownership configuration;
+stop its owned services while repairing configuration instead.
 
 Keep both applications independently deployed. In a controlled backend
 environment, set the five `AGRI_WORKSPACE_*` values above, run provisioning,

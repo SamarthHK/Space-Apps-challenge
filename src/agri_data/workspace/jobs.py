@@ -13,12 +13,14 @@ from .formats import MEDIA_TYPES, parse_upload, serialize_export
 
 
 PROTOCOL = "workspace-jobs-1"
+ACCOUNT_PROTOCOL = "workspace-account-jobs-1"
 
 
 class JobStore:
-    def __init__(self, fields):
+    def __init__(self, fields, *, deployment_id=None):
         self.fields = fields
         self.workspace = fields.workspace
+        self.deployment_id = deployment_id
 
     @property
     def workspace_id(self):
@@ -62,6 +64,12 @@ class JobStore:
     def available(self):
         try:
             with self.workspace.session() as connection:
+                if self.deployment_id is not None:
+                    return connection.execute(
+                        "SELECT 1 FROM workspace_workers WHERE workspace_id=%s AND protocol=%s "
+                        "AND canonical_schema=%s AND heartbeat_at>clock_timestamp()-interval '30 seconds' LIMIT 1",
+                        (self.deployment_id, ACCOUNT_PROTOCOL, self.fields.settings.schema),
+                    ).fetchone() is not None
                 return connection.execute(
                     "SELECT 1 FROM workspace_workers WHERE workspace_id=%s AND protocol=%s "
                     "AND project_ids @> %s::text[] AND heartbeat_at > clock_timestamp()-interval '30 seconds' LIMIT 1",

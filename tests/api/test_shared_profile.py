@@ -125,7 +125,13 @@ def test_origin_preflight_and_data_reads_stay_independent(workspace_store, prepa
         assert http.get("/api/v1/fields").status_code == 200
         capabilities = http.get("/api/v1/workspace").json()["data"]["capabilities"]
         assert next(row for row in capabilities if row["capability_id"] == "profile")["state"] == "ready"
-        assert http.get("/api/v1/auth/session").status_code == 404
+        session = http.get("/api/v1/auth/session")
+        assert session.status_code == 200 and session.json()["data"] == {
+            "mode": "shared", "user": None, "expires_at": None, "csrf_token": None,
+        }
+        assert "Set-Cookie" not in session.headers
+        http.headers["Origin"] = ORIGIN
+        assert http.post("/api/v1/auth/bootstrap").status_code == 404
 
 
 def test_setup_is_explicit_and_migrations_detect_drift(workspace_store):

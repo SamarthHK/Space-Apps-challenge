@@ -132,7 +132,8 @@ def test_openapi_export_is_deterministic_and_matches_live_routes(server, tmp_pat
                           "getObservation", "listObservationEvidence", "getProfile", "updateProfile",
                           "createField", "updateField", "archiveField", "getJob",
                           "createBoundaryImport", "getBoundaryImport", "confirmBoundaryImport",
-                          "createExport", "downloadExport"}
+                          "createExport", "downloadExport", "getSession", "createSignInContext",
+                          "registerAccount", "loginAccount", "logoutAccount"}
     output = tmp_path / "openapi.json"
     result = subprocess.run(
         [sys.executable, "-m", "agri_data.api", "--export-openapi", str(output)],

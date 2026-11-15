@@ -58,7 +58,7 @@ router = APIRouter(prefix="/api/v1")
 
 @router.get("/profile", operation_id="getProfile", response_model=ProfileResponse)
 def profile(request: Request, response: Response):
-    result = request.app.state.workspace_store.get_profile()
+    result = request.state.workspace_store.get_profile()
     response.headers["ETag"] = profile_etag(result)
     return {"data": result, "meta": {"request_id": request.state.request_id, "api_version": "v1"}}
 
@@ -66,6 +66,6 @@ def profile(request: Request, response: Response):
 @router.patch("/profile", operation_id="updateProfile", response_model=ProfileResponse)
 def update_profile(body: ProfilePatch, request: Request, response: Response,
                    if_match: str | None = Header(None, alias="If-Match")):
-    result = request.app.state.workspace_store.update_profile(body, if_match, request.state.request_id)
+    result = request.state.workspace_store.update_profile(body, if_match, request.state.request_id)
     response.headers["ETag"] = profile_etag(result)
     return {"data": result, "meta": {"request_id": request.state.request_id, "api_version": "v1"}}

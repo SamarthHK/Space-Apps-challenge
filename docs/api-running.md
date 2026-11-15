@@ -1,31 +1,35 @@
-# Running the shared-workspace API
+# Running the workspace API
 
-No accounts are implemented by request. Every device permitted to reach this
-service shares the same access. Tailscale access rules, not CORS, are the access
-boundary. Do not publish it through Funnel, a public proxy or port forwarding.
+The hosted target now uses private accounts. Configure the canonical/application
+stores and provision them as described in [private_workspace.md](private_workspace.md)
+before starting account mode. `AGRI_AUTH_MODE=shared` retains the earlier
+account-free compatibility mode; it does not provide per-person privacy.
+Both modes remain loopback/Tailscale only. Do not publish through Funnel, a public proxy or port forwarding.
 The server refuses wildcard/public bind addresses and disables proxy-header trust.
 
 Restore dependencies with `uv sync --locked --extra dev`. From the backend root:
 
 ```powershell
 $env:AGRI_API_HOST = (tailscale ip -4).Trim()
-$env:AGRI_API_PORT = "8000"
+$env:AGRI_API_PORT = "8080"
 $env:AGRI_ALLOWED_ORIGINS = "http://${env:AGRI_API_HOST}:1080"
+$env:AGRI_AUTH_MODE = "accounts"
 uv run --locked python -m agri_data.api
 ```
 
 Use the actual Tailscale address in the browser, not `0.0.0.0`. HTTP on the
 Tailscale interface travels within the encrypted tailnet. Public deployment
-requires authentication and HTTPS; this account-free mode is not suitable.
+requires additional HTTPS, account-operations and deployment hardening.
 
 For loopback-only development use `AGRI_API_HOST=127.0.0.1` and
-`AGRI_ALLOWED_ORIGINS=http://localhost:1080`.
+`AGRI_ALLOWED_ORIGINS=http://127.0.0.1:1080`. Private cookie sessions require
+the same hostname for the two instances, even though their ports differ.
 Configuration is explicit environment only; `.env` is not automatically read.
 
 Implemented foundation:
 
 - `GET /api/v1/health`: liveness and contract revision, not provider/DB health.
-- `GET /api/v1/workspace`: shared access mode and truthful capability states.
+- `GET /api/v1/workspace`: access mode and truthful capability states; authenticated in account mode.
 - `GET /api/v1/openapi.json`: schema for implemented operations only.
 
 The read increment also implements listFields/getField, listObservations/
@@ -55,8 +59,9 @@ preview/confirmation and GeoJSON/KML/KMZ exports are implemented separately.
 See [shared_workspace.md](shared_workspace.md) for the five explicit workspace
 database/ID settings, additive provisioning, writer permissions, worker command,
 limits, browser acceptance harness, and safe write-disable recovery.
-No users, authentication cookies, model execution, or private-profile migration
-are introduced. The API never provisions application state on a GET.
+Private account/session routes and account-aware workers are documented in
+[private_workspace.md](private_workspace.md). Model execution and importing donor
+private profiles remain excluded. The API never provisions application state on a GET.
 
 Legacy ambiguous boundary versions require explicit selection through
 `GET /api/v1/fields/{field_id}?boundary_id=...`. The API does not guess "current"
@@ -67,7 +72,7 @@ conflicting revisions and evidence counts; raw acquisition copies are not
 presented as independent observations.
 
 Collections accept `limit` (1-200) and opaque `cursor`. Cursors bind to the
-filters and a hash of the complete response snapshot: a changed snapshot returns
+account/workspace, filters and a hash of the complete response snapshot: a changed snapshot returns
 409; filter changes/tampering/server restart return 400. Restart from page one.
 Current pagination materializes each selected result in memory; this read slice
 targets the small reference corpus, not unbounded production archives. SQL

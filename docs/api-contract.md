@@ -1,13 +1,13 @@
 # Frontend/backend integration contract
 
-Revision: `shared-workspace-1`, 2026-11-15.
-Status: **shared reads, profiles, field writes, imports/jobs and geometry exports implemented**.
+Revisions: `private-workspace-2` in account mode; `shared-workspace-1` for shared compatibility.
+Status: **private accounts, scoped reads/profiles/fields, imports/jobs and geometry exports implemented**.
 Other resource contracts below remain proposals.
 
-Approved deployment: no accounts for now; one shared workspace over Tailscale.
-Frontend port 1080, backend port 8000. Configure the actual Tailscale IP rather
-than a wildcard browser address. Every tailnet client permitted by access rules
-shares access; there is no per-person privacy or user authorization claim.
+Updated owner decision: private per-person accounts, with the original UI restored.
+Frontend port 1080, backend port 8080. Configure the actual Tailscale IP rather
+than a wildcard browser address. Shared access remains an explicit compatibility
+mode, not the private release's fallback.
 `docs/openapi.json` describes only implemented routes. `docs/api-running.md`
 contains executable commands and limitations.
 
@@ -22,7 +22,7 @@ The implemented schemas are in backend-owned `docs/openapi.json`, with unique
 operation IDs matching this document. Export it
 from the actual FastAPI application; pin an identical artifact and its SHA-256
 in the frontend's `contracts` directory. Record the backend commit when committed.
-See `docs/shared_workspace.md` for the implemented ownership, persistence,
+See `docs/private_workspace.md` and `docs/shared_workspace.md` for ownership, persistence,
 preconditions, worker lifecycle and deployment contract.
 Do not generate placeholder agricultural response examples to fill the artifact.
 
@@ -36,15 +36,16 @@ artifact only when their schemas and behavior are specified and implemented.
 
 | Decision | Required result | Work blocked |
 | --- | --- | --- |
-| D01 Authentication | Resolved: no accounts/tokens now. Bind only loopback/Tailscale; access controlled by tailnet rules. Check browser Origin/Host; CORS is not authentication. | Public/multi-user deployment deferred. |
-| D02 Ownership | Resolved: one shared workspace with an explicit configured project allow-list. Never expose all stored projects automatically. | Reads need explicit project configuration. |
+| D01 Authentication | Updated: Argon2 passwords, revocable HttpOnly sessions, CSRF and persistent authentication limits in `accounts` mode. Bind only loopback/Tailscale; CORS is not authentication. | Public deployment and account recovery remain deferred. |
+| D02 Ownership | Updated: each account receives a server-assigned workspace/project. Shared compatibility keeps its explicit project allow-list. Never expose all projects automatically or assign shared records to the first account. | Runtime ownership configuration must fail closed. |
 | D03 Product extensions | Deferred by owner: authentic economic sources/methods are not yet defined. | Financial recommendations, markets and forecasts. |
 | D04 Evidence-use policy | Approved: inspect pending records with labels, never promote them to accepted. | Decision rules need their own specified policy. |
 | D05 Geography support | Approved: Polygon/MultiPolygon only; no non-spatial drafts. Unsupported topology/projections remain rejected. | Missing authentic geometry acceptance contexts. |
 
-Implement the approved shared-access slice without a login service. Public or
-multi-user deployment requires a new decision and contract revision. Other work
-can proceed only when independent of unresolved source/method dependencies.
+The new account mode deliberately extends the Health/Workspace revision enums;
+scientific read bodies, profile fields, ETags and job/geometry contracts remain
+compatible. Other work proceeds only when independent of unresolved sources
+and model-input dependencies.
 
 ## 3. Transport conventions
 
@@ -69,28 +70,34 @@ can proceed only when independent of unresolved source/method dependencies.
   meta: {request_id, api_version}}`. `details` may be empty; messages never
   contain DSNs, local paths, stack traces or secrets.
 - Common implemented HTTP outcomes: 400 malformed request/cursor;
-  403 prohibited action; 404 absent OR unowned resource; 409 state/idempotency
+  401 missing/expired session; 403 prohibited action/CSRF; 404 absent OR unowned resource; 409 state/idempotency
   conflict; 412 stale ETag; 413 upload too large; 415 unsupported media;
   422 semantic validation; 428 missing required If-Match/Idempotency-Key;
-  503 configured dependency unavailable. No session, rate-limit, or
-  unimplemented-operation stub is implied by this registry.
+  429 authentication rate limit (with Retry-After); 503 configured dependency
+  unavailable. Account changes in an existing page return 409 `session_changed`.
 - POST creates return 201 and `Location`; asynchronous submission returns 202
   with a Job and `Location` for `getJob`. PATCH returns the updated resource.
-  Future 204 responses have no JSON body; no session DELETE exists in this mode.
+  Logout returns 204 without a JSON body.
 - Profile responses and dedicated field-mutation responses carry a positive
   integer `version`. Profile and field GETs carry strong ETags; existing field
   read bodies deliberately have no new version property. PATCH requires
   `If-Match` from the last read. Omitted
   properties stay unchanged; explicit null clears only nullable properties.
   Project scope, identifiers, provenance and computed values are not writable.
-- All mutating POST operations require `Idempotency-Key`. Scope keys by
+- Field/import/export POST operations require `Idempotency-Key`. Scope keys by
   workspace, compare operation and payload hashes, and persist results transactionally.
   Same key/body replays the original resource/job; changed body returns 409.
   Receipts have no automatic expiry; retention is stated in OpenAPI. Never auto-retry an
   ambiguous write without this guarantee.
+- Authentication POSTs use a one-use bootstrap/session CSRF context rather than
+  submission receipts. Do not replay an ambiguous registration/login/logout;
+  inspect the session and offer explicit sign-in recovery.
 - Return `X-Request-ID`; CORS allows Content-Type, If-Match and
   Idempotency-Key, and exposes ETag, Location, Content-Disposition
-  and X-Request-ID. Use explicit origin allow-lists and no cookies/credentials.
+  and X-Request-ID. Shared mode omits credentials. Account mode allows credentials
+  only for explicit origins, plus X-CSRF-Token and X-Account-ID request headers.
+  X-Account-ID binds an existing browser page to its expected authenticated owner;
+  it never grants access without the matching session.
   GET/POST/PATCH/DELETE are supported; mutations require a configured Origin.
   Set API responses to `Cache-Control: no-store`.
 - Never run acquisition on a GET, expose an acceptance/health-check CLI as a
@@ -101,15 +108,21 @@ can proceed only when independent of unresolved source/method dependencies.
 **Implemented:** getHealth/getWorkspace, listFields/getField,
 listObservations/getObservation/listObservationEvidence, getProfile/updateProfile,
 createField/updateField/archiveField, createBoundaryImport/getBoundaryImport/
-confirmBoundaryImport, getJob, createExport/downloadExport.
+confirmBoundaryImport, getJob, createExport/downloadExport,
+getSession/createSignInContext/registerAccount/loginAccount/logoutAccount.
 The implementation column identifies the backend task, not current readiness.
 Resource IDs, nested resources, downloads and jobs must stay within the explicit
-shared project scope. No login routes exist.
+server-resolved account scope, or the configured shared scope in compatibility mode.
 
 | Operation ID | Method and path after `/api/v1` | Request / response | Task |
 | --- | --- | --- | --- |
 | getHealth | GET `/health` | Minimal liveness/version only; no provider calls or DB credentials | B02 |
-| getWorkspace | GET `/workspace` | Shared access mode, project IDs and capabilities; no user/token | B02 |
+| getWorkspace | GET `/workspace` | Access mode, owned project IDs and capabilities; no user/token | B02 |
+| getSession | GET `/auth/session` | Mode and nullable authenticated user/expiry/CSRF; no raw session token | U2 |
+| createSignInContext | POST `/auth/bootstrap` | Origin-bound HttpOnly bootstrap cookie and CSRF/expiry envelope | U2 |
+| registerAccount | POST `/auth/register` | Normalized login + password, bootstrap CSRF; 201 SessionResponse | U2 |
+| loginAccount | POST `/auth/login` | Login + password, bootstrap CSRF; rotated SessionResponse | U2 |
+| logoutAccount | POST `/auth/logout` | Session CSRF, revoke cookie session; 204 | U2 |
 | getProfile | GET `/profile` | Profile, including legitimately null unset fields | B02 |
 | updateProfile | PATCH `/profile` | Profile writable properties; Profile + ETag | B02 |
 | listFields | GET `/fields` | Archived records excluded; page of unchanged FieldRecord DTOs | B03 |
@@ -143,7 +156,7 @@ shared project scope. No login routes exist.
 | getPlan | GET `/planting-plans/{plan_id}` | PlantingPlan + ETag | B08 |
 | updatePlan | PATCH `/planting-plans/{plan_id}` | Writable PlanInput properties/status; PlantingPlan + ETag | B08 |
 
-Login/callback/refresh paths are absent by decision D01.
+OAuth callbacks, refresh-token services and password recovery remain absent.
 Capabilities distinguish `ready`, `blocked`, `not_implemented`, with `reason`
 and `operation_ids`. The frontend disables unsupported operations; direct calls
 receive 404 before implementation, or 503 when an implemented route has a
@@ -175,16 +188,17 @@ returned as null when absent, not filled from frontend seeds.
 
 ### Workspace and Profile
 
-Workspace: `access_mode: shared_trusted_network`, `project_ids`,
-`contract_revision`, `capabilities`. Project scope is configured server-side,
-not supplied by the browser.
+Workspace: `access_mode: shared_trusted_network | private_account`, `project_ids`,
+`contract_revision`, `capabilities`. Account mode resolves the project from the
+authenticated account; it never trusts an owner supplied by the browser.
 
 SharedProfile: `workspace_id`, `version`, `created_at`, `updated_at`, `name`, `kannada_name`, `phone`, `village`,
 `taluk`, `district`, `state`, `soil_health_card_no`, `farmer_category`,
 `preferred_language`, `risk_tolerance`, `primary_objective`.
 User-submission properties are nullable; identity/version/timestamps are server-owned.
 GET never seeds a person's data. Preference codes are frozen in ProfilePatch and
-SharedProfile in OpenAPI and use the shared-profile adapter, not legacy storageService. A soil-card number
+SharedProfile in OpenAPI (the historical DTO name is retained in private mode),
+not legacy storageService. A soil-card number
 on a profile is not a laboratory record and does not imply verification.
 
 ### Fields

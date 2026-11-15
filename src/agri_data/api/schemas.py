@@ -49,7 +49,7 @@ class ErrorResponse(DTO):
 
 class Health(DTO):
     status: Literal["ok"] = "ok"
-    contract_revision: Literal["shared-workspace-1"] = "shared-workspace-1"
+    contract_revision: Literal["shared-workspace-1", "private-workspace-2"] = "shared-workspace-1"
 
 
 class HealthResponse(DTO):
@@ -65,8 +65,8 @@ class Capability(DTO):
 
 
 class Workspace(DTO):
-    access_mode: Literal["shared_trusted_network"] = "shared_trusted_network"
-    contract_revision: Literal["shared-workspace-1"] = "shared-workspace-1"
+    access_mode: Literal["shared_trusted_network", "private_account"] = "shared_trusted_network"
+    contract_revision: Literal["shared-workspace-1", "private-workspace-2"] = "shared-workspace-1"
     project_ids: list[str]
     capabilities: list[Capability]
 

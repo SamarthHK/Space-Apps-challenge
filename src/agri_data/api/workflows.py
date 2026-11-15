@@ -109,7 +109,7 @@ def submitted(request, response, job):
 
 @router.get("/jobs/{job_id}", operation_id="getJob", response_model=JobResponse)
 def get_job(job_id: str, request: Request):
-    return envelope(request, request.app.state.job_store.get(job_id))
+    return envelope(request, request.state.job_store.get(job_id))
 
 
 @router.post("/imports", operation_id="createBoundaryImport", response_model=JobResponse, status_code=202,
@@ -124,35 +124,35 @@ async def create_import(request: Request, response: Response, filename: str = Qu
                           "application/vnd.google-earth.kml+xml", "application/vnd.google-earth.kmz"}:
         raise WorkspaceError(415, "unsupported_media_type", "Send the original file bytes, not multipart or a filesystem path")
     content = await request.body()
-    job = await run_in_threadpool(request.app.state.job_store.submit_import,
+    job = await run_in_threadpool(request.state.job_store.submit_import,
                                   content, filename, project_id, source_namespace, key)
     return submitted(request, response, job)
 
 
 @router.get("/imports/{import_id}", operation_id="getBoundaryImport", response_model=ImportResponse)
 def get_import(import_id: str, request: Request):
-    return envelope(request, request.app.state.job_store.import_info(import_id))
+    return envelope(request, request.state.job_store.import_info(import_id))
 
 
 @router.post("/imports/{import_id}/confirm", operation_id="confirmBoundaryImport",
              response_model=JobResponse, status_code=202)
 def confirm_import(import_id: str, body: ImportConfirmation, request: Request, response: Response,
                    key: str | None = Header(None, alias="Idempotency-Key", description=IDEMPOTENCY_DESCRIPTION)):
-    return submitted(request, response, request.app.state.job_store.confirm(
+    return submitted(request, response, request.state.job_store.confirm(
         import_id, body.model_dump(), key))
 
 
 @router.post("/exports", operation_id="createExport", response_model=JobResponse, status_code=202)
 def create_export(body: ExportRequest, request: Request, response: Response,
                   key: str | None = Header(None, alias="Idempotency-Key", description=IDEMPOTENCY_DESCRIPTION)):
-    return submitted(request, response, request.app.state.job_store.submit_export(body.model_dump(), key))
+    return submitted(request, response, request.state.job_store.submit_export(body.model_dump(), key))
 
 
 @router.get("/exports/{export_id}/download", operation_id="downloadExport", response_class=Response,
             responses={200: {"content": {mime: {"schema": {"type": "string", "format": "binary"}} for mime in (
                 "application/geo+json", "application/vnd.google-earth.kml+xml", "application/vnd.google-earth.kmz")}}})
 def download_export(export_id: str, request: Request):
-    record = request.app.state.job_store.download(export_id)
+    record = request.state.job_store.download(export_id)
     return Response(content=bytes(record["content"]), media_type=record["media_type"], headers={
         "Content-Disposition": f'attachment; filename="{record["filename"]}"',
         "ETag": f'"sha256:{record["sha256"]}"',
