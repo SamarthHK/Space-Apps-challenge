@@ -8,7 +8,9 @@
 
 The repository currently has a functioning Phase 1 prototype for KML ingestion,
 SoilGrids, NASA POWER, simulated Sentinel-2 indices, a small groundwater reference
-adapter, basic processing, SQLite persistence, and profile exports.
+adapter, basic processing, SQLite persistence, and profile exports. The orchestration
+now also has explicit `live` and `demo` modes, run-specific output directories,
+KML/raw-response snapshots, observation JSON/Parquet exports, and a run manifest.
 
 `Plan.md` describes a much broader agricultural data platform. It includes ten data
 domains, many external datasets, laboratory and sensor imports, raster extraction,
@@ -59,9 +61,12 @@ also not connected to the central pipeline.
 
 ### 2. The pipeline is not yet configuration-driven end to end
 
-`run_pipeline()` currently chooses a fixed adapter map in Python. It does not yet
-read an acquisition section that controls enabled domains, source selection, date
-ranges, retries, coverage, or test/live mode. Date defaults are also implicit.
+`run_pipeline()` now accepts domains, date ranges, and `live`/`demo` mode, but it
+still chooses the adapter map in Python. It does not yet read a complete acquisition
+section that controls source priority, retries, coverage thresholds, import files,
+authentication, or per-source configuration. The run manifest records the selected
+arguments, but it does not yet record the full resolved configuration and dataset
+versions.
 
 The plan requires source coverage discovery, per-source configuration, extraction
 jobs, repeat-run reuse, and explicit cache/version decisions. Those are not yet
@@ -69,12 +74,15 @@ implemented in the orchestration path.
 
 ### 3. Raw-data handling is incomplete
 
-SoilGrids and NASA POWER save raw JSON, but the current pipeline does not reliably
-save or register every input/output artifact:
+The orchestration now snapshots the KML under `data/raw/inputs/`, stores hashed raw
+responses for adapters it runs, and writes detailed observation exports. Raw-data
+handling is still incomplete:
 
-- The input KML is read in place but is not copied into `data/raw` or registered as
-  a source asset.
-- Simulated Sentinel-2 scenes are processed in memory and have no raw scene asset.
+- The KML source asset is registered, but it is not yet linked to a project or run
+  manifest through a first-class dataset record.
+- Simulated Sentinel-2 scenes are saved as JSON, but their synthetic status, scene
+  identity, spatial coverage, and processing inputs are not represented in a
+  dedicated imagery dataset model.
 - CGWB reference data is in code and has no raw snapshot/provenance asset.
 - Source assets are not consistently linked from observations through a dataset and
   extraction job.
@@ -122,10 +130,13 @@ are not calibrated crop models.
 
 ### 7. Repeatability and identity need strengthening
 
-The `Field.field_id` column is globally unique. Re-running a different KML that
-generates `FIELD_0001` can collide with an existing farm. The pipeline also does
-not yet implement a complete idempotency key based on project, source, geometry,
-variable, time, depth, dataset version, and processing version.
+The pipeline now derives a geometry/project-based field ID and writes a unique run
+directory. The database still has a globally unique `Field.field_id`, project
+creation is not fully idempotent, and the observation idempotency key is only
+partially implemented. A complete key must include project, field geometry,
+variable, source asset, observation time/period, depth, statistic, dataset version,
+and processing version. The current extraction job is not yet a full resumable job
+state machine.
 
 The plan requires extraction jobs, source versioning, cache reuse, duplicate
 avoidance, and reprocessing support. Those need to be designed before adding many
@@ -158,9 +169,275 @@ milestone rather than maintained as a manually contradictory checklist.
 
 ### 10. Operational interfaces are missing
 
-There is no stable CLI command, run manifest, structured logging/reporting of
-partial failures, or resume command. Docker/PostGIS configuration exists, but the
-application does not yet have a tested PostgreSQL/PostGIS integration path.
+There is now a basic `python -m agri_data INPUT.kml` CLI and a run manifest. A
+structured log, resume command, source status command, configuration file, and
+PostgreSQL/PostGIS integration test are still missing.
+
+## The fifteen missing feature groups and orchestration design
+
+The missing work should enter the existing pipeline through a common source result
+contract. Each adapter or importer must return:
+
+- source and dataset identity, version, license, mode, and retrieval metadata;
+- immutable raw asset references and checksums;
+- canonical observations with field, time, depth, statistic, unit, resolution,
+  measurement type, uncertainty, and quality flag;
+- spatial and temporal coverage;
+- validation results, warnings, and an explicit unavailable reason when applicable.
+
+The orchestration sequence is:
+
+~~~text
+run request
+  → resolve configuration and source coverage
+  → validate KML and create project-scoped fields
+  → retrieve/import source data
+  → save immutable raw assets
+  → normalize into canonical observations
+  → run quality/provenance gates
+  → database + complete Parquet/JSON detail export
+  → optional filtration views
+  → profile/report references
+~~~
+
+An adapter result should carry source_id, domain, dataset_id, mode, raw_asset_id,
+observations, coverage, warnings, and validation. The orchestrator should never
+infer a value from a summary profile. It should pass the complete observation
+collection to storage first, then create summaries as views.
+
+### 1. Soil laboratory and detailed soil properties
+
+SoilGrids currently supplies mapped sand, silt, clay, pH, organic carbon, total
+nitrogen, bulk density, CEC, and coarse fragments at six depths. The plan also
+requires EC, sodicity/ESP, available N/P/K, sulphur, micronutrients, calcium
+carbonate, infiltration, hydraulic conductivity, rooting depth, drainage,
+contamination, and soil temperature.
+
+Add canonical variables and units for every Soil Health Card field. Implement CSV,
+JSON, and laboratory-report import with sample date, laboratory, method, detection
+limit, depth, report checksum, and original units. Run this importer as an explicit
+import source. Remove the embedded baseline laboratory values from the measured
+path. Normalize all samples into observations, validate ambiguous nutrient bases,
+and generate hydraulic estimates as derived observations linked to the pedotransfer
+method and input observation IDs.
+
+### 2. DEM, terrain, geology, and hydrology
+
+Terrain functions exist but no DEM is acquired by the active pipeline. Add DEM
+download/import adapters that return tile IDs, CRS, transform, resolution, nodata,
+acquisition date, and source version. Select tiles from field bounds plus a margin,
+mosaic them, and save the source raster.
+
+Insert a raster extraction stage after field validation. It clips each raster to
+each field, records valid-pixel coverage and resolution, and writes observations
+for elevation, slope, aspect, curvature, TWI, flow accumulation, drainage density,
+erosion risk, watershed, and landform. Geology, lithology, geomorphology, and parent
+material need separate vector/raster adapters and spatial intersection records.
+
+### 3. Rainfall source cross-validation
+
+NASA POWER currently covers daily precipitation. The plan additionally identifies
+IMD, KSNDMC, CHIRPS, and GPM, plus rainfall intensity and formal onset/withdrawal
+definitions.
+
+Implement each source as a climate adapter producing the same daily schema:
+field_id, date, precipitation, source, station/grid ID, resolution, and quality.
+For stations, run nearest-station selection and retain distance/elevation
+representativeness. For grids, query the field or extract a polygon statistic.
+Store each source independently. Add a cross-source processor that computes bias,
+correlation, missingness, and disagreement; never average sources implicitly.
+Calculate rainy days, intensity, onset/withdrawal, anomalies, SPI, SPEI, and trends
+from source-specific series with a declared baseline period.
+
+### 4. Atmospheric climate completeness
+
+The current climate path has temperature, humidity, wind speed, solar radiation,
+and precipitation. The plan also requires dew point, VPD, pressure, wind direction,
+net radiation, sunshine, cloud cover, heatwaves, cold spells, frost, and growing
+degree days.
+
+Extend the canonical daily climate schema and source mappings for ERA5-Land, IMD,
+station imports, and NASA POWER where available. The climate normalizer must
+validate timezone, units, sentinels, duplicates, date continuity, and min/mean/max
+consistency. Store daily source observations first. Store VPD, ET0, GDD,
+heat/cold/frost event flags, anomalies, monthly, seasonal, and annual aggregates
+as derived records with period bounds and method metadata.
+
+### 5. Groundwater, surface water, irrigation, and soil moisture
+
+CGWB currently uses three hard-coded wells and emits groundwater depth only. The
+plan requires real well histories, aquifer type, water EC/pH, surface-water
+features, irrigation infrastructure, SMAP, ERA5-Land root-zone moisture, reservoirs,
+canals, and irrigation reliability.
+
+Replace the reference table with a CGWB/India-WRIS station import/live adapter;
+retain well ID, coordinates, elevation, aquifer, measurement date, season, and
+measurement method. Emit every available well variable, including EC and pH,
+rather than only depth. Add water-feature and irrigation-network spatial layers.
+Intersect fields and buffers while preserving feature IDs and distances. Add
+soil-moisture adapters with depth/layer metadata and product resolution. Add a
+water-balance processor that cites rainfall, ET0, soil hydraulics, irrigation
+events, runoff assumptions, and moisture observations for every derived balance.
+
+### 6. Real satellite imagery and land history
+
+The existing Sentinel-2 adapter simulates reflectance. Add Earth Engine and local
+scene import adapters with deterministic fixture support. Query by geometry and
+date, cloud-mask scenes, and save scene/product IDs, footprints, cloud fractions,
+bands, resolution, timestamps, and collection versions.
+
+Compute NDVI, NDMI, SAVI, EVI, LAI/fAPAR, phenology, anomalies, and change detection
+as derived observations linked to scene assets. Add Landsat, MODIS, WorldCover,
+Dynamic World, JRC water, and crop-history adapters. Synthetic curves must remain
+explicitly synthetic/modelled.
+
+### 7. Crop requirements and cultivar data
+
+The catalog has five crop profiles but lacks cultivar-level and source-specific
+requirements. Normalize YAML, EcoCrop, GAEZ, ICAR, and manual sources into the crop
+species, variety, stage, and parameter tables with source, version, confidence,
+stage, cultivar, and applicability conditions.
+
+Run crop acquisition independently of field environmental acquisition. Suitability
+then joins stored crop requirements to stored field observations. Missing
+requirements must remain missing and carry an explicit explanation.
+
+### 8. Germination and establishment
+
+The current development function creates a generic schedule and LAI curve. Add
+stage-specific parameters and optional field/trial observations for soil
+temperature, soil moisture, sowing depth, emergence date, germination percentage,
+seedling survival, and early root growth.
+
+Run a crop-stage processor after daily climate, soil moisture, cultivar parameters,
+and management events are available. Store measured stage events separately from
+modelled estimates and retain all input observation IDs.
+
+### 9. Crop growth and stress response
+
+The current LAI curve omits measured biomass, flowering, pollination, grain filling,
+harvest index, water-use efficiency, nutrient-use efficiency, and stress response.
+Add time-series variables and import templates for these measurements.
+
+Build growth features from satellite indices, climate, soil moisture, crop
+requirements, and management. Store model outputs under a model-run dataset with
+parameter/version metadata; keep measured trials and sensors in separate records.
+
+### 10. Historical crop performance and trials
+
+FAOSTAT currently uses hard-coded benchmarks. Add FAOSTAT/state-statistics imports
+with item, area, unit, year, methodology, revision, production, harvested area,
+and yield metadata. Add trial/performance imports connected to crop trials and
+performance records, including cultivar, treatment, dates, irrigation, fertilizer,
+biomass, harvest index, and observed stress.
+
+Performance comparisons must distinguish statistical benchmarks, trials, surveys,
+and field measurements, and cite the exact baseline used for a yield gap.
+
+### 11. Biological risks, weeds, and pollination
+
+The current module has a few hard-coded weather rules. Add biological-agent
+imports with scientific identity, taxonomy, agent type, host crop, source, and
+confidence. Store crop-agent relationships with life stage, susceptibility,
+environmental thresholds, controls, and source references.
+
+Build risk events from weather, leaf wetness, crop stage, vegetation state,
+management, and historical presence. Each alert must retain trigger observations,
+uncertainty, and method rather than only a text recommendation.
+
+### 12. Nutrient cycling, residues, and rotation interactions
+
+Rotation calculations exist, but no field residue, root, decomposition, disease
+carryover, allelopathy, or measured soil-change data flows through the pipeline.
+Persist crop sequence, harvest, residue management, nutrient application, and soil
+test events in time order.
+
+Add residue C/N, decomposition, incorporation, root contribution, fixation, uptake,
+and carryover variables with uncertainty. Evaluate a sequence from the previous
+season state and store transitions, assumptions, source records, and predicted
+effects. APSIM/DSSAT runs must be model datasets separate from observations.
+
+### 13. Cultivation and management
+
+Management tables exist without import or orchestration. Define CSV/JSON templates
+for seed, sowing, spacing, population, irrigation, fertilizer, tillage, weeds,
+pest control, residues, and harvest. Validate timestamps, amounts, units, products,
+cultivars, and field association.
+
+Import these events before growth, water balance, biological risk, and rotation
+processing. Corrected events should be versioned, preserving the original record.
+
+### 14. Physical sensor ingestion
+
+Add deployment metadata for sensor ID, manufacturer, variable, position, elevation,
+depth, calibration, installation, removal, and field. Add raw-preserving CSV/JSON
+imports with timezone normalization, unit conversion, calibration metadata, quality
+flags, and gap detection. MQTT can use the same normalized observation contract.
+
+Link every sensor reading to its deployment and source asset, then cross-validate it
+against stations, satellite, and reanalysis without replacing either series.
+
+### 15. Air quality, hazards, degradation, and change
+
+Plan sections 2.7 and 2.8 are absent from the current source, variable, processing,
+and pipeline layers. Add variables and event records for flood, drought, fire,
+erosion, landslide, salinity, contamination, PM2.5, PM10, ozone, smoke, and dust
+where source coverage exists.
+
+Add raster/event adapters and field-buffer intersection. Preserve event geometry,
+date, severity, footprint, source, and confidence. Change processors must retain
+both baseline and comparison datasets. Hazard and air-quality observations should
+feed crop stress reports as evidence, without silently changing suitability scores.
+
+## Complete-data retention and filtration plan
+
+The output contract must guarantee that source data is never shortened to make a
+profile convenient to read. Raw data, normalized observations, derived records, and
+filtered views are separate products:
+
+~~~text
+raw/              exact source response or imported file
+normalized/       every canonical observation, no row truncation
+processed/        complete derived tables and spatial outputs
+derived/          complete analytical/model results
+exports/full/     complete field/domain exports
+exports/filtered/ user-selected views with saved filter specification
+exports/summary/  compact human-readable summaries
+~~~
+
+The filtration pipeline is a downstream query/view stage. It must never mutate or
+overwrite raw, normalized, processed, derived, or full exports. A filter request
+should include field IDs, domains, variables, date range, depth range, source IDs,
+measurement types, quality flags, spatial resolution limits, and optional row
+limits. It must write the resolved filter specification, input dataset checksums,
+row counts before/after filtering, and output checksum beside the filtered result.
+
+Required implementation details:
+
+- Replace profile construction that drops detailed arrays with a full profile
+  manifest containing links to complete domain files.
+- Export observations as complete JSON Lines and Parquet files. JSON Lines avoids
+  holding a large dataset in one object while retaining every row.
+- Add a filter_observations function that returns a new DataFrame or query result
+  and records its filter manifest.
+- Permit summaries to contain aggregates, but include the source row count,
+  observation file path, and dataset checksum.
+- Reject accidental truncation parameters in full export functions. A limit is legal
+  only in an explicitly named filtered export.
+- Ensure CLI commands distinguish export full, export filtered, and export summary.
+- Validate that full-output row counts equal the database query row counts for each
+  field/domain.
+
+Acceptance criteria:
+
+1. Every source response is retained byte-for-byte or as an immutable imported file.
+2. Every normalized observation is present in the full database and full export.
+3. Summary profiles contain references to complete data and never claim to contain
+   all observations.
+4. Filtering creates a new reproducible view and leaves the complete dataset
+   unchanged.
+5. Tests cover zero filters, each filter dimension, compound filters, empty results,
+   checksums, row counts, and reruns.
 
 ## Implementation plan
 
