@@ -1,5 +1,5 @@
 {
-  "backend_commit": "c876655f4a6526a35e0bb67d9ea9d289e49ba917",
-  "sha256": "112e57a9b0000851ef78d1a3f81335054514b2c9e783f321a007464bf9f2dad1",
-  "revision": "shared-workspace-1"
+  "sha256": "7f76d4ca8e6931153663cb25ef132895952d76ca7386834c1b5c6c5a75c7041f",
+  "revision": "shared-workspace-1",
+  "backend_commit": "92ed57ac87c73db22365578ce8e86a8e7e651ca3"
 }

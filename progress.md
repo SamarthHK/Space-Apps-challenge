@@ -1,25 +1,75 @@
-# Frontend progress and handoff
+# Frontend implementation handoff
 
 Updated: 2026-11-15. Branch: `frontend`.
 
-## Current objective
+## Current scope and decisions
 
-Keep the Vite/Leaflet frontend independently deployable and connect it over HTTP to a separately deployed Python backend. Replace bundled agricultural, financial and user data with versioned API responses. The full implementation sequence, screen mapping, dependencies and acceptance cases are in [frontendplan.md](frontendplan.md). The companion backend contract is in the `backend` checkout at `/home/munna-01/PycharmProjects/Space-Apps-challenge/backendplan.md`.
+The owner requested small commits only after rigorous affected tests pass.
+This policy applies to this project. Preserve unrelated backend work.
 
-## Work completed
+Approved mode: no accounts, one shared Tailscale workspace. Frontend port 1080,
+API port 8000. All devices permitted by tailnet rules share access. Never
+publish this account-free mode through Funnel or a public proxy. Economics is
+deferred; pending evidence stays labelled; fields require polygon geometry.
 
-- Located the two project checkouts: this `frontend` branch and the Python `backend` branch in `PycharmProjects/Space-Apps-challenge`.
-- Audited the frontend imports, data modules, storage service and recommendation engine. `leaflet` and `vite` are declared and installed; `npm run build` succeeded on 2026-11-15. `npm ls` reports optional platform/preprocessor packages, with no identified missing required package.
-- Wrote `frontendplan.md` with phases F01–F11 and acceptance cases WEB-01–WEB-15. It specifies an independent static build, configurable API origin, authenticated API client, remote state, safe rendering, and migration of all seven screens.
-- The backend plan was revised to include API contracts, persistence, market and plan resources, frontend integration and API acceptance cases.
+Read `frontendplan.md` and backend branch `backendplan.md`, `docs/api-contract.md`
+and `docs/api-running.md`. Implemented contract: `shared-workspace-1`.
+The exact generated schema and source commit/hash are pinned under `contracts`.
+Legacy per-user authentication tasks in the original plan are superseded.
 
-## Current code state
+## Completed increments
 
-- No frontend application code has been migrated. `src/main.js` still reads `storageService.js`, `recommendationEngine.js` and bundled `src/data` modules.
-- Profile, plots and plans still use `localStorage`; scientific/market values and recommendations are still hardcoded or computed in the browser.
-- The backend API required by the plan has not been implemented or verified. A successful frontend build does not demonstrate data integration.
-- The prior conversation reported a Vite service at `0.0.0.0:8080` and a Tailscale URL; its current running state has not been verified in this handoff.
+| Step | Commit / scope | Evidence |
+| --- | --- | --- |
+| API foundation | Backend `209da1d`: trusted-network config, health/workspace metadata, standard errors | 32 API/contract tests passed in exact staged snapshot |
+| Scoped read API | Backend `c876655`: canonical fields/observations/evidence, explicit boundary selection, read-only DB, snapshot cursors | 41 API/contract tests passed in exact staged snapshot with authentic PostgreSQL evidence |
+| Provider-time contract | Backend `92ed57a`: preserve POWER local timestamps without an invented UTC suffix | 38 API tests, including real evidence checked against OpenAPI formats |
+| Frontend transport | Frontend `929b5b0`: origin/config, fetch client, response validation and race-safe resources | 8 unit/contract tests plus production build |
+| Connected read slice | Current main/index/map/workspace: seven-view shell, scoped fields, stored boundaries, canonical records, evidence and filters | Unit/build and real-browser suite; final result recorded in implementation commit |
 
-## Next action
+All new code is independent of unrelated uncommitted backend modules. Read
+routes require a prepared canonical DB schema; they do not migrate it or call
+CLI proof commands. No writes are enabled.
 
-Begin F01: inventory every active hardcoded field and freeze the OpenAPI request/response contract with the backend. Then implement the API client and migrate one screen at a time, recording honest blocked states when backend resources are unavailable. Do not claim WEB acceptance cases have passed yet.
+## Working behavior
+
+- Bootstrap workspace and capability states from the configured API.
+- List canonical fields only in explicitly configured projects.
+- Select a recorded boundary version when "current" is ambiguous; render
+  stored GeoJSON with Leaflet and server-calculated metrics when available.
+- Inspect canonical source values, units/basis, observation time/time standard,
+  pending/accepted/rejected state, conflicts and original evidence.
+- Paginate/filter records with race protection; handle changed snapshot,
+  invalid filters, unavailable backend and reconnect without demo fallback.
+- All seven navigation destinations remain accessible. Unimplemented screens
+  display honest unavailable states, not old fictional recommendations/prices.
+- No production import of legacy services/data modules; no authoritative
+  localStorage, seeded profile or initial HTML scientific values.
+
+The original seeded services/data files remain unused pending F10 cleanup.
+The UI does not claim verified agronomy or that reference records describe
+Karnataka. POWER reference evidence is from a Dutch parcel.
+
+## Remaining work
+
+B02/F03 shared-profile persistence, B04/F04 field writes/import/export, B05/F05
+soil submissions/analysis, B06/F06 acquisition/satellite, B07/F07/F08 crop and
+market services, B08/F09 planting plans, then cleanup and full deployment gates.
+No full F01/F04/B03 or WEB/API completion claim: property-level inventories,
+additional authentic geometry contexts, writes and later schemas remain open.
+Pending scientific approval and training readiness are separate from the
+passing engineering checks.
+
+## Running and validating
+
+See README for commands. `.env.local` holds local public host configuration
+and is ignored by Git. No credentials belong there.
+Backend PostgreSQL in this workspace required a different loopback port after
+the old port became unavailable; use the actual configured port, not a hardcoded
+assumption. Database and provider readiness must be rechecked after restarts.
+
+`npm test` covers configuration, transport, schema and race behavior.
+`npm run build` produces an independently hosted static artifact.
+`TEST_API_ORIGIN` points browser tests at a real prepared backend; no generated
+agricultural fixtures are used. Browser network/malformed-response and inert-text
+cases are explicit transport/UI tests, not scientific acceptance evidence.

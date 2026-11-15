@@ -3,36 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bhumi — Karnataka Agricultural Intelligence</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231b5e34'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z'/></svg>" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./src/style.css" />
+  <title>Bhumi - Agricultural Intelligence</title>
 </head>
 <body>
   <div id="app-container">
-
-    <!-- LEFT PERMANENT SIDEBAR NAVIGATION -->
-    <nav id="left-sidebar-nav">
-      <!-- BRAND BLOCK -->
+    <nav id="left-sidebar-nav" aria-label="Main navigation">
       <div class="sidebar-brand">
         <div class="sidebar-brand-icon"></div>
         <div class="sidebar-brand-text">
           <div class="sidebar-brand-name">BHUMI</div>
-          <div class="sidebar-brand-sub">Karnataka</div>
+          <div class="sidebar-brand-sub">Shared workspace</div>
         </div>
       </div>
-
-      <!-- ACTIVE PLOT SELECTOR -->
       <div class="sidebar-plot-block">
-        <div class="sidebar-plot-label">Active Plot</div>
-        <select id="global-plot-select" class="sidebar-plot-select"></select>
+        <label class="sidebar-plot-label" for="global-plot-select">Active Plot</label>
+        <select id="global-plot-select" class="sidebar-plot-select" disabled>
+          <option value="">No field loaded</option>
+        </select>
       </div>
-
-      <!-- NAV ITEMS -->
       <div class="sidebar-nav-list" id="main-nav-tabs">
-        <button class="nav-tab-btn active" data-view="dashboard">Dashboard</button>
+        <button class="nav-tab-btn active" data-view="dashboard" aria-current="page">Dashboard</button>
         <button class="nav-tab-btn" data-view="myland">My Land</button>
         <button class="nav-tab-btn" data-view="landanalysis">Land Analysis</button>
         <button class="nav-tab-btn" data-view="recommendations">Crop Recommendations</button>
@@ -40,852 +30,98 @@
         <button class="nav-tab-btn" data-view="plans">Planting Plans</button>
         <button class="nav-tab-btn" data-view="profile">My Profile</button>
       </div>
-
-      <!-- FARMER IDENTITY -->
-      <div class="sidebar-farmer-pill" id="header-farmer-pill" title="View Profile">
-        <div class="farmer-avatar-dot"></div>
-        <span id="header-farmer-name">Shivalingaiah G.</span>
-      </div>
+      <p class="workspace-notice">Account-free, trusted-network access. Everyone permitted to reach this workspace shares access.</p>
     </nav>
-
-    <!-- MAIN VIEWS CONTAINER -->
     <main class="main-content">
-
-      <!-- ===================================================================
-           VIEW 1: DASHBOARD
-           =================================================================== -->
+      <div class="connection-bar">
+        <p id="connection-status" role="status">Connecting to the configured backend...</p>
+        <button id="retry-connection" class="btn-secondary">Reconnect</button>
+      </div>
       <section id="view-dashboard" class="view-section active">
         <div class="view-wrapper">
-          <div class="view-header">
-            <div>
-              <h1 class="view-header-title">Farmer Intelligence Dashboard</h1>
-              <p class="view-header-subtitle">Tumakuru & Mandya Pilot Baseline &bull; Profit-Oriented Agro Intelligence</p>
-            </div>
-            <div style="display:flex; gap:0.5rem;">
-              <button class="btn-primary" id="btn-dash-run-rec">
-                Evaluate Crops for Active Plot
-              </button>
-              <button class="btn-secondary" id="btn-dash-add-plot">
-                Register New Plot
-              </button>
-            </div>
+          <h1 class="view-header-title">Farmer Intelligence Dashboard</h1>
+          <p class="view-header-subtitle">Source inspection only. No estimated crop or financial results.</p>
+          <div class="card">
+            <h2 class="card-title">Fields</h2>
+            <p id="fields-status" role="status">Not loaded</p>
+            <button id="more-fields" class="btn-secondary" hidden>Load more fields</button>
           </div>
-
-          <!-- KEY METRICS CARDS -->
-          <div class="metric-grid">
-            <div class="metric-card">
-              <span class="metric-label">Registered Plots</span>
-              <span class="metric-value" id="dash-metric-plots">3</span>
-              <span class="metric-subtext">Across 2 Districts</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-label">Total Land Holding</span>
-              <span class="metric-value" id="dash-metric-area">7.15 ac</span>
-              <span class="metric-subtext highlight">286 Guntas (2.89 ha)</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-label">Farm Analysis Status</span>
-              <span class="metric-value" id="dash-metric-soil-status">2/3 Verified</span>
-              <span class="metric-subtext">Soil Health Card Active</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-label">Suitable Candidate Crops</span>
-              <span class="metric-value" id="dash-metric-suitable-crops">6 Crops</span>
-              <span class="metric-subtext highlight">Passed Agronomic Filters</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-label">Top Expected Return</span>
-              <span class="metric-value" style="color:var(--status-green);" id="dash-metric-top-return">₹41,732</span>
-              <span class="metric-subtext">Net Return / Acre (Ragi GPU-28)</span>
-            </div>
-          </div>
-
-          <!-- ALERT BANNER: MISSING INFORMATION -->
-          <div class="alert-banner" id="dash-alert-banner">
-            <div class="alert-content">
-              <div class="alert-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              </div>
-              <div>
-                <div class="alert-title" id="dash-alert-title">Soil-Test Lab Record Missing for Pandavapura Sugar Strip</div>
-                <div class="alert-desc" id="dash-alert-desc">Using regional alluvial baseline. Enter Soil Health Card parameters for 100% accurate fertilizer & yield calibration.</div>
-              </div>
-            </div>
-            <button class="btn-primary btn-sm" id="btn-dash-resolve-alert">Enter Lab Values</button>
-          </div>
-
-          <!-- 2-COLUMN MAIN DASHBOARD -->
-          <div class="dash-columns">
-            <!-- LEFT: TOP PROFIT-YIELDING CROPS FOR CURRENT PLOT -->
-            <div class="card">
-              <div class="sidebar-panel-header">
-                <div>
-                  <h3 class="card-title">Top Profit-Oriented Crop Recommendations</h3>
-                  <p class="card-subtitle" id="dash-rec-subtitle">For Selected Plot &bull; Ranked by Expected Net Return (₹/Acre)</p>
-                </div>
-                <button class="btn-secondary btn-sm" id="btn-dash-view-all-recs">View Full Engine &rarr;</button>
-              </div>
-              <div class="crop-preview-list" id="dash-crop-list"></div>
-            </div>
-
-            <!-- RIGHT: QUICK ACTIONS & RECENT PLANS -->
-            <div style="display:flex; flex-direction:column; gap:1.25rem;">
-              <!-- RECENT PLANTING PLANS -->
-              <div class="card">
-                <h3 class="card-title">Active Planting Plans</h3>
-                <p class="card-subtitle">Saved cropping decisions for upcoming season</p>
-                <div id="dash-plans-list" style="display:flex; flex-direction:column; gap:0.6rem;"></div>
-              </div>
-
-              <!-- USEFUL NEXT ACTIONS -->
-              <div class="card">
-                <h3 class="card-title">Recommended Next Actions</h3>
-                <div class="quick-action-list">
-                  <button class="action-card-btn" id="act-draw-plot">
-                    <span>Draw boundary for a new agricultural parcel</span>
-                    <span>&rarr;</span>
-                  </button>
-                  <button class="action-card-btn" id="act-compare-mandi">
-                    <span>Check today's Tumakuru and Tiptur APMC prices</span>
-                    <span>&rarr;</span>
-                  </button>
-                  <button class="action-card-btn" id="act-run-scenarios">
-                    <span>Test financial sensitivity under price drop</span>
-                    <span>&rarr;</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div class="card">
+            <h2 class="card-title">Backend capabilities</h2>
+            <ul id="capabilities"></ul>
           </div>
         </div>
       </section>
-
-      <!-- ===================================================================
-           VIEW 2: MY LAND (Precision Cockpit Modeled on User's Reference GUI)
-           =================================================================== -->
       <section id="view-myland" class="view-section">
-        <div class="cockpit-container">
-          <!-- TOP COCKPIT TOOLBAR (Matches Reference GUI Top Bar) -->
-          <div class="cockpit-top-bar">
-            <div style="display:flex; align-items:center; gap:0.75rem;">
-              <button class="btn-secondary btn-sm" id="btn-cockpit-menu" title="Toggle Plot List">Menu</button>
-              <!-- Date Range Pickers (as seen in reference GUI) -->
-              <div class="date-range-display">
-                <span>2026.06.01</span>
-                <span>&rarr;</span>
-                <span>2026.11.15</span>
-              </div>
-            </div>
-
-            <!-- DRAW BOUNDARY PEG TOOL & LAYER SWITCHER -->
-            <div class="cockpit-tools-group">
-              <button class="btn-primary btn-sm" id="btn-start-drawing">
-                Draw Plot Boundary
-              </button>
-              <button class="btn-secondary btn-sm" id="btn-export-kml" title="Export KML / CAML File for Earth / GIS / Home Directory">
-                Export KML / CAML
-              </button>
-              <button class="btn-secondary btn-sm" id="btn-export-current-geojson" title="Export GeoJSON">
-                Export GeoJSON
-              </button>
-            </div>
+        <div class="view-wrapper">
+          <h1 class="view-header-title">My Land</h1>
+          <p class="view-header-subtitle">Stored geometry, not a generated parcel or analytical satellite overlay.</p>
+          <div class="card">
+            <label for="boundary-select">Recorded boundary version</label>
+            <select id="boundary-select" class="form-select" disabled><option value="">Select a field first</option></select>
+            <p id="field-status" role="status">Select a field.</p>
+            <dl id="field-details"></dl>
           </div>
-
-          <!-- MAIN LEAFLET MAP VIEWPORT -->
-          <div class="cockpit-map-area">
-            <div id="map"></div>
-
-            <!-- DRAWING BANNER OVERLAY -->
-            <div class="draw-helper-banner" id="draw-helper-banner">
-              <span>Click on satellite map to place boundary corner pegs.</span>
-              <span id="draw-points-count" style="color:var(--green-700); font-weight:700;">(0 points)</span>
-              <button class="btn-primary btn-sm" id="btn-finish-drawing" style="padding:0.2rem 0.5rem;">Finish &amp; Calculate Area</button>
-              <button class="btn-secondary btn-sm" id="btn-cancel-drawing" style="padding:0.2rem 0.5rem;">Cancel</button>
-            </div>
-
-            <!-- FLOATING MAP CONTROLS OVERLAY (Cleaned up, no distracting icons) -->
-            <div class="map-floating-overlay-top">
-              <select class="hud-select-pill" id="cockpit-overlay-mode">
-                <option value="ndvi">NDVI Vegetation Heatmap</option>
-                <option value="ndwi">NDWI Canopy Moisture</option>
-                <option value="truecolor">Natural Satellite (No Heatmap)</option>
-              </select>
-              <button class="hud-btn-pill" id="btn-fit-parcel" title="Center on Active Plot">
-                Center Plot
-              </button>
-            </div>
-          </div>
-
-          <!-- RIGHT SIDEBAR (Matches Reference GUI: Imagery Passes + Weather Forecast) -->
-          <aside class="cockpit-sidebar-right">
-            <!-- CARD 1: SATELLITE PASSES (Sentinel-2 / Landsat) -->
-            <div class="sidebar-panel-card">
-              <div class="sidebar-panel-header">
-                <div class="sidebar-panel-title">Satellite Passes</div>
-                <div class="cloud-filter-pill">
-                  Max Cloud: 100%
-                </div>
-              </div>
-              <div class="satellite-pass-list" id="cockpit-pass-list"></div>
-            </div>
-
-            <!-- CARD 2: WEATHER & ENVIRONMENTAL INDICATORS (Matches Reference GUI) -->
-            <div class="sidebar-panel-card">
-              <div class="sidebar-panel-header">
-                <div class="sidebar-panel-title">Weather &amp; Agro-Met Forecast</div>
-                <span style="font-size:0.7rem; color:var(--text-subtle);">IMD / KSNDMC</span>
-              </div>
-              <div class="weather-row-list" id="cockpit-weather-list">
-                <div class="weather-slot-item">
-                  <div class="weather-slot-left">
-                    <span style="font-size:0.72rem; font-weight:700; color:var(--text-subtle);">[OVERCAST]</span>
-                    <div>
-                      <div class="weather-slot-desc">Clear to Moderate Cloud</div>
-                      <div class="weather-slot-time">Today &bull; Afternoon Pass</div>
-                    </div>
-                  </div>
-                  <div class="weather-slot-right">
-                    <span class="weather-pill">Wind: 14.2 km/h</span>
-                    <span class="weather-pill">Temp: 29.4°C</span>
-                  </div>
-                </div>
-                <div class="weather-slot-item">
-                  <div class="weather-slot-left">
-                    <span style="font-size:0.72rem; font-weight:700; color:var(--text-subtle);">[RAIN]</span>
-                    <div>
-                      <div class="weather-slot-desc">Scattered Light Showers</div>
-                      <div class="weather-slot-time">Tomorrow &bull; 14:00</div>
-                    </div>
-                  </div>
-                  <div class="weather-slot-right">
-                    <span class="weather-pill">Wind: 18.5 km/h</span>
-                    <span class="weather-pill">Temp: 27.1°C</span>
-                  </div>
-                </div>
-                <div class="weather-slot-item">
-                  <div class="weather-slot-left">
-                    <span style="font-size:0.72rem; font-weight:700; color:var(--text-subtle);">[CLEAR]</span>
-                    <div>
-                      <div class="weather-slot-desc">Dry Clear Canopy</div>
-                      <div class="weather-slot-time">Weekend &bull; High Radiation</div>
-                    </div>
-                  </div>
-                  <div class="weather-slot-right">
-                    <span class="weather-pill">Wind: 11.0 km/h</span>
-                    <span class="weather-pill">Temp: 31.0°C</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- CARD 3: PARCEL DETAILS -->
-            <div class="sidebar-panel-card" id="cockpit-parcel-details">
-              <div class="sidebar-panel-title" style="margin-bottom:0.5rem;">Plot Information</div>
-              <div style="font-size:0.8rem; line-height:1.6;" id="cockpit-plot-info-text">
-                Loading plot metadata...
-              </div>
-            </div>
-          </aside>
-
-          <!-- BOTTOM COLLAPSIBLE TIME-SERIES PANEL (Matches Reference GUI) -->
-          <div class="cockpit-bottom-drawer" id="cockpit-bottom-drawer">
-            <div class="drawer-header" id="drawer-toggle-bar">
-              <div class="drawer-title-group">
-                <span style="font-size:0.75rem; font-weight:700; color:var(--text-main);">
-                  NDVI Vigour & Moisture Trend
-                </span>
-                <div class="drawer-legend">
-                  <span><span class="legend-dot" style="background:#166534;"></span> Mean NDVI</span>
-                  <span><span class="legend-dot" style="background:#22c55e;"></span> Peak Canopy</span>
-                  <span><span class="legend-dot" style="background:#0284c7;"></span> 24h Rain</span>
-                </div>
-              </div>
-              <button class="toggle-drawer-btn" id="btn-toggle-drawer" title="Expand/Collapse">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-              </button>
-            </div>
-            <div class="drawer-body">
-              <svg class="timeseries-svg" id="timeseries-chart-svg" viewBox="0 0 900 85" preserveAspectRatio="none">
-                <!-- SVG Chart will be rendered dynamically by main.js -->
-              </svg>
-            </div>
-          </div>
+          <div id="api-map" aria-label="Selected field boundary map"></div>
+          <p id="tile-status" role="status"></p>
+          <p>Drawing, imports and exports are unavailable until their backend capabilities are implemented.</p>
         </div>
       </section>
-
-      <!-- ===================================================================
-           VIEW 3: LAND ANALYSIS
-           =================================================================== -->
       <section id="view-landanalysis" class="view-section">
         <div class="view-wrapper">
-          <div class="view-header">
-            <div>
-              <h1 class="view-header-title">Farm Profile & Land Analysis</h1>
-              <p class="view-header-subtitle">Integrating Farmer Laboratory Records, Water Audit, Climate & Satellite Sensors</p>
-            </div>
-            <button class="btn-primary" id="btn-open-soil-modal">
-              Update Soil Health Card / Lab Records
-            </button>
-          </div>
-
-          <div class="analysis-grid">
-            <!-- 1. SOIL HEALTH CARD & LABORATORY RECORDS -->
-            <div class="card">
-              <div class="sidebar-panel-header">
-                <h3 class="card-title">Soil Health Card (SHC) Lab Data</h3>
-                <span class="brand-badge" id="shc-badge-status">Verified Lab Record</span>
-              </div>
-              <p class="card-subtitle" id="shc-card-meta">ICAR-KVK Hirehalli &bull; Sample Sy. 42/3</p>
-
-              <div style="font-size:0.82rem; margin-bottom:0.75rem; color:var(--text-muted);">
-                <div><b>Texture:</b> <span id="soil-texture-display">Red Sandy Loam (ಕೆಂಪು ಮರಳು ಮಣ್ಣು)</span></div>
-                <div><b>Soil Depth:</b> <span id="soil-depth-display">Medium (45 cm effective root zone)</span></div>
-                <div><b>Drainage:</b> <span id="soil-drainage-display">Well-drained (No waterlogging hazard)</span></div>
-              </div>
-
-              <!-- NUTRIENTS GRID -->
-              <div class="nutrient-card-grid">
-                <div class="nutrient-pill">
-                  <div class="nutrient-symbol">pH (Acidity/Alkalinity)</div>
-                  <div class="nutrient-val" id="soil-ph-val">6.6</div>
-                  <span class="nutrient-status medium">Optimal Neutral</span>
-                </div>
-                <div class="nutrient-pill">
-                  <div class="nutrient-symbol">EC (Salinity dS/m)</div>
-                  <div class="nutrient-val" id="soil-ec-val">0.32</div>
-                  <span class="nutrient-status medium">Normal Non-Saline</span>
-                </div>
-                <div class="nutrient-pill">
-                  <div class="nutrient-symbol">Organic Carbon (%)</div>
-                  <div class="nutrient-val" id="soil-oc-val">0.52%</div>
-                  <span class="nutrient-status medium">Medium Range</span>
-                </div>
-                <div class="nutrient-pill">
-                  <div class="nutrient-symbol">Available Nitrogen (N)</div>
-                  <div class="nutrient-val" id="soil-n-val">215 kg/ha</div>
-                  <span class="nutrient-status low">Low (Deficient)</span>
-                </div>
-                <div class="nutrient-pill">
-                  <div class="nutrient-symbol">Available Phosphorus (P)</div>
-                  <div class="nutrient-val" id="soil-p-val">22.4 kg/ha</div>
-                  <span class="nutrient-status medium">Medium</span>
-                </div>
-                <div class="nutrient-pill">
-                  <div class="nutrient-symbol">Available Potassium (K)</div>
-                  <div class="nutrient-val" id="soil-k-val">275 kg/ha</div>
-                  <span class="nutrient-status high">High (Adequate)</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 2. WATER RESOURCES & IRRIGATION AUDIT -->
-            <div class="card">
-              <h3 class="card-title">Water Resources &amp; Irrigation Audit</h3>
-              <p class="card-subtitle">Source dependability & pumping economic cost</p>
-
-              <div style="font-size:0.82rem; line-height:1.7; color:var(--text-muted);" id="water-audit-details">
-                <div><b>Irrigation Method:</b> <span id="water-method">Rainfed + Supplemental Borewell</span></div>
-                <div><b>Borewell Depth:</b> <span id="water-depth">450 feet</span></div>
-                <div><b>Discharge Yield:</b> <span id="water-yield">1.5 inches (Seasonal drying in Apr-May)</span></div>
-                <div><b>Pumping Cost:</b> <span id="water-cost">₹120 / hour (Diesel share)</span></div>
-                <div><b>Water Quality:</b> <span id="water-quality">Good (EC 0.42, Low Sodium Adsorption)</span></div>
-              </div>
-
-              <div style="margin-top:1rem; padding:0.75rem; background:var(--status-blue-bg); border:1px solid var(--status-blue-border); border-radius:var(--radius-sm); font-size:0.78rem; color:var(--status-blue);">
-                <b>Irrigation Recommendation:</b> Prioritize low water-duty crops (Ragi, Groundnut, Pigeon Pea). Reserve borewell water strictly for critical pod-development stages.
-              </div>
-            </div>
-
-            <!-- 3. CLIMATE & DROUGHT RISK AUDIT -->
-            <div class="card">
-              <h3 class="card-title">Regional Climate &amp; Drought Vulnerability</h3>
-              <p class="card-subtitle" id="climate-region-name">Tumakuru District Baseline &bull; Southern Dry Zone</p>
-
-              <div style="font-size:0.82rem; line-height:1.7; color:var(--text-muted);">
-                <div><b>Annual Normal Rainfall:</b> <span id="clim-rainfall">688 mm (Kharif: 375 mm)</span></div>
-                <div><b>Kharif Dry Spell Risk:</b> <span id="clim-dryspells">2 to 3 spells (duration 12-18 days)</span></div>
-                <div><b>Drought Index:</b> <span id="clim-drought" style="color:var(--status-amber); font-weight:700;">Moderate Dryland Vulnerability</span></div>
-                <div><b>Optimal Sowing Window:</b> <span id="clim-sowing">July 10 – August 05</span></div>
-              </div>
-
-              <div style="margin-top:1rem; padding:0.75rem; background:var(--green-50); border:1px solid var(--green-border); border-radius:var(--radius-sm); font-size:0.78rem; color:var(--green-800);">
-                <b>Monsoon Alert:</b> Southern Dry Zone Kharif rains peak in September. Sowing crops like Ragi and Tur in July ensures flowering aligns with September showers.
-              </div>
-            </div>
-          </div>
-
-          <!-- SATELLITE VS LABORATORY DATA DISCLAIMER (Prompt Section 5) -->
-          <div class="science-disclaimer-card">
-            <div class="disclaimer-title">Scientific Integrity Note: Satellite vs Laboratory Soil Testing</div>
-            <div class="disclaimer-text">
-              Satellite remote sensing (Sentinel-2, Landsat) measures <b>canopy optical reflectance, leaf chlorophyll, and surface moisture index</b>. Satellites <b>cannot</b> directly measure underground chemical nutrient levels like Nitrogen (N), Phosphorus (P), or Potassium (K). Those values must always come from physical <b>Soil Health Cards or laboratory soil tests</b>. Our engine uses laboratory data for nutrient calculations and satellite imagery for real-time vegetative monitoring.
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ===================================================================
-           VIEW 4: CROP RECOMMENDATIONS (The Core Profit Engine)
-           =================================================================== -->
-      <section id="view-recommendations" class="view-section">
-        <div class="view-wrapper">
-          <div class="view-header">
-            <div>
-              <h1 class="view-header-title">Profit-Oriented Crop Recommendations</h1>
-              <p class="view-header-subtitle">Stage A Agronomic Filtering &bull; Stage B Financial Net Returns &bull; Stage C Sensitivity Scenarios</p>
-            </div>
-            <button class="btn-primary" id="btn-save-top-plan">
-              Create Planting Plan for Top Crop
-            </button>
-          </div>
-
-          <!-- CONTROLS & SENSITIVITY MODULATION BAR -->
-          <div class="rec-controls-card">
-            <div class="rec-filters-left">
-              <span style="font-size:0.8rem; font-weight:700; color:var(--text-main);">Target Season:</span>
-              <div class="season-btn-group" id="rec-season-tabs">
-                <button class="season-btn active" data-season="kharif">Kharif (Monsoon)</button>
-                <button class="season-btn" data-season="rabi">Rabi (Post-Monsoon)</button>
-                <button class="season-btn" data-season="any">All Seasons</button>
-              </div>
-            </div>
-
-            <!-- SENSITIVITY SLIDERS -->
-            <div class="sensitivity-sliders-group">
-              <div class="slider-unit">
-                <label>Market Price Shift:</label>
-                <input type="range" id="slider-price-adjust" min="-30" max="30" step="5" value="0" />
-                <span id="label-price-adjust" style="min-width:35px; color:var(--orange-600);">0%</span>
-              </div>
-              <div class="slider-unit">
-                <label>Cultivation Cost Shift:</label>
-                <input type="range" id="slider-cost-adjust" min="-25" max="25" step="5" value="0" />
-                <span id="label-cost-adjust" style="min-width:35px; color:var(--text-main);">0%</span>
-              </div>
-              <button class="btn-secondary btn-sm" id="btn-reset-sensitivity" title="Reset Sliders">Reset</button>
-            </div>
-          </div>
-
-          <!-- AGRONOMIC FILTER STATUS SUMMARY -->
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; font-size:0.84rem; color:var(--text-muted);">
-            <div>
-              <span style="font-weight:700; color:var(--status-green);" id="rec-count-suitable">6 Suitable Crops</span>
-              <span>passed physical soil, water, and climate criteria for </span>
-              <b id="rec-plot-name-display" style="color:var(--text-main);">Hirehalli North Dryland Plot (3.25 Acres)</b>
-            </div>
-            <div style="font-size:0.78rem;">
-              Ranked by: <b>Expected Net Return (₹ / Acre)</b>
-            </div>
-          </div>
-
-          <!-- RANKED SUITABLE CROPS LIST -->
-          <div class="rec-cards-stack" id="rec-cards-container">
-            <!-- Rendered dynamically by main.js -->
-          </div>
-
-          <!-- DISQUALIFIED CROPS ACCORDION (Stage A Transparency) -->
-          <div class="disqualified-section">
-            <h4 style="font-size:0.95rem; font-weight:700; color:var(--text-main); margin-bottom:0.25rem;">
-              Disqualified Crops (Failed Stage A Agronomic Suitability)
-            </h4>
-            <p style="font-size:0.78rem; color:var(--text-subtle);">
-              These crops cannot be recommended for this plot regardless of market price because hard physical soil, moisture, or seasonal constraints are violated.
-            </p>
-            <div id="disqualified-crops-container">
-              <!-- Rendered dynamically -->
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ===================================================================
-           VIEW 5: MARKET INTELLIGENCE
-           =================================================================== -->
-      <section id="view-market" class="view-section">
-        <div class="view-wrapper">
-          <div class="view-header">
-            <div>
-              <h1 class="view-header-title">Agricultural Market Intelligence</h1>
-              <p class="view-header-subtitle">Karnataka APMC Mandis &bull; Daily Arrivals &bull; Farm-Gate Price Realization</p>
-            </div>
-            <div style="font-size:0.75rem; background:#ffffff; border:1px solid var(--border-medium); padding:0.35rem 0.65rem; border-radius:var(--radius-sm); color:var(--text-muted);">
-              Data Source: <b>AGMARKNET & eNAM Karnataka</b>
-            </div>
-          </div>
-
-          <!-- MANDI SELECTOR PILLS -->
-          <div class="market-mandi-selector-bar" id="market-mandi-bar">
-            <button class="mandi-pill-btn active" data-mandi="all">All Karnataka Mandis</button>
-            <button class="mandi-pill-btn" data-mandi="mandi-tumakuru">Tumakuru APMC</button>
-            <button class="mandi-pill-btn" data-mandi="mandi-tiptur">Tiptur APMC</button>
-            <button class="mandi-pill-btn" data-mandi="mandi-mandya">Mandya APMC</button>
-            <button class="mandi-pill-btn" data-mandi="mandi-bengaluru">Bengaluru (Yeshwantpur)</button>
-            <button class="mandi-pill-btn" data-mandi="mandi-ramanagara">Ramanagara APMC</button>
-          </div>
-
-          <!-- COMMODITY PRICES GRID -->
-          <div class="market-commodity-grid" id="market-commodity-grid">
-            <!-- Rendered dynamically -->
-          </div>
-
-          <!-- FARM-GATE VS MANDI PRICE EXPLANATION CARD -->
-          <div class="card" style="margin-top:1.5rem; background:var(--bg-orange-soft); border-color:var(--orange-300);">
-            <h4 style="font-size:0.9rem; font-weight:700; color:var(--orange-700); margin-bottom:0.35rem;">
-              Understanding Your Expected Farm-Gate Price
-            </h4>
-            <p style="font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
-              A farmer rarely receives the highest quoted APMC price on the news. To calculate the <b>real cash in hand</b>, our engine deducts <b>APMC cess (1.5%)</b>, <b>mandi weighing & bagging charges (~₹80/qtl)</b>, and <b>truck/tempo freight transport from farm-gate (~₹4.50/qtl/km)</b>. This protects you against overestimating revenues before committing funds.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <!-- ===================================================================
-           VIEW 6: PLANTING PLANS
-           =================================================================== -->
-      <section id="view-plans" class="view-section">
-        <div class="view-wrapper">
-          <div class="view-header">
-            <div>
-              <h1 class="view-header-title">Saved Planting Plans & Farm Decisions</h1>
-              <p class="view-header-subtitle">Compare Cultivation Budgets, Expected Profits & Risk Across Scenarios</p>
-            </div>
-            <button class="btn-primary" id="btn-create-new-plan">
-              Create New Planting Plan
-            </button>
-          </div>
-
-          <!-- PLANS COMPARISON SUMMARY -->
-          <div class="metric-grid" style="margin-bottom:1.5rem;">
-            <div class="metric-card">
-              <span class="metric-label">Total Planned Acreage</span>
-              <span class="metric-value" id="plans-metric-acreage">5.35 ac</span>
-              <span class="metric-subtext">Across 2 Active Plans</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-label">Total Cultivation Budget</span>
-              <span class="metric-value" id="plans-metric-budget">₹1,04,400</span>
-              <span class="metric-subtext">Input & Labour Capital Required</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-label">Expected Net Profit</span>
-              <span class="metric-value" style="color:var(--status-green);" id="plans-metric-profit">₹2,34,751</span>
-              <span class="metric-subtext highlight">Expected Scenario Baseline</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-label">Conservative Buffer</span>
-              <span class="metric-value" id="plans-metric-buffer">₹72,300</span>
-              <span class="metric-subtext">Minimum Worst-Case Net Gain</span>
-            </div>
-          </div>
-
-          <!-- PLANS LIST -->
-          <div class="plans-grid" id="plans-cards-grid">
-            <!-- Rendered dynamically -->
-          </div>
-        </div>
-      </section>
-
-      <!-- ===================================================================
-           VIEW 7: MY PROFILE
-           =================================================================== -->
-      <section id="view-profile" class="view-section">
-        <div class="view-wrapper">
-          <div class="view-header">
-            <div>
-              <h1 class="view-header-title">Farmer Profile & Landholding</h1>
-              <p class="view-header-subtitle">Individual Farmer Identity, Administrative Jurisdiction & Preferences</p>
-            </div>
-            <button class="btn-primary" id="btn-save-profile">Save Profile Changes</button>
-          </div>
-
-          <div class="profile-container-card">
-            <div class="profile-field-row">
-              <div>
-                <label class="form-label">Farmer Full Name</label>
-                <input type="text" class="form-input" id="prof-name" value="Shivalingaiah Gowda" />
-              </div>
-              <div>
-                <label class="form-label">Name in Kannada</label>
-                <input type="text" class="form-input" id="prof-kannada-name" value="ಶಿವಲಿಂಗಯ್ಯ ಗೌಡ" />
-              </div>
-            </div>
-
-            <div class="profile-field-row">
-              <div>
-                <label class="form-label">Mobile Number</label>
-                <input type="text" class="form-input" id="prof-phone" value="+91 98450 12345" />
-              </div>
-              <div>
-                <label class="form-label">Soil Health Card (SHC) Number</label>
-                <input type="text" class="form-input" id="prof-shc" value="SHC-KA-TUM-2026-88412" />
-              </div>
-            </div>
-
-            <div class="profile-field-row">
-              <div>
-                <label class="form-label">District</label>
-                <select class="form-select" id="prof-district">
-                  <option value="Tumakuru" selected>Tumakuru (ತುಮಕೂರು)</option>
-                  <option value="Mandya">Mandya (ಮಂಡ್ಯ)</option>
-                  <option value="Mysuru">Mysuru (ಮೈಸೂರು)</option>
-                  <option value="Hassan">Hassan (ಹಾಸನ)</option>
+          <h1 class="view-header-title">Land Analysis</h1>
+          <p class="view-header-subtitle">Canonical source records. Pending records are not verified field measurements or recommendations.</p>
+          <div class="card">
+            <p>Soil/water/derived climate summaries and laboratory submissions are not implemented.</p>
+            <form id="observation-filters" class="api-filters">
+              <label>Variable ID <input id="variable-filter" class="form-input" autocomplete="off" /></label>
+              <label>Validation
+                <select id="validation-filter" class="form-select">
+                  <option value="all">All states</option><option value="pending">Pending</option>
+                  <option value="accepted">Accepted</option><option value="rejected">Rejected</option>
                 </select>
-              </div>
-              <div>
-                <label class="form-label">Taluk</label>
-                <input type="text" class="form-input" id="prof-taluk" value="Tumakuru" />
-              </div>
+              </label>
+              <label>From <input id="start-date" type="date" class="form-input" /></label>
+              <label>Through <input id="end-date" type="date" class="form-input" /></label>
+              <button class="btn-primary" type="submit">Apply filters</button>
+            </form>
+            <p id="observations-status" role="status">Select a field.</p>
+            <div class="table-scroll">
+              <table id="observations-table">
+                <thead><tr><th>Variable</th><th>Value</th><th>Unit / basis</th><th>Observation time</th><th>Validation</th><th>Source</th></tr></thead>
+                <tbody id="observations-body"></tbody>
+              </table>
             </div>
-
-            <div class="profile-field-row">
-              <div>
-                <label class="form-label">Village</label>
-                <input type="text" class="form-input" id="prof-village" value="Hirehalli (ಹಿರೇಹಳ್ಳಿ)" />
-              </div>
-              <div>
-                <label class="form-label">Farmer Category</label>
-                <select class="form-select" id="prof-category">
-                  <option value="small_marginal" selected>Small &amp; Marginal Farmer (&lt; 2 Hectares)</option>
-                  <option value="medium">Medium Landholder (2 - 5 Hectares)</option>
-                  <option value="large">Large Landholder (&gt; 5 Hectares)</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="profile-field-row">
-              <div>
-                <label class="form-label">Risk Tolerance Strategy</label>
-                <select class="form-select" id="prof-risk">
-                  <option value="conservative">Conservative (Low input risk, guaranteed food crops)</option>
-                  <option value="balanced" selected>Balanced (Diversified food + high return oilseed/pulses)</option>
-                  <option value="progressive">Commercial Profit Maximization (High inputs, cash crops)</option>
-                </select>
-              </div>
-              <div>
-                <label class="form-label">Primary Agricultural Objective</label>
-                <select class="form-select" id="prof-objective">
-                  <option value="profit_maximization" selected>Maximum Net Financial Return (ಲಾಭಾಂಶ)</option>
-                  <option value="low_water_risk">Drought Safety & Water Conservation</option>
-                  <option value="household_security">Household Food & Fodder Security</option>
-                </select>
-              </div>
-            </div>
-
-            <div style="margin-top:1.5rem; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-subtle); padding-top:1rem;">
-              <button class="btn-secondary btn-sm" id="btn-reset-demo-data" style="color:var(--status-red); border-color:#fca5a5;">
-                Reset Demo Data to Factory Defaults
-              </button>
-              <button class="btn-primary" id="btn-save-profile-bottom">Update Profile</button>
-            </div>
+            <button id="previous-observations" class="btn-secondary" disabled>Previous page</button>
+            <button id="next-observations" class="btn-secondary" disabled>Next page</button>
+          </div>
+          <div class="card">
+            <h2 class="card-title">Observation and source evidence</h2>
+            <p id="evidence-status" role="status">Choose an observation's evidence.</p>
+            <pre id="evidence-details"></pre>
+            <button id="next-evidence" class="btn-secondary" hidden>Next evidence page</button>
           </div>
         </div>
       </section>
-
+      <section id="view-recommendations" class="view-section"><div class="view-wrapper">
+        <h1 class="view-header-title">Crop Recommendations</h1>
+        <div class="card"><p>No recommendation service is implemented. Crop suitability, scenarios and financial forecasts are unavailable; no browser rules or fallback values are used.</p></div>
+      </div></section>
+      <section id="view-market" class="view-section"><div class="view-wrapper">
+        <h1 class="view-header-title">Market Intelligence</h1>
+        <div class="card"><p>Market feeds and economic methods are deferred. Prices, arrivals, MSP and farm-gate estimates are unavailable.</p></div>
+      </div></section>
+      <section id="view-plans" class="view-section"><div class="view-wrapper">
+        <h1 class="view-header-title">Planting Plans</h1>
+        <div class="card"><p>Planting-plan persistence is not implemented. Browser demo plans are not loaded or uploaded.</p></div>
+      </div></section>
+      <section id="view-profile" class="view-section"><div class="view-wrapper">
+        <h1 class="view-header-title">My Profile</h1>
+        <div class="card"><p>This is an account-free shared workspace. Shared-profile persistence is not implemented; no seeded identity is displayed.</p></div>
+      </div></section>
     </main>
-
-    <!-- ===================================================================
-         MODAL 1: ADD / REGISTER NEW PLOT
-         =================================================================== -->
-    <div class="modal-overlay" id="modal-add-plot">
-      <div class="modal-dialog">
-        <div class="modal-header">
-          <h3 style="font-size:1.1rem; font-weight:700; color:var(--text-main);">Register Agricultural Plot</h3>
-          <button class="modal-close-btn" data-close="modal-add-plot">&times;</button>
-        </div>
-        <form id="form-add-plot">
-          <div style="margin-bottom:0.85rem;">
-            <label class="form-label">Plot Name</label>
-            <input type="text" class="form-input" id="new-plot-name" placeholder="e.g. South Borewell Field" required />
-          </div>
-          <div class="profile-field-row" style="margin-bottom:0.85rem;">
-            <div>
-              <label class="form-label">District</label>
-              <select class="form-select" id="new-plot-district">
-                <option value="Tumakuru" selected>Tumakuru</option>
-                <option value="Mandya">Mandya</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label">Taluk</label>
-              <input type="text" class="form-input" id="new-plot-taluk" placeholder="e.g. Tiptur" required />
-            </div>
-          </div>
-          <div class="profile-field-row" style="margin-bottom:0.85rem;">
-            <div>
-              <label class="form-label">Village</label>
-              <input type="text" class="form-input" id="new-plot-village" placeholder="e.g. Honnavalli" required />
-            </div>
-            <div>
-              <label class="form-label">Survey Number</label>
-              <input type="text" class="form-input" id="new-plot-survey" placeholder="e.g. Sy. No. 58/2" />
-            </div>
-          </div>
-          <div class="profile-field-row" style="margin-bottom:0.85rem;">
-            <div>
-              <label class="form-label">Area (in Acres)</label>
-              <input type="number" step="0.05" class="form-input" id="new-plot-acres" placeholder="e.g. 2.5" required />
-            </div>
-            <div>
-              <label class="form-label">Irrigation Type</label>
-              <select class="form-select" id="new-plot-irrigation">
-                <option value="rainfed">Rainfed (ಮಳೆಯಾಶ್ರಿತ)</option>
-                <option value="borewell">Borewell (ಬೋರ್‌ವೆಲ್)</option>
-                <option value="canal">Canal Command (ಕಾಲುವೆ)</option>
-                <option value="drip">Drip Irrigation (ಹನಿ ನೀರಾವರಿ)</option>
-                <option value="sprinkler">Sprinkler (ತುಂತುರು)</option>
-              </select>
-            </div>
-          </div>
-          <div class="profile-field-row" style="margin-bottom:0.85rem;">
-            <div>
-              <label class="form-label">Water Availability</label>
-              <select class="form-select" id="new-plot-water-avail">
-                <option value="medium_seasonal">Medium Seasonal (Monsoon dependent)</option>
-                <option value="high_perennial">High Perennial (Year-round)</option>
-                <option value="low_critical">Low Critical (Scarcity prone)</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label">Soil Texture</label>
-              <select class="form-select" id="new-plot-soil-texture">
-                <option value="red_sandy_loam">Red Sandy Loam</option>
-                <option value="clay_loam">Medium Clay Loam</option>
-                <option value="black_soil">Black Soil</option>
-                <option value="alluvial">Alluvial Loam</option>
-                <option value="laterite">Laterite Soil</option>
-              </select>
-            </div>
-          </div>
-          <div style="margin-bottom:1.25rem;">
-            <label class="form-label">Previous Crops Cultivated</label>
-            <input type="text" class="form-input" id="new-plot-prev-crops" placeholder="e.g. Groundnut, Ragi" />
-          </div>
-          <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
-            <button type="button" class="btn-secondary" data-close="modal-add-plot">Cancel</button>
-            <button type="submit" class="btn-primary">Save Plot</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- ===================================================================
-         MODAL 2: UPDATE SOIL HEALTH CARD LAB VALUES
-         =================================================================== -->
-    <div class="modal-overlay" id="modal-soil-data">
-      <div class="modal-dialog">
-        <div class="modal-header">
-          <h3 style="font-size:1.1rem; font-weight:700; color:var(--text-main);">Update Soil Health Card Records</h3>
-          <button class="modal-close-btn" data-close="modal-soil-data">&times;</button>
-        </div>
-        <form id="form-soil-data">
-          <div class="profile-field-row" style="margin-bottom:0.85rem;">
-            <div>
-              <label class="form-label">Soil Health Card No.</label>
-              <input type="text" class="form-input" id="modal-soil-cardno" required />
-            </div>
-            <div>
-              <label class="form-label">Testing Lab Name</label>
-              <input type="text" class="form-input" id="modal-soil-lab" placeholder="e.g. ICAR-KVK Soil Lab" required />
-            </div>
-          </div>
-          <div class="profile-field-row" style="margin-bottom:0.85rem;">
-            <div>
-              <label class="form-label">Soil pH (0 - 14)</label>
-              <input type="number" step="0.1" class="form-input" id="modal-soil-ph" required />
-            </div>
-            <div>
-              <label class="form-label">EC (Salinity dS/m)</label>
-              <input type="number" step="0.01" class="form-input" id="modal-soil-ec" required />
-            </div>
-          </div>
-          <div class="profile-field-row" style="margin-bottom:0.85rem;">
-            <div>
-              <label class="form-label">Organic Carbon (%)</label>
-              <input type="number" step="0.01" class="form-input" id="modal-soil-oc" required />
-            </div>
-            <div>
-              <label class="form-label">Available Nitrogen (kg/ha)</label>
-              <input type="number" step="1" class="form-input" id="modal-soil-n" required />
-            </div>
-          </div>
-          <div class="profile-field-row" style="margin-bottom:0.85rem;">
-            <div>
-              <label class="form-label">Available Phosphorus (kg/ha)</label>
-              <input type="number" step="0.5" class="form-input" id="modal-soil-p" required />
-            </div>
-            <div>
-              <label class="form-label">Available Potassium (kg/ha)</label>
-              <input type="number" step="1" class="form-input" id="modal-soil-k" required />
-            </div>
-          </div>
-          <div class="profile-field-row" style="margin-bottom:1.25rem;">
-            <div>
-              <label class="form-label">Soil Depth</label>
-              <select class="form-select" id="modal-soil-depth">
-                <option value="shallow">Shallow (&lt; 30 cm)</option>
-                <option value="medium" selected>Medium (30 - 60 cm)</option>
-                <option value="deep">Deep (&gt; 60 cm)</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label">Drainage Characteristic</label>
-              <select class="form-select" id="modal-soil-drainage">
-                <option value="well_drained" selected>Well Drained</option>
-                <option value="moderate">Moderate</option>
-                <option value="slow_draining">Slow Draining</option>
-              </select>
-            </div>
-          </div>
-          <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
-            <button type="button" class="btn-secondary" data-close="modal-soil-data">Cancel</button>
-            <button type="submit" class="btn-primary">Save Lab Test Data</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- ===================================================================
-         MODAL 3: CREATE PLANTING PLAN
-         =================================================================== -->
-    <div class="modal-overlay" id="modal-create-plan">
-      <div class="modal-dialog">
-        <div class="modal-header">
-          <h3 style="font-size:1.1rem; font-weight:700; color:var(--text-main);">Create New Planting Decision Plan</h3>
-          <button class="modal-close-btn" data-close="modal-create-plan">&times;</button>
-        </div>
-        <form id="form-create-plan">
-          <div style="margin-bottom:0.85rem;">
-            <label class="form-label">Select Plot</label>
-            <select class="form-select" id="plan-input-plot"></select>
-          </div>
-          <div style="margin-bottom:0.85rem;">
-            <label class="form-label">Select Candidate Crop</label>
-            <select class="form-select" id="plan-input-crop"></select>
-          </div>
-          <div class="profile-field-row" style="margin-bottom:0.85rem;">
-            <div>
-              <label class="form-label">Allocated Area (Acres)</label>
-              <input type="number" step="0.1" class="form-input" id="plan-input-acre" required />
-            </div>
-            <div>
-              <label class="form-label">Planned Sowing Window</label>
-              <input type="date" class="form-input" id="plan-input-sow" value="2026-07-10" required />
-            </div>
-          </div>
-          <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.25rem;">
-            <button type="button" class="btn-secondary" data-close="modal-create-plan">Cancel</button>
-            <button type="submit" class="btn-primary">Save Planting Plan</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- NOTIFICATION TOAST -->
-    <div class="hud-toast" id="hud-toast"></div>
   </div>
-
-  <!-- Vite Main Entry Point -->
+  <noscript>JavaScript is required to load backend records. No agricultural data is available in this static page.</noscript>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

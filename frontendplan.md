@@ -1,291 +1,270 @@
-# Agriculture Intelligence Frontend — Backend Integration Plan
+# Frontend integration execution plan
 
-## 1. Goal and boundaries
+Updated: 2026-11-15. Branch: `frontend`. Status: implementation started.
 
-Rewrite the existing Vite/Leaflet frontend so it remains an independently built and deployed web application while retrieving and mutating required data through the backend's versioned HTTP API.
+## Approved account-free first slice
 
-The frontend and backend must remain separate instances:
+The owner selected no accounts and shared Tailscale access. Frontend port is
+1080; API port is 8000. Contract `shared-workspace-1` supersedes the original
+authentication/ownership requirements below: bootstrap getWorkspace, do not
+create login/token/session UI, and constrain data to the server-configured
+shared projects. All permitted tailnet clients share access. Profile work is a
+shared profile, not per-user storage. Do not expose this mode publicly.
+Pending source inspection/polygon-only fields are approved; economics is deferred.
+Historical getSession references below mean getWorkspace under this override.
+WEB-03/04 now test no-account operation and project scope, not nonexistent users.
 
-- The frontend is a static Vite build deployable from its own host and port.
-- The backend is a separately deployed API and PostgreSQL/PostGIS service.
-- The frontend knows the backend only through a configured API base URL and a versioned OpenAPI contract.
-- The frontend must not import backend Python modules, connect directly to PostgreSQL, read backend files, or require both repositories to share a filesystem.
-- The backend must not serve as the frontend's source tree or build system. It may optionally serve the already-built static artifact in a combined deployment, but that is not the primary architecture and must not be required.
+## Project commit policy
 
-The rewrite preserves the current screens and interaction model where the underlying backend supports them: dashboard, My Land, land analysis, crop recommendations, market intelligence, planting plans and profile management.
+Commit each small, coherent implementation step only after rigorous tests for
+the changed behavior and edge cases, affected regressions and the production
+build pass. The committed snapshot must work without uncommitted dependencies.
+Do not commit a failing or partial step or include unrelated user changes.
+This policy applies only to this project; record validation with each handoff.
 
-## 2. Non-negotiable data rules
+## 1. Start here
 
-1. Remove production use of hardcoded farmer, plot, soil, water, satellite, climate, crop, market, recommendation and planting-plan values.
-2. Do not fall back to plausible defaults when an API request fails or a field is missing. Render `loading`, `empty`, `unavailable`, `blocked`, `stale` or `error` explicitly.
-3. Static interface copy, select-option labels, icons, colors and layout configuration may remain bundled. Scientific, geographical, financial and user-specific values must come from the backend.
-4. Browser storage may hold non-sensitive UI preferences such as the selected tab or display language. It must not be the authoritative repository for profiles, fields, soil records, recommendations or plans.
-5. The frontend may calculate presentation-only values such as formatting, chart coordinates and visible totals from API-provided records. Scientific normalization, field area, data validation, recommendations and financial outputs remain backend responsibilities.
-6. Every displayed scientific or financial value must retain enough response metadata to expose its unit, observation/reference period, quality or availability state and source where the screen calls for it.
-7. Never put provider credentials, database credentials, JWT signing keys or other backend secrets into Vite environment variables or the browser bundle.
+1. Read `progress.md`, this plan and the shared contract on branch `backend`:
+   `docs/api-contract.md`, revision `integration-draft-1`.
+2. Read `backendplan.md` and `IMPLEMENTATION_STATUS.md` on branch `backend`.
+   In this workspace the backend is `..\Space-Apps-challenge`; the
+   [local contract](../Space-Apps-challenge/docs/api-contract.md) and
+   [local backend plan](../Space-Apps-challenge/backendplan.md) are available.
+   These relative links are workspace conveniences, not runtime dependencies.
+3. Inspect `git status --short`, `index.html`, `src/main.js`, the two service
+   modules and the data imports before editing. Line references below are
+   navigation hints from this audit; find symbols if later edits shift lines.
+4. Execute the next ready F-task. Check its B-task dependencies and acceptance
+   gate before claiming completion. Keep blocked screens honest and continue
+   only work independent of their blockers.
 
-## 3. Current hardcoded behavior to replace
+There is one API specification, not a second frontend route design. Copy the
+agreed contract/OpenAPI artifacts into `contracts` during F01/F02 for independent
+development, recording their source revision and SHA-256. On another machine,
+obtain the exact backend artifact rather than assuming this sibling directory
+exists. Documentation changes must be committed/shared before another model
+can retrieve them from a remote branch.
 
-| Current file/behavior | Required replacement |
-| --- | --- |
-| `src/services/storageService.js` seeds and persists farmer profiles, plots and planting plans in `localStorage`. | API repositories for profile, fields and planting plans. Keep only optional UI preferences in local storage. |
-| `src/data/karnatakaCrops.js` contains crop requirements, risks, costs, yields and prices. | Crop/reference catalog endpoints with source and version metadata. Remove the production data module after all consumers migrate. |
-| `src/data/marketData.js` contains mandi and commodity prices. | Market endpoints returning authentic observations, timestamps, currency, quantity basis, source and freshness. |
-| `src/data/environmentalData.js` contains climate baselines, satellite passes and NDVI time series. | Field analysis, climate, satellite-scene and vegetation-series endpoints with quality and availability metadata. |
-| `src/services/recommendationEngine.js` runs recommendations and financial scenarios locally. | Backend recommendation endpoints returning a persisted, versioned run with explanations and missing-input states. |
-| `src/data/agriZones.js`, `mandyaData.js` and `sensorStations.js` contain additional bundled domain records. | Remove if unused; otherwise map each active UI consumer to an API resource before deleting the module. Do not leave dormant production datasets that can later be used accidentally. |
-| `Date.now()` creates plot and plan IDs. | Backend-generated stable IDs returned by create requests. |
-| `Math.random()` can create a soil-card number. | User-supplied or backend/imported external identifier. Never fabricate it. |
-| New plots without drawn geometry receive a generated district rectangle. | Require geometry or create an explicit non-spatial draft supported by the backend. Never invent a field boundary. |
-| Browser code estimates authoritative field area. | Use the browser estimate only while drawing and label it as provisional; replace it with the PostGIS-calculated area after saving. |
-| Render functions use values such as `soil.ph || 6.6` and a Tumakuru climate fallback. | Null-safe view models and explicit unavailable components. Use nullish semantics only for display, never to inject a scientific value. |
-| GeoJSON/KML exports are assembled entirely in the browser. | Request authorized backend exports so geometry versions, holes, MultiPolygons and provenance remain correct. |
-| User-controlled strings are interpolated into `innerHTML`. | Safe DOM construction or a single audited escaping layer before rendering API/user content. |
+The current README describes the original prototype, not verified integration.
+The real `vite.config.js` uses port **8080**, not the README's 5173.
+No existing server's running state is assumed.
 
-Before implementation, use `rg` to produce a checked inventory of every literal domain value, `localStorage` call, data-module import, fallback expression, generated identifier and direct `innerHTML` interpolation. Keep this inventory in the migration checklist until each item is removed or explicitly classified as static UI configuration.
+## 2. What the code actually supports
 
-## 4. Target frontend architecture
+The frontend is Vite + vanilla JavaScript + Leaflet, with seven screens.
+`src/main.js:5-9` imports bundled domain data, localStorage persistence and a
+browser recommendation engine. No API client, authentication or remote state
+has been implemented. `package.json` currently offers dev/build/preview only;
+test/lint scripts below are future work, not commands available today.
 
-Use native browser `fetch`; Axios is not required. Centralize transport behavior instead of calling `fetch` from render functions.
+The backend has reusable CLI/database/geography code, not HTTP routes. It has
+authentic Dutch reference-boundary/NASA POWER data paths and Woburn trial
+imports. Those are not a Karnataka soil/water/satellite catalog or a crop
+recommendation/market service. Scientific records remain pending when reported
+as such; software health, scientific acceptance and training readiness differ.
+
+First delivery is a narrow vertical slice:
+
+**session/profile -> owned field list -> authoritative map geometry -> canonical
+POWER source-record inspection, with pending/quality/provenance labels.**
+
+Do not wait for a fully trained model to implement this slice. Do not claim that
+it completes the dashboard's agronomic or financial features either. B04/F04
+then adds field drawing, preview/confirmed imports and supported exports.
+
+## 3. Non-negotiable frontend rules
+
+- Frontend and backend build/deploy independently. Browser uses configured HTTP
+  only, never Python modules, PostgreSQL or backend filesystem paths.
+- Keep Leaflet/native fetch/vanilla JS. Do not introduce a framework rewrite or
+  Axios merely to connect APIs.
+- No production domain seeds, fallback scientific values, browser agronomic
+  rules, fabricated geometry/IDs/soil cards or local financial forecasts.
+- User declarations are allowed, but must stay distinguishable from measured or
+  scientifically accepted records. A submitted card number is not verification.
+- localStorage may hold UI preferences only. Never automatically upload legacy
+  stored plots/profile/plans: they may be generated seeds. Any later migration
+  requires explicit user review and a separately specified import flow.
+- Null, zero, missing, rejected, pending, stale and blocked are not interchangeable.
+  Do not replace missing values with zero, a district baseline or another field.
+- Preserve units, basis, dates/time standard, quality, spatial support and source
+  references. Do not turn POWER retrieval dates into observation dates.
+- Do not port the browser recommendation engine into Python. Its hardcoded
+  thresholds, yield/cost/price assumptions are not authenticated source evidence.
+- Safe DOM construction is required for API/user values, including Leaflet
+  popups, option elements, SVG labels and toasts. Do not trust arbitrary HTML.
+- Secrets and authentication signing/provider credentials never enter Vite
+  configuration or the bundle. D01 decides the session transport before F03.
+
+## 4. Consumer inventory and operation mapping
+
+This checked family-level inventory includes previously missed HTML/form paths.
+F01 must expand it to one row per active displayed/input property; it is not
+already a complete field-level mapping. Each row needs consumer/property,
+classification, operation ID + DTO property, availability behavior, task and
+status. Unmapped means blocked, not permission to invent an API property.
+
+| Consumer / code location | Existing behavior to remove | Shared operation IDs / target |
+| --- | --- | --- |
+| Bootstrap/header, main.js initData/getActivePlot/renderHeaderControls | Seeded person/plots/plans and silent first-plot fallback | getSession, getProfile, listFields; listPlans only when ready. No field means explicit empty selection. |
+| Dashboard, renderDashboard | Browser recommendation execution, seeded verified counts, net returns and misleading "100% accurate" text | listFields, getAnalysis, listRecommendations, getRecommendation, listPlans. Compose only available data; aggregate complete pages, not partial pages. |
+| Map, initMap/renderMapActiveParcel | Seed center/NDVI color, legacy boundaries and popups | getField, getAnalysis, listScenes; true GeoJSON geometry, explicit unsupported overlays. Base-map configuration may remain static. |
+| Add plot/drawing, finishDrawing/setupForms | Date.now IDs, default district rectangle, fabricated soil/water/NDVI and authoritative user area | createField, updateField; require drawn geometry, backend IDs/area/boundary version. User area can only be a separately labelled declaration if specified. |
+| New KML/KMZ workflow | No existing upload/preview/confirmation flow | createBoundaryImport, getJob, getBoundaryImport, confirmBoundaryImport. Wait for B04, do not emulate by local-only save. |
+| GeoJSON click handler/exportPlotAsKML | Browser-assembled exports; KML outer ring only | createExport, getJob, downloadExport. GeoJSON first; KML/KMZ disabled until supported. |
+| My Land, renderMyLand/renderTimeSeriesSvg | Global hardcoded passes, mean/max NDVI and rainfall, assumed dates/scene ID | listScenes, getVegetationSeries; rain from identified climate records. Field/boundary/date scope, gaps and source labels retained. |
+| Land analysis, renderLandAnalysis | Soil pH/EC/carbon/N/P/K/texture/depth/drainage, water quality/depth/yield/cost, annual/seasonal rain/dry spells/drought defaults | getAnalysis plus listObservations for pending source inspection. Freeze per-metric IDs and units in B05; unknown metrics stay blocked. |
+| Soil modal, main.js:1118-1128 and setupForms | Fabricated card/lab/values, today's date treated as test date, immediate hasSoilTest=true | listSoilRecords, createSoilRecord. Ask actual sample date/origin; pending submission, no client verification. |
+| Recommendations, renderCropRecommendations and dashboard | JS agronomic score, suitable/excluded lists, returns, BCR, budgets, risks, sowing/yield assumptions | listCrops, createRecommendation, getJob, listRecommendations, getRecommendation. Backend run and input versions required. |
+| Markets, renderMarketIntelligence | Bundled mandi prices, MSP, arrivals, trends and farm-gate deductions | listMandis, listMarkets. Missing MSP/derived prices must remain unavailable independently of modal prices. |
+| Plans, renderPlantingPlans/setupForms/openPlanModalWithCrop | Seeded CRUD, generated IDs, browser forecasts/default dates/crop fallback | listCrops, listPlans, createPlan, getPlan, updatePlan; archive, not destructive deletion. No computed financial payloads from browser. |
+| Profile, renderProfile/saveProfileHandler | localStorage authority and seeded district/preferences | getProfile, updateProfile. Include farmer_category/preferred_language consistently; freeze mismatched objective codes. |
+| index.html (including static body and form values) | Initial fake counts, scientific values, identity, dates and regional defaults before JS runs | Empty/loading placeholders, nullable form fields. Labels/options are static only if not asserted as a user's actual value. |
+| storageService.js/recommendationEngine.js and data modules | Bundled production domain authority | Retire after consumer migration; never reactivate on network failure. |
+| agriZones.js/mandyaData.js/sensorStations.js | No active imports found in audited application | Recheck consumers then remove dormant domain datasets; do not create endpoints just to preserve unused demo files. |
+
+Special semantic gaps: water discharge in "inches" has no defined flow basis;
+profile objective codes disagree between HTML and seeds; canopy/soil quality
+labels and climate sowing dates are not harmless layout copy. Resolve or disable
+these fields explicitly rather than matching names to unrelated backend data.
+
+## 5. Contract consumption and client/state boundaries
+
+Use operation IDs and DTOs from `backend:docs/api-contract.md`. Do not introduce
+`/plots`, `/recommendations` or a second convention independently. On the wire,
+`field_id`, `boundary_id`, `plan_id`, `run_id` and snake_case remain unchanged.
+Only adapters translate to a legacy view model while migrating.
+
+Target layout, created incrementally:
 
 ```text
 src/
-  api/
-    client.js              # base URL, auth mode, timeout/abort, JSON parsing
-    errors.js              # stable API error model
-    profileApi.js
-    fieldsApi.js
-    analysisApi.js
-    cropsApi.js
-    recommendationsApi.js
-    marketsApi.js
-    plansApi.js
-    exportsApi.js
-  adapters/
-    profileViewModel.js
-    fieldViewModel.js
-    analysisViewModel.js
-    recommendationViewModel.js
-    marketViewModel.js
-    planViewModel.js
-  state/
-    appState.js            # data plus loading/error/request status per resource
-    actions.js             # async orchestration and request cancellation
-  views/                   # split current main.js render/event responsibilities
-  map/                     # Leaflet setup, drawing and API geometry adapters
-  config.js                # validated public runtime/build configuration
-  main.js                  # application bootstrap only
+  api/client.js              # URL/auth/error/timeout parsing, no view logic
+  api/<resource>Api.js        # shared operation-ID implementations
+  adapters/<resource>ViewModel.js
+  state/appState.js
+  state/actions.js
+  views/                     # extracted only as each feature migrates
+  map/                       # geometry, drawing, layers
+  config.js
+  main.js                    # eventually bootstrap only
+contracts/                   # pinned contract/OpenAPI artifacts and source hash
 ```
 
-This layout is a target boundary, not a requirement for one large rewrite. Move one vertical feature at a time while keeping the app buildable. Avoid introducing a UI framework solely for this migration unless a separate decision documents the benefit and conversion cost.
+Client requirements:
 
-### 4.1 API client rules
+- Validate VITE_API_BASE_URL as an origin; append `/api/v1` exactly once.
+  Follow D01 for credentials/CSRF or bearer behavior. No per-view auth storage.
+- Parse the shared success/error envelopes, non-JSON failures and 204 correctly.
+  Validate response shapes against pinned schemas at the boundary.
+- Use AbortController and a request-generation check. Cancellation alone does
+  not prevent a just-completed old response from overwriting a new selection.
+- Reads may retry bounded documented transient errors. No ambiguous write
+  retries without the same Idempotency-Key and the server's replay guarantee.
+- Preserve ETag, send If-Match on PATCH; distinguish 409 conflicts from 412
+  stale versions and 428 missing preconditions. Do not silently overwrite.
+- Downloads follow the authenticated binary route, validate safe filenames and
+  revoke browser object URLs. Never treat local backend paths as download URLs.
+- Poll jobs using retry_after_seconds/Retry-After, stop for terminal states and
+  on logout/navigation. Partial is a distinct terminal outcome.
 
-- Read the base URL from `VITE_API_BASE_URL` or a documented runtime configuration file. Fail startup with a clear configuration screen if it is absent in a production build.
-- Prefix application calls with `/api/v1`; never scatter full endpoint URLs through view code.
-- Apply one authentication strategy consistently. For secure cross-origin cookies use `credentials: "include"`, backend allow-listed origins and CSRF protection as required. For bearer tokens, define secure acquisition, memory/storage, expiry and refresh behavior with the backend; do not improvise token storage in individual modules.
-- Add an `AbortController` timeout and cancel superseded requests when the active field, season or filter changes.
-- Retry only documented transient failures and only when the operation is safe or has an idempotency key. Never automatically retry an ambiguous create/update.
-- Parse success, validation, authorization, conflict, rate-limit and server-error responses into stable frontend error objects.
-- Attach/request a request ID for diagnostics without exposing secrets.
-- Validate critical API response shapes at the boundary. Prefer generated OpenAPI types/client metadata or a small runtime schema layer; do not spread unchecked property access across render code.
-
-### 4.2 State and rendering rules
-
-Each remote resource stores data and status separately:
+Resource state:
 
 ```js
 {
-  status: "idle" | "loading" | "ready" | "empty" | "error",
+  status: "idle", // idle | loading | ready | empty | error
   data: null,
   error: null,
-  receivedAt: null
+  requestKey: null,
+  receivedAt: null,
+  refreshing: false
 }
 ```
 
-Views must render all states deliberately. A previous successful response may remain visible during refresh only when clearly marked as refreshing or stale. Changing the active field must invalidate or refetch field-scoped resources so one field's analysis cannot appear under another field's name.
+Keep transport status separate from capability readiness, backend feature
+availability, scientific validation, freshness and job state. A 200 response
+containing pending records is not a "Verified Lab Record".
+Cache/request keys include user, field, boundary, dates, season and filters as
+applicable. Clear protected state on logout/session expiry. Field changes must
+invalidate dependent data and never render the previous field under the new name.
+Refresh may retain same-key data only with a visible refreshing/stale indicator.
 
-View-model adapters convert API resources into UI-ready structures but must not create missing scientific values. Formatting currency, units and dates is allowed; assigning a default pH, yield, price, NDVI or climate baseline is not.
+## 6. Execution tasks and backend dependencies
 
-## 5. API contract required by the frontend
+All F-tasks start pending. Writing this plan did not implement them.
 
-Freeze exact paths and schemas with the backend OpenAPI artifact before migrating each screen. The following resource map defines required capabilities; exact paths may change once, during the contract step, but must then be versioned.
+| Task | Depends on | Implementation scope | Exit gate |
+| --- | --- | --- | --- |
+| F01 Inventory and contract agreement | None; B01 cooperation | Expand Section 4 to property-level mapping; agree first-slice DTO/auth/ownership/evidence policy and preference codes. Obtain shared specification; pin exact OpenAPI once B02/B03 exports it. Record unresolved D03/later-resource blockers. | Every active field classified; first-slice properties agreed, no guessed endpoint. Authentic reference evidence identified; later missing capabilities listed, not treated as available. |
+| F02 Transport, safe shell and remote state | F01; B02 shell/schema artifact | Add config/client/errors/schema validation/state, safe rendering primitives and startup/offline/unauthorized states. Remove HTML seed values. Stop initData seeding; gate every unmigrated view as not connected. | Client/state cases and independent build pass; failed/missing API never shows demo values. Existing legacy modules may remain unused until F10, not execute as fallback. |
+| F03 Session and profile | F02; B02 auth/profile gates | Bootstrap session, clear protected state on expiry/logout, get/update profile, validation and ETag conflicts. Blank new profile; preserve real Unicode user text safely. | WEB-03/04/05/12 for profile, including new browser process. No profile localStorage authority. |
+| F04 Fields and map, then writes/import/export | F03; B03 for reads; B04 for mutations | Migrate selectors/map and canonical source-record inspection first. Then draw/create/edit/archive, preview/confirm uploads, job states and supported exports. Respect current boundary and backend area. | Read slice: WEB-04/07/08 against owned canonical fields. Write slice: WEB-05/06/11/13. Each slice recorded separately; no full F04 completion until both pass. |
+| F05 Dashboard, land analysis and soil submission | F04 read slice; B05; B07/B08 only for respective dashboard cards | Replace all soil/water/climate fallbacks, add metadata/pending inspection and soil submission/history. Dashboard shows field metrics immediately; recommendation/financial/plan cards remain capability-blocked until their own tasks. | WEB-07/08/12/13; no scientific defaults or automatic verified badge. Submitted sample date is actual, not receipt time. |
+| F06 Satellite and vegetation | F04 read slice; B06 scene/series gates | Replace scene/date seeds and index/rain series; adapt actual overlays. Handle zero/one/multiple points, gaps and negative NDVI per definition, not a hardcoded 0..1 clamp. | WEB-07/08/13; selected scene/field/boundary reconcile with response. Base-map failure is distinct from analytical-data absence. |
+| F07 Catalog and recommendations | F05; B07 catalog/recommendation gates; D03/D04 | Replace engine/catalog imports; submit explicit season year/date, field/boundary version and scenario inputs. Render stored suitable/excluded/unavailable results and metadata. | WEB-09; no agronomic or economic calculations in browser; no-results differs from blocked run. Activate dashboard recommendation cards only now. |
+| F08 Markets | F03; B07 mandi/market gates and D03 | API filters, provenance, currency/quantity basis, freshness and optional MSP/trend/farm-gate metrics. | WEB-10/13; unsupported computed values stay unavailable. Independent of F07 if market contract is ready. |
+| F09 Planting plans | F04 read slice; B08; F07 only when attaching a recommendation | Remote CRUD/archive, field/crop/run versions, area/date validation, immutable financial references and conflicts. Display nullable forecasts honestly. | WEB-05/11; persist across processes, preserve references and no partial-page financial totals presented as complete. Activate dashboard plan cards now. |
+| F10 Remove legacy authority and finish module split | All implemented view migrations | Remove retired services/data modules, reset-demo behavior, fabricated IDs/cards/boundaries, seeded copy and dead imports. Finish bootstrap/view/state separation without unrelated UX redesign. | WEB-14 source + index.html + built bundle; backend off means honest errors. Remaining blocked screens have no legacy fallback. |
+| F11 Independent deployment and release evidence | Tasks included in release; B09 cooperation | Browser tests, compatibility, exact environment/auth/CORS/tile/font documentation and static deployment against separate API origin. | WEB cases pass for stated release scope; excluded blocked capabilities listed. Full migration is not complete while required screens remain blocked. |
 
-| Frontend journey | Required backend capability |
+For any task: read exact code and current backend artifact -> implement one
+vertical feature -> run its narrow tests/build -> reconcile UI/API/DB ->
+record task evidence -> proceed. Never rewrite all main.js before one slice works.
+Never expand a blocked capability by guessing what a future backend will return.
+
+F04's read slice adds a source-record panel inside the existing Land Analysis
+screen, not an eighth screen. Use listObservations for variable/value/unit/date/
+validation rows and getObservation/listObservationEvidence for provenance detail.
+Keep the existing verified-summary cards blocked until F05 has eligible metrics.
+
+## 7. Validation and dependency plan
+
+Current scripts: `npm run dev`, `npm run build`, `npm run preview`.
+Use `npm ci` when dependencies need restoring for implementation/validation.
+Do not install anything for this documentation-only revision.
+
+F02 adds a unit/DOM harness (for example Vitest/jsdom) only when tests are added.
+F04 adds a browser harness (for example Playwright) with its first browser cases.
+Choose generated schema validation or a small runtime validator in F01/F02,
+not both without need. Add dependencies with package.json/package-lock.json
+together, declare supported engines, and document executable test scripts then.
+
+Use real isolated backend accounts/DB and authentic provenance-checked records
+for integration acceptance; no provider mocks/generated agricultural fixtures
+as evidence. Synthetic transport-only error/HTML-safety inputs are not domain
+data and must be explicitly isolated from scientific tests/acceptance. If a
+required authentic geometry or provider context is missing, report that gate
+blocked; do not fabricate it to make WEB-06/09/10 pass.
+
+| Case | Assertion |
 | --- | --- |
-| Session bootstrap | Current authenticated user/session plus API/schema version. |
-| Profile | Get and update the current farmer profile with validation and concurrency/version metadata. |
-| Plot selector/dashboard | List owned fields with authoritative area, representative point, geometry summary, soil-status summary and available recommendation/alert counts. |
-| Add/draw plot | Create a field from GeoJSON, return server ID and authoritative geometry metrics, and report validation/repair results. |
-| KML/KMZ import | Multipart upload, import preview/validation and explicit confirmation if repair or multiple fields are involved. |
-| My Land | Fetch full authorized field geometry, latest valid satellite summary, available scenes/passes and overlay metadata. |
-| Land analysis | Fetch soil, water and climate summaries plus availability, source, unit, quality and observation/reference dates. |
-| Vegetation chart | Fetch field-scoped NDVI/other index series with scene dates, cloud/quality flags, units/index definition and gaps. |
-| Crop recommendations | Submit field, season and optional scenario inputs; retrieve suitable, excluded and unavailable results with explanations, input versions and recommendation-run ID. |
-| Market intelligence | Query observations by crop/commodity, mandi/region and date; return min/modal/max price where authentic, arrivals, units, currency, source and freshness. |
-| Planting plans | List, create, update and archive plans with server IDs, field/crop references, dates, acreage, recommendation reference, assumptions and version. |
-| Exports | Download backend-generated GeoJSON, KML/KMZ or complete field profile with authorization and safe filename handling. |
-| Jobs/refresh | Poll long-running import/acquisition/recommendation jobs and render queued, running, failed, blocked and complete states. |
+| WEB-01 Independent build | Static build needs no Python source/shared filesystem. |
+| WEB-02 Configuration | Same source targets configured API origins; missing/invalid config fails clearly; actual dev port documented. |
+| WEB-03 Authentication | Login/bootstrap/expiry/logout follow D01; no secrets/token persistence in bundle or browser storage. |
+| WEB-04 Authorization | 401/403/unowned 404 cannot leak another user's state, nested evidence, imports, jobs or exports. |
+| WEB-05 Persistence | Profile, field and plan mutations survive refresh/new browser process and match backend reads. |
+| WEB-06 Geometry | Coordinate order, holes, MultiPolygons, version identity and area survive draw/import/read/export; preview has no active-field write. |
+| WEB-07 Meaningful states | Pending/rejected/null/missing/zero/stale/blocked/below-detection values remain distinct and source-labelled. |
+| WEB-08 Races and pagination | Rapid field/filter changes cannot overwrite current state; full totals do not use partial pages. |
+| WEB-09 Recommendations | UI groups/scenarios/explanations match a persisted run and actual input versions; no local decision rules. |
+| WEB-10 Markets | Prices/arrivals/units/source/freshness reconcile with records; missing derived economics do not appear current. |
+| WEB-11 Conflicts and replay | If-Match/version conflicts visible; repeated submissions do not duplicate fields/plans/imports; archive preserves references. |
+| WEB-12 Safe rendering | Profile/field/API text is inert in all views, SVG, popups, selectors and toasts. |
+| WEB-13 Failures and jobs | Offline, timeout, malformed response, backend/provider failure and partial/blocked jobs are usable without fallback data. |
+| WEB-14 Hardcode removal | Source, initial HTML, forms and bundle contain no production domain seeds or browser scientific/economic calculations. |
+| WEB-15 Separate deployment | Static frontend and API work over documented independent origins with correct CORS/auth; no machine-specific IP in source. |
 
-Do not design screen-specific endpoints that return HTML. The API returns versioned data resources; the frontend owns presentation.
+A limited first-slice release may pass its applicable cases while later tasks
+remain blocked. Record that exact scope. Full frontend integration requires all
+F-tasks, all required capabilities and WEB-01 through WEB-15, not merely a build.
 
-## 6. Implementation sequence
+## 8. Handoff format
 
-Every phase ends with a build and its listed acceptance gate. Do not retain a hardcoded production fallback as a migration shortcut. If a backend capability is unavailable, keep that screen in an honest unavailable state until the contract is implemented.
+Update `progress.md` after each implementation task:
 
-### F01 — Freeze inventory and API contract
+`task_id | status | operation_ids | files | backend contract revision/hash |
+commands/outcomes | evidence | blockers | next ready task`
 
-- Inventory all hardcoded/domain values and current consumers.
-- Map every screen field to an API property, user-entered value, derived presentation value or static UI label.
-- Obtain/commit the backend OpenAPI artifact and define versioning/error/availability conventions.
-- Decide authentication and cross-origin deployment behavior.
-- Define supported Node/npm versions and environment configuration.
-
-Exit gate: no current data field is unmapped; sample authentic responses exist for each ready backend resource; missing backend capabilities are explicit blockers.
-
-### F02 — Add transport, configuration and remote state foundations
-
-- Implement `config.js`, the centralized API client, errors, authentication handling and resource-state helpers.
-- Add global startup, unauthorized, offline and backend-unavailable experiences.
-- Add request cancellation and stale-response protection.
-- Keep current screens on existing data temporarily, but prohibit new direct data-module imports.
-
-Exit gate: client tests cover success, validation error, unauthorized, conflict, timeout, abort, malformed response and unavailable backend; a production build points only to configured API origins.
-
-### F03 — Migrate authentication and profile
-
-- Bootstrap the session before user-specific requests.
-- Replace `storageService.getProfile/saveProfile` with profile API actions.
-- Handle save validation, unauthorized state and optimistic-concurrency conflicts.
-- Render user text safely.
-
-Exit gate: profile data survives refresh and a new browser process because it is read from the backend; no profile data is auto-seeded or persisted as the authority in `localStorage`.
-
-### F04 — Migrate fields, drawing and geographical import/export
-
-- Replace local plot reads/writes with field APIs.
-- Send drawn GeoJSON to the backend and replace the provisional browser area with the authoritative response.
-- Add KML/KMZ import flow with validation/repair feedback.
-- Replace generated IDs and generated district rectangles.
-- Replace local export assembly with backend downloads.
-- Keep Leaflet as the map/rendering library and adapt backend GeoJSON to it.
-
-Exit gate: create, read, update, archive, draw, import, select, refresh and export pass for Polygons, holes and MultiPolygons; cross-user field access is denied by the backend and handled by the UI.
-
-### F05 — Migrate dashboard and land analysis
-
-- Fetch dashboard summaries and field-scoped soil, water and climate resources.
-- Replace all numeric fallback expressions with availability-aware components.
-- Display unit, date/period, quality/source and stale state where relevant.
-- Ensure active-field changes cancel or ignore older responses.
-
-Exit gate: no dashboard or land-analysis scientific value comes from bundled modules or fallback constants; missing and rejected data cannot look verified.
-
-### F06 — Migrate satellite/vegetation data
-
-- Fetch scene/pass metadata and vegetation time series for the active field.
-- Preserve gaps and quality/cloud flags in charts rather than interpolating them in the browser.
-- Keep tile-layer configuration separate from analytical raster/index data.
-- Render tile/font network failure separately from backend analytical-data failure.
-
-Exit gate: selected scene, displayed overlay metadata and chart values reconcile with API responses after field and scene changes.
-
-### F07 — Migrate crop catalog and recommendations
-
-- Replace `karnatakaCrops.js` consumers with crop/reference APIs.
-- Replace `recommendationEngine.js` execution with recommendation-run creation/retrieval.
-- Render suitable, excluded and unavailable groups from backend results.
-- Preserve explanations, input versions, uncertainty and run ID.
-- Send sensitivity/scenario controls as explicit inputs; display backend-computed outputs only.
-
-Exit gate: the browser contains no agronomic decision rules, default soil/climate inputs, yield assumptions, price assumptions or profitability calculations; a repeated run is traceable to the backend.
-
-### F08 — Migrate market intelligence
-
-- Replace `marketData.js` with filterable market API calls.
-- Display observation time, source, currency, quantity basis and freshness.
-- Distinguish no observation, stale observation and request failure.
-- Do not recompute or label farm-gate prices unless the backend returns a traceable calculation and assumptions.
-
-Exit gate: every displayed price and arrival value reconciles with an API record and stale/missing data cannot appear current.
-
-### F09 — Migrate planting plans
-
-- Replace local plan CRUD with backend plan APIs.
-- Use server IDs, versions and field/crop references.
-- Handle validation, stale-version conflict, archived state and deleted/changed referenced data.
-- Preserve the recommendation run and financial assumptions used to create a plan.
-
-Exit gate: plans persist across browsers/processes, concurrent updates cannot silently overwrite one another, and no plan depends on local seeded crop or financial data.
-
-### F10 — Remove legacy data paths and split the application
-
-- Remove production imports of `storageService.js`, `recommendationEngine.js` and migrated data modules.
-- Remove reset-demo-data behavior from production.
-- Remove random identifiers, generated soil cards, generated field rectangles and scientific fallback constants.
-- Split the current `main.js` into API/state/view/map modules without changing behavior unnecessarily.
-- Search the built bundle and source tree for retired seed names and representative hardcoded domain values.
-
-Exit gate: the hardcoded inventory is empty except approved static UI configuration; disabling the backend yields honest unavailable/error screens rather than demo data.
-
-### F11 — Test, secure and deploy independently
-
-- Add unit tests for client, adapters, state transitions and safe rendering.
-- Add OpenAPI compatibility checks.
-- Add browser tests for all seven views and failure/empty/loading/conflict paths.
-- Build the frontend independently and run it against a separately started backend URL.
-- Document exact frontend origin(s), backend CORS allow-list, authentication transport, CSP and external tile/font requirements.
-- Verify Tailscale/LAN access does not hardcode one machine's IP into the source or bundle.
-
-Exit gate: all Section 8 cases pass from clean installs and separate processes; deployment requires only the static frontend artifact, public configuration and network access to the API/tile/font hosts.
-
-## 7. Dependency plan
-
-Current runtime/build dependencies are sufficient to render and build the present app: Leaflet and Vite resolve successfully. Do not add Axios merely to make HTTP requests.
-
-Add dependencies only with the phase that uses them and commit `package.json` plus `package-lock.json` together:
-
-- Add a unit/DOM test runner for F02 onward, such as Vitest with jsdom.
-- Add a browser harness for F04 onward, such as Playwright.
-- Add an OpenAPI client/type or compatibility tool if selected in F01.
-- Add a small runtime schema validator only if generated contract validation does not cover the JavaScript boundary adequately.
-- Add ESLint/security rules if adopted for unsafe DOM insertion and async error handling.
-- Declare supported Node and npm versions using `engines` and, if chosen, `packageManager`.
-
-Avoid adding a global state framework, UI framework, chart framework or HTTP package unless the existing vanilla modules become demonstrably insufficient. Every new package requires a documented purpose, lockfile entry, licence review, clean-install check and production-build check.
-
-## 8. Acceptance tests
-
-| Test ID | Required assertion |
-| --- | --- |
-| WEB-01 Independent build | `npm ci` and the production build succeed without backend source files or a shared filesystem. |
-| WEB-02 Configured backend | The same frontend source can target documented backend environments through public configuration; missing/invalid configuration fails clearly. |
-| WEB-03 Authentication | Protected data is unavailable before authentication; expiry/logout works; no backend secret appears in source maps, bundle or browser storage. |
-| WEB-04 Authorization handling | Backend 401/403 responses clear or preserve state appropriately and never expose another user's cached field/profile/plan. |
-| WEB-05 Remote persistence | Profile, field and plan changes survive refresh and a new browser process and match backend reads. |
-| WEB-06 Geometry | Draw/import/read/export preserves coordinate order, holes and MultiPolygons; authoritative area comes from the backend. |
-| WEB-07 Missing/quality states | Null, missing, rejected, stale and blocked records render distinctly without zero/default substitution. |
-| WEB-08 Request races | Rapid field/season/filter changes cannot render a late response for the wrong selection. |
-| WEB-09 Recommendations | Displayed recommendations, exclusions, explanations and scenarios match a stored backend run exactly. |
-| WEB-10 Markets | Prices, arrivals, units, source and freshness match API records; stale/unavailable data is labelled correctly. |
-| WEB-11 Plans/conflicts | Server IDs and versions are used; stale updates produce a visible conflict and cannot silently overwrite. |
-| WEB-12 Safe rendering | Stored profile/field/API text cannot execute HTML or JavaScript through any view, tooltip or toast. |
-| WEB-13 Failure handling | Offline, timeout, malformed response, validation error, provider failure and backend 5xx states remain usable and do not activate demo data. |
-| WEB-14 Hardcode removal | Source and production bundle contain no retired seeded identities, plot records, agronomic values, market observations, generated IDs/boundaries or scientific fallbacks. |
-| WEB-15 Separate deployment | A static frontend server and a separately started backend communicate through the configured origin with correct CORS/auth behavior over the intended LAN/Tailscale deployment. |
-
-## 9. Definition of done
-
-The frontend migration is complete only when:
-
-- F01 through F11 pass their exit gates.
-- All active screens obtain domain and user data through the versioned backend API.
-- The frontend and backend build, start, configure and deploy independently.
-- Production no longer imports or silently falls back to bundled demo/domain datasets.
-- `localStorage` is not the authoritative source for profiles, fields, records, recommendations or plans.
-- Loading, empty, unavailable, stale, blocked, unauthorized, conflict and error states are implemented and tested.
-- API/UI values reconcile with backend records including IDs, geometry, units, dates, quality, source and availability.
-- WEB-01 through WEB-15 pass from clean installs against separate frontend and backend processes.
-- Setup documentation explains environment configuration, authentication/CORS, external map/font dependencies, tests and deployment without embedding one developer machine's address.
-
-If a required backend route or authentic dataset is missing, report the corresponding phase and screen as blocked. Do not retain hardcoded production data to claim the migration is complete.
+Use pending/in_progress/blocked/failed/complete. Include B dependencies for
+blocked work. Never say a planned endpoint, source feed, job or acceptance case
+works without observed evidence. Keep completion concise and machine-followable.

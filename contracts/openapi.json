@@ -1130,296 +1130,7 @@
         ],
         "title": "ErrorResponse"
       },
-      "EvidenceResponse": {
-        "properties": {
-          "data": {
-            "items": {
-              "$ref": "#/components/schemas/Observation"
-            },
-            "type": "array",
-            "title": "Data"
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PageMeta"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "data",
-          "meta"
-        ],
-        "title": "EvidenceResponse"
-      },
-      "EvidenceType": {
-        "type": "string",
-        "enum": [
-          "measured",
-          "surveyed",
-          "published_parameter",
-          "published_recommendation",
-          "satellite",
-          "modelled_product",
-          "reanalysis",
-          "projection",
-          "derived"
-        ],
-        "title": "EvidenceType"
-      },
-      "FieldRecord": {
-        "properties": {
-          "field_id": {
-            "type": "string",
-            "title": "Field Id"
-          },
-          "project_id": {
-            "type": "string",
-            "title": "Project Id"
-          },
-          "name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Name"
-          },
-          "current_boundary_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Current Boundary Id"
-          },
-          "selected_boundary_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Selected Boundary Id"
-          },
-          "geometry_status": {
-            "type": "string",
-            "enum": [
-              "available",
-              "selection_required",
-              "unavailable"
-            ],
-            "title": "Geometry Status"
-          },
-          "boundary_versions": {
-            "items": {
-              "$ref": "#/components/schemas/BoundaryVersion"
-            },
-            "type": "array",
-            "title": "Boundary Versions"
-          },
-          "geometry": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Geometry"
-          },
-          "metric_crs": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Metric Crs"
-          },
-          "area_m2": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Area M2"
-          },
-          "area_ha": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Area Ha"
-          },
-          "perimeter_m": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Perimeter M"
-          },
-          "representative_point": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Representative Point"
-          },
-          "repair_notes": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Repair Notes"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "field_id",
-          "project_id",
-          "name",
-          "current_boundary_id",
-          "selected_boundary_id",
-          "geometry_status",
-          "boundary_versions",
-          "geometry",
-          "metric_crs",
-          "area_m2",
-          "area_ha",
-          "perimeter_m",
-          "representative_point",
-          "repair_notes"
-        ],
-        "title": "FieldRecord"
-      },
-      "FieldResponse": {
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/FieldRecord"
-          },
-          "meta": {
-            "$ref": "#/components/schemas/Meta"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "data",
-          "meta"
-        ],
-        "title": "FieldResponse"
-      },
-      "FieldsResponse": {
-        "properties": {
-          "data": {
-            "items": {
-              "$ref": "#/components/schemas/FieldRecord"
-            },
-            "type": "array",
-            "title": "Data"
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PageMeta"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "data",
-          "meta"
-        ],
-        "title": "FieldsResponse"
-      },
-      "Health": {
-        "properties": {
-          "status": {
-            "type": "string",
-            "const": "ok",
-            "title": "Status",
-            "default": "ok"
-          },
-          "contract_revision": {
-            "type": "string",
-            "const": "shared-workspace-1",
-            "title": "Contract Revision",
-            "default": "shared-workspace-1"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "title": "Health"
-      },
-      "HealthResponse": {
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/Health"
-          },
-          "meta": {
-            "$ref": "#/components/schemas/Meta"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "data",
-          "meta"
-        ],
-        "title": "HealthResponse"
-      },
-      "Meta": {
-        "properties": {
-          "request_id": {
-            "type": "string",
-            "title": "Request Id"
-          },
-          "api_version": {
-            "type": "string",
-            "const": "v1",
-            "title": "Api Version",
-            "default": "v1"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "request_id"
-        ],
-        "title": "Meta"
-      },
-      "Observation": {
+      "EvidenceObservation": {
         "properties": {
           "schema_version": {
             "type": "string",
@@ -1580,37 +1291,40 @@
             "anyOf": [
               {
                 "type": "string",
-                "format": "date-time"
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})?$"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Observed At"
+            "title": "Observed At",
+            "description": "Provider-local or offset timestamp; interpret with the record's timezone field."
           },
           "period_start": {
             "anyOf": [
               {
                 "type": "string",
-                "format": "date-time"
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})?$"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Period Start"
+            "title": "Period Start",
+            "description": "Provider-local or offset timestamp; interpret with the record's timezone field."
           },
           "period_end": {
             "anyOf": [
               {
                 "type": "string",
-                "format": "date-time"
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})?$"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Period End"
+            "title": "Period End",
+            "description": "Provider-local or offset timestamp; interpret with the record's timezone field."
           },
           "unknown_time_reason": {
             "anyOf": [
@@ -2126,7 +1840,296 @@
           "extraction_job_id",
           "created_at"
         ],
-        "title": "Observation"
+        "title": "EvidenceObservation"
+      },
+      "EvidenceResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceObservation"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PageMeta"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "EvidenceResponse"
+      },
+      "EvidenceType": {
+        "type": "string",
+        "enum": [
+          "measured",
+          "surveyed",
+          "published_parameter",
+          "published_recommendation",
+          "satellite",
+          "modelled_product",
+          "reanalysis",
+          "projection",
+          "derived"
+        ],
+        "title": "EvidenceType"
+      },
+      "FieldRecord": {
+        "properties": {
+          "field_id": {
+            "type": "string",
+            "title": "Field Id"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "current_boundary_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Boundary Id"
+          },
+          "selected_boundary_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Boundary Id"
+          },
+          "geometry_status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "selection_required",
+              "unavailable"
+            ],
+            "title": "Geometry Status"
+          },
+          "boundary_versions": {
+            "items": {
+              "$ref": "#/components/schemas/BoundaryVersion"
+            },
+            "type": "array",
+            "title": "Boundary Versions"
+          },
+          "geometry": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geometry"
+          },
+          "metric_crs": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metric Crs"
+          },
+          "area_m2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area M2"
+          },
+          "area_ha": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Ha"
+          },
+          "perimeter_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Perimeter M"
+          },
+          "representative_point": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Representative Point"
+          },
+          "repair_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repair Notes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "field_id",
+          "project_id",
+          "name",
+          "current_boundary_id",
+          "selected_boundary_id",
+          "geometry_status",
+          "boundary_versions",
+          "geometry",
+          "metric_crs",
+          "area_m2",
+          "area_ha",
+          "perimeter_m",
+          "representative_point",
+          "repair_notes"
+        ],
+        "title": "FieldRecord"
+      },
+      "FieldResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FieldRecord"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "FieldResponse"
+      },
+      "FieldsResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/FieldRecord"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PageMeta"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "FieldsResponse"
+      },
+      "Health": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok",
+            "title": "Status",
+            "default": "ok"
+          },
+          "contract_revision": {
+            "type": "string",
+            "const": "shared-workspace-1",
+            "title": "Contract Revision",
+            "default": "shared-workspace-1"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "Health"
+      },
+      "HealthResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Health"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "HealthResponse"
+      },
+      "Meta": {
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "title": "Request Id"
+          },
+          "api_version": {
+            "type": "string",
+            "const": "v1",
+            "title": "Api Version",
+            "default": "v1"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "request_id"
+        ],
+        "title": "Meta"
       },
       "ObservationResponse": {
         "properties": {
