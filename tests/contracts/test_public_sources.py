@@ -58,3 +58,13 @@ def test_native_trust_cannot_be_used_with_certificate_verification_disabled():
     with system_trust_session() as session:
         with pytest.raises(ValueError, match="requires certificate verification"):
             session.get(DES + "/website/crops-apy-report-web", verify=False)
+
+
+def test_public_redirect_receipt_keeps_original_source_without_temporary_credentials(tmp_path):
+    url = "https://github.com/user-attachments/files/20961388/GAEZv5_Themes_Sub-themes_Variables.xlsx"
+    with system_trust_session() as session:
+        asset = archive_response(url, tmp_path, session=session)
+    assert asset["requested_url"] == url
+    assert asset["response_url"].startswith("https://objects.githubusercontent.com/")
+    assert "x-amz-" not in json.dumps(asset).casefold()
+    assert Path(asset["raw_path"]).read_bytes().startswith(b"PK")

@@ -5,8 +5,17 @@ from hashlib import sha256
 from pathlib import Path
 import json
 import uuid
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import requests
+
+
+def _public_receipt_url(url):
+    parts = urlsplit(url)
+    keys = {"token", "access_token", "api_key", "key", "sig", "signature", "client_secret"}
+    query = [(key, value) for key, value in parse_qsl(parts.query, keep_blank_values=True)
+             if key.casefold() not in keys and not key.casefold().startswith(("x-amz-", "x-goog-"))]
+    return urlunsplit((parts.scheme, parts.netloc.rsplit("@", 1)[-1], parts.path, urlencode(query), ""))
 
 
 def system_trust_session():
@@ -63,8 +72,8 @@ def archive_response(url: str, destination: Path, params=None, timeout=60, *,
     evidence = {
         "request_id": uuid.uuid4().hex,
         "request_method": method,
-        "requested_url": response.request.url,
-        "response_url": response.url,
+        "requested_url": _public_receipt_url((response.history[0] if response.history else response).request.url),
+        "response_url": _public_receipt_url(response.url),
         "http_status": response.status_code,
         "content_type": response.headers.get("Content-Type"),
         "etag": response.headers.get("ETag"),
