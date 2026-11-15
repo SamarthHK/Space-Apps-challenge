@@ -23,6 +23,7 @@ from agri_data.contracts.ml_dataset import export_preparation, load_training_sna
 from agri_data.contracts.postgres import PostgresStore
 from agri_data.contracts.trials import import_woburn, workbook_rows
 from agri_data.contracts.assets import archive_response
+from agri_data.contracts.health import check_snapshot
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -129,3 +130,52 @@ def test_preparation_snapshot_is_reproducible_and_refuses_training():
     assert targets["value"].isna().any()
     assert set(splits["split"]) == {"withheld"}
     assert set(examples["example_id"]) == set(targets["example_id"]) == set(splits["example_id"])
+
+
+def test_real_http_refusal_records_failure_without_a_raw_observation():
+    output = ROOT / "data" / "exports" / ("http-refusal-" + uuid.uuid4().hex)
+    with socket.socket() as endpoint:
+        endpoint.bind(("127.0.0.1", 0))
+        with pytest.raises(requests.RequestException):
+            archive_response(f"http://127.0.0.1:{endpoint.getsockname()[1]}/", output, timeout=1)
+    files = list(output.iterdir())
+    assert len(files) == 1 and files[0].name.endswith(".failure.json")
+    result = json.loads(files[0].read_bytes())
+    assert result["status"] == "failed"
+    assert "raw_path" not in result
+
+
+def test_live_engineering_health_accepts_pending_data_and_preserves_missingness(tmp_path):
+    output = ROOT / "data" / "exports" / ("engineering-health-" + uuid.uuid4().hex)
+    process = subprocess.run(
+        [sys.executable, "-m", "agri_data", "health-check", "--config",
+         str(ROOT / "config" / "acceptance.yaml"), "--output", str(output)],
+        cwd=ROOT, capture_output=True, text=True,
+    )
+    assert process.returncode == 0, process.stdout + process.stderr
+    report = json.loads(process.stdout)
+    assert report["status"] == "passed", report
+    assert report["verified_fresh_requests"] == 6
+    assert all(receipt["fresh"] and receipt["http_status"] == 200 for receipt in report["request_evidence"])
+    formats = report["data"]["format_checks"]
+    assert formats["training_ready"] is False
+    assert formats["missing_yields"] > 0
+    assert report["full_inventory_complete"] is False
+    corrupt = tmp_path / "corrupt-snapshot"
+    shutil.copytree(output / "dataset", corrupt)
+    with (corrupt / "targets.parquet").open("ab") as stream:
+        stream.write(b"\n")
+    with pytest.raises(ValueError, match="checksum mismatch"):
+        check_snapshot(corrupt)
+
+
+def test_engineering_cli_reports_missing_configuration_without_a_traceback(tmp_path):
+    result = subprocess.run(
+        [sys.executable, "-m", "agri_data", "health-check", "--config",
+         str(tmp_path / "absent.yaml"), "--output", str(tmp_path / "output")],
+        cwd=ROOT, capture_output=True, text=True,
+    )
+    assert result.returncode == 2
+    assert "FileNotFoundError" in result.stderr
+    assert "Traceback" not in result.stderr
+    assert not (tmp_path / "output").exists()

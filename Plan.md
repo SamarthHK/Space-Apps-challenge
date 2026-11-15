@@ -1,10 +1,39 @@
 # Agriculture Data Platform — Implementation and Acceptance Contract
 
+## Current acceptance override (2026-11-15)
+
+The current user requirements supersede scientific-approval requirements below.
+Software acceptance now requires nonredundant logical data, documented and
+consistent formats, accessible real acquisition routes, and healthy executable
+scripts. Independent scientific validation, agronomic thresholds and expert
+approval are not prerequisites for engineering health.
+
+- Repeated acquisition/import must not duplicate canonical observations or trial
+  contexts. Keep immutable raw evidence and explicit revisions; do not delete
+  provenance to achieve deduplication.
+- Validate types, identifiers, units, dates, missing values, relationships,
+  checksums and database/export roundtrips. Unknown data stay unknown.
+- Verify supported APIs/import-download routes with fresh requests and actual
+  response parsing. Report authentication, network and format failures instead
+  of substituting cached or generated success.
+- Require successful pipeline execution, repeat-import safety, readable failure
+  reports and regression checks. Record the tested scope and time: provider
+  availability is not a permanent guarantee.
+- Scientific review status and ML training readiness are separate from software
+  health. Do not relabel records as scientifically accepted, infer missing
+  histories, or bypass leakage checks to pass engineering validation.
+
+The inventory remains the desired scope, not a claim that all integrations
+exist. `health-check` evaluates the implemented PDOK, NASA POWER and Woburn
+pipelines. A passing health report does not certify unimplemented inventory
+items. The older `validate` suites preserve the original strict-contract audit;
+their scientific blockers do not determine current engineering health.
+
 ## 1. Objective, scope and mandatory rules
 
 Implement a working system that accepts real KML/KMZ agricultural boundaries, retrieves or imports authentic environmental and agricultural data, validates its meaning and fitness for use, persists it in an actual PostgreSQL/PostGIS database, and exports complete, traceable field and crop profiles.
 
-This document is the implementation authority. Section 2 is the **only implementation sequence**. Sections 3–9 define contracts, inventories and acceptance tests used by that sequence; they are not alternative roadmaps. Development belongs on the `backend` branch. Preserve existing user work when preparing that branch.
+This document is the implementation authority. Section 2 is the **only implementation sequence**. Sections 3–9 define contracts, inventories and acceptance tests used by that sequence; they are not alternative roadmaps. AI/ML development and its data-preparation dependencies belong on `backend-ai`; other backend development remains on `backend`. Preserve existing user work when preparing either branch.
 
 ### 1.1 Full scope
 

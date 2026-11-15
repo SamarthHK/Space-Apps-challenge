@@ -14,6 +14,9 @@ def main():
     validate.add_argument("--suite", choices=["connections", "database", "features", "all"], required=True)
     validate.add_argument("--config", type=Path, required=True)
     validate.add_argument("--fresh", action="store_true")
+    health = commands.add_parser("health-check", help="Run live engineering checks without requiring scientific approval")
+    health.add_argument("--config", type=Path, required=True)
+    health.add_argument("--output", type=Path, required=True)
     acquire = commands.add_parser("acquire-reference", help="Acquire public authentic infrastructure reference evidence")
     acquire.add_argument("--output", type=Path, required=True)
     proof = commands.add_parser("storage-proof", help="Run preparatory real PostgreSQL readback checks, not full acceptance")
@@ -45,6 +48,17 @@ def main():
     snapshot.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     repository = Path.cwd()
+    if args.command == "health-check":
+        import json
+        from agri_data.contracts.health import run_health
+        try:
+            result = run_health(args.config, args.output, repository)
+        except (OSError, ValueError, KeyError) as exc:
+            print(f"Health-check setup failed ({type(exc).__name__}); check configuration and output paths.",
+                  file=sys.stderr)
+            return 2
+        print(json.dumps(result, indent=2))
+        return 0 if result["status"] == "passed" else 2
     if args.command == "acquire-reference":
         from agri_data.contracts.corpus import acquire_reference_corpus
         print(acquire_reference_corpus(args.output)["manifest"])

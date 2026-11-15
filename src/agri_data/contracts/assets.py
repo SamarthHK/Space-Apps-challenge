@@ -12,7 +12,20 @@ import requests
 def archive_response(url: str, destination: Path, params=None, timeout=60) -> dict:
     """Make a fresh public request; never use a cache to establish connectivity."""
     started = datetime.now(timezone.utc).isoformat()
-    response = requests.get(url, params=params, timeout=timeout)
+    destination.mkdir(parents=True, exist_ok=True)
+    try:
+        response = requests.get(url, params=params, timeout=timeout)
+    except requests.RequestException as error:
+        # This path is for public sources. Do not persist arbitrary exception
+        # text, which may include authentication or proxy configuration.
+        failure = {
+            "request_id": uuid.uuid4().hex, "started_at": started,
+            "finished_at": datetime.now(timezone.utc).isoformat(),
+            "status": "failed", "error_type": type(error).__name__, "fresh": True,
+        }
+        (destination / (failure["request_id"] + ".failure.json")).write_text(
+            json.dumps(failure, indent=2), encoding="utf-8")
+        raise
     payload = response.content
     digest = sha256(payload).hexdigest()
     destination.mkdir(parents=True, exist_ok=True)
