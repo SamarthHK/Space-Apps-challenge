@@ -102,3 +102,54 @@ Small original uploads/GeoJSON are stored transactionally in PostgreSQL rather
 than a browser-visible filesystem. Canonical source assets use opaque
 `workspace-asset://` locators, not download URLs. User-supplied geometry is never
 labelled a surveyed or scientifically verified measurement.
+
+## Durable imports and exports
+
+Run `python -m agri_data.workspace.worker` with the same workspace and canonical
+project settings as the API. This is backend infrastructure, not another
+browser-facing API. `--once` processes at most one queued job for operational
+checks. Provisioning does not start a worker. Import/export capabilities require
+a matching worker heartbeat from the last 30 seconds; job status remains readable
+while workers are offline. Acquisition and model capabilities remain unavailable.
+
+Submit original bytes to `POST /api/v1/imports?filename=...&project_id=...&source_namespace=...`
+with `Content-Type: application/octet-stream` and an `Idempotency-Key`.
+Multipart bodies and browser filesystem paths are not accepted. KML, KMZ, and
+GeoJSON FeatureCollections are supported. A namespace explicitly identifies the
+source within the shared workspace; reuse it only when provider identifiers
+should refer to the same fields. File names are not field identities.
+
+Submissions return 202 and a job `Location`. Poll `GET /api/v1/jobs/{job_id}`.
+After a successful preview, `GET /api/v1/imports/{import_id}` returns candidates,
+source locators, geometry/metrics, create/update actions, expected versions, and
+rejections. Preview changes no canonical field, boundary, or source-asset rows.
+Confirm an explicit selection of up to 50 valid candidate IDs with its exact
+`preview_hash` at `POST /api/v1/imports/{import_id}/confirm`, using a new submission
+key. Rejected features are never silently included or repaired. If an existing
+field changes after preview, the entire confirmation fails without partial writes;
+create a fresh preview rather than overwriting that change.
+
+Jobs use database leases, attempt counters, `FOR UPDATE SKIP LOCKED`, and atomic
+result/field transactions. A dead worker's lease is reclaimable after 60 seconds.
+Live processing holds the job lock; recovery cannot execute the same job
+concurrently. Transient storage failures retry after two seconds, at most three
+attempts; permanent validation/conflict failures do not retry. Queued input and
+original uploads survive API/worker restarts. Failed exhausted work requires a
+fresh explicit submission/preview after the underlying issue is resolved.
+
+`POST /api/v1/exports` takes a format (`geojson`, `kml`, or `kmz`) and 1-50 explicit
+`{field_id,boundary_id}` selections, plus an `Idempotency-Key`. It snapshots those
+stored versions, not whatever boundary becomes current later. On job success,
+`GET /api/v1/exports/{export_id}/download` returns real bytes with the correct
+media type, attachment filename, and checksum ETag. Downloads recheck current
+project scope and archival state; no arbitrary filesystem path is served.
+Polygons, all MultiPolygon parts, holes, and retained original altitude roundtrip.
+Legacy canonical 2D geometry is explicitly labelled; missing altitude is never
+invented. Source metadata is retained in GeoJSON properties and structured KML
+ExtendedData, with existing folder names.
+
+Limits: 16 MiB uploads, 100 preview features, 100000 total KML positions, 10000
+positions per field, 256 KMZ entries, 32 MiB expanded KML/output. External links,
+entities/DTDs, unsafe archive paths, excessive nesting/compression, and encrypted
+archives are rejected. There is no implicit geometry repair, provider acquisition,
+scientific acceptance, or fabricated observation generation in these workflows.

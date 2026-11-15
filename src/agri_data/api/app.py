@@ -19,7 +19,9 @@ from .data import DataStore, DataUnavailable, ResourceNotFound
 from .pagination import Pagination, InvalidCursor, ChangedSnapshot
 from .profile import router as profile_router
 from .field_writes import router as field_router
+from .workflows import router as workflow_router
 from agri_data.workspace.fields import FieldStore, field_etag
+from agri_data.workspace.jobs import JobStore
 from agri_data.workspace.errors import WorkspaceError, WorkspaceUnavailable
 from agri_data.workspace.store import WorkspaceStore
 
@@ -40,15 +42,18 @@ def create_app(settings=None, data_settings=None, workspace_settings=None):
     app = FastAPI(
         title="AgriData shared workspace API", version="1.0.0",
         docs_url=None, redoc_url=None, openapi_url="/api/v1/openapi.json",
-        responses={code: {"model": ErrorResponse} for code in (400, 403, 404, 405, 409, 412, 413, 422, 428, 500, 503)},
+        responses={code: {"model": ErrorResponse} for code in (400, 403, 404, 405, 409, 412, 413, 415, 422, 428, 500, 503)},
     )
     store = DataStore(data_settings)
     workspace_store = WorkspaceStore(workspace_settings)
     app.state.workspace_store = workspace_store
     field_store = FieldStore(workspace_store, data_settings)
     app.state.field_store = field_store
+    job_store = JobStore(field_store)
+    app.state.job_store = job_store
     app.include_router(profile_router)
     app.include_router(field_router)
+    app.include_router(workflow_router)
     pagination = Pagination()
     app.add_middleware(
         CORSMiddleware,
@@ -56,7 +61,7 @@ def create_app(settings=None, data_settings=None, workspace_settings=None):
         allow_credentials=False,
         allow_methods=["GET", "POST", "PATCH", "DELETE"],
         allow_headers=["X-Request-ID", "Content-Type", "If-Match", "Idempotency-Key"],
-        expose_headers=["X-Request-ID", "ETag", "Location"],
+        expose_headers=["X-Request-ID", "ETag", "Location", "Content-Disposition"],
     )
 
     @app.middleware("http")
@@ -89,7 +94,7 @@ def create_app(settings=None, data_settings=None, workspace_settings=None):
         response.headers["X-Content-Type-Options"] = "nosniff"
         if request.headers.get("origin") in settings.allowed_origins:
             response.headers["Access-Control-Allow-Origin"] = request.headers["origin"]
-            response.headers["Access-Control-Expose-Headers"] = "X-Request-ID, ETag, Location"
+            response.headers["Access-Control-Expose-Headers"] = "X-Request-ID, ETag, Location, Content-Disposition"
             response.headers.add_vary_header("Origin")
         return response
 
@@ -147,7 +152,8 @@ def create_app(settings=None, data_settings=None, workspace_settings=None):
                 "field_writes": ["createField", "updateField", "archiveField"],
                 "analysis": ["getAnalysis", "listSoilRecords", "createSoilRecord"],
                 "imports": ["createBoundaryImport", "getBoundaryImport", "confirmBoundaryImport"],
-                "jobs": ["getJob", "createAcquisition"],
+                "jobs": ["getJob"],
+                "acquisition": ["createAcquisition"],
                 "exports": ["createExport", "downloadExport"],
                 "satellite": ["listScenes", "getVegetationSeries"],
                 "crops": ["listCrops"],
@@ -157,6 +163,8 @@ def create_app(settings=None, data_settings=None, workspace_settings=None):
             }.items()
         ]
         ready = store.available()
+        writer_ready = field_store.ready()
+        worker_ready = writer_ready and job_store.available()
         for capability in capabilities:
             if capability.capability_id in ("fields", "observations"):
                 capability.state = "ready" if ready else "blocked"
@@ -165,8 +173,14 @@ def create_app(settings=None, data_settings=None, workspace_settings=None):
                 capability.state = "ready" if workspace_store.ready() else "blocked"
                 capability.reason = None if capability.state == "ready" else "Configure and provision shared workspace storage"
             elif capability.capability_id == "field_writes":
-                capability.state = "ready" if field_store.ready() else "blocked"
+                capability.state = "ready" if writer_ready else "blocked"
                 capability.reason = None if capability.state == "ready" else "Scoped canonical storage and an authorized workspace writer required"
+            elif capability.capability_id in ("imports", "exports"):
+                capability.state = "ready" if worker_ready else "blocked"
+                capability.reason = None if worker_ready else "A configured import/export worker heartbeat is required"
+            elif capability.capability_id == "jobs":
+                capability.state = "ready" if field_store.configured() and workspace_store.ready() else "blocked"
+                capability.reason = None if capability.state == "ready" else "Configure scoped workspace job storage"
         return WorkspaceResponse(
             data=Workspace(project_ids=list(data_settings.project_ids) if data_settings else [], capabilities=capabilities),
             meta=Meta(request_id=request.state.request_id),

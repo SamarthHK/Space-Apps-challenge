@@ -138,9 +138,10 @@ class FieldStore:
             json.dumps(prepared["geometry"]),
         ))
         connection.execute(
-            "INSERT INTO workspace_boundary_originals(workspace_id,boundary_id,geometry) VALUES (%s,%s,%s) "
+            "INSERT INTO workspace_boundary_originals(workspace_id,boundary_id,geometry,properties) VALUES (%s,%s,%s,%s) "
             "ON CONFLICT DO NOTHING",
-            (self.workspace.settings.workspace_id, boundary_id, Jsonb(prepared["original_geometry"])),
+            (self.workspace.settings.workspace_id, boundary_id, Jsonb(prepared["original_geometry"]),
+             Jsonb(prepared.get("properties", {}))),
         )
         return boundary_id
 
