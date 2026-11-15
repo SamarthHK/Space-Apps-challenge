@@ -35,6 +35,11 @@ Implemented foundation:
 The read increment also implements listFields/getField, listObservations/
 getObservation/listObservationEvidence. Configure data access explicitly:
 
+The following is the historical shared reference configuration. For private
+hosting, use a dedicated canonical/application schema pair as described in
+`private_workspace.md`; do not place private projects in a schema exposed by
+another unauthenticated service.
+
 ```powershell
 $env:AGRI_API_DATABASE_URL = "postgresql://<role>@127.0.0.1:<port>/<database>"
 $env:AGRI_API_DATABASE_NAME = "<database>"

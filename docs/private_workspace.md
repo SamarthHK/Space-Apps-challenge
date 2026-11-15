@@ -8,6 +8,10 @@ Shared compatibility is available only by explicitly choosing `AGRI_AUTH_MODE=sh
 
 Use the canonical and application database settings in `shared_workspace.md`.
 Their schemas must differ, but their PostgreSQL endpoint/database must match.
+For a new private deployment, dedicate both schemas rather than putting private
+projects in a canonical schema served by another unauthenticated API. The local
+release uses `agri_spaceapps_private_data` and `agri_spaceapps_private_workspace`.
+Shared storage and the reference corpus remain separate and unchanged.
 The canonical reader still starts read-only transactions. The application writer
 also needs INSERT on canonical `projects` and SELECT/INSERT/UPDATE on the new
 account/session/limit tables, in addition to the existing field/job permissions.
@@ -17,6 +21,13 @@ dependencies before upgrading. Run `python -m agri_data.workspace.admin provisio
 under the authorized setup role to apply additive migration `004_accounts.sql`.
 It creates no users, passwords or personally owned data. Existing shared profiles,
 plots and donor private records are neither copied nor assigned to the first signup.
+
+A fresh canonical schema can be prepared with `contracts.postgres.PostgresStore.migrate`
+under the authorized setup role before application provisioning. This applies the
+five packaged canonical migrations, including real foreign keys, but creates no
+provider observations, plots or user accounts. Provisioning is not an API startup
+side effect. Keep the base project allow-list narrow; authenticated requests and
+the private worker replace it with each account's server-assigned project.
 
 Set these values for both API and worker:
 
@@ -113,6 +124,13 @@ same current owner/project scope and verify the stored checksum before returning
 bytes. They never open legacy local source paths. Import history stays retained
 after a field is archived; normal field/source access is hidden with the field.
 
+The restored frontend sends new drawings as actual UTF-8 KML with stable placemark
+IDs and source namespace `drawn`. It saves the original, displays the server
+preview/measurements, and requires explicit confirmation. Rejected drawings remain
+editable; uncertain upload acknowledgments retain the exact bytes and key. Once
+a job is acknowledged, retries only monitor its existing identity. Conditional
+PATCH still handles edits to saved fields. Saving KML does not invoke an AI model.
+
 ## Verification and remaining operations
 
 `python -m pytest tests\api -q` includes eleven account cases alongside the existing
@@ -125,9 +143,12 @@ The frontend now integrates sign-up/sign-in/logout, private profile labels,
 in-memory CSRF/owner context, revocation handling and cross-tab clearing.
 Run `python scripts\workspace_browser_acceptance.py --frontend <checkout> --mode both`
 to build once and exercise shared/private suites with owned schemas/processes.
-The private suite covers independent accounts, persistence, missed switch
-notifications and server-side session revocation. `--mode accounts` runs only
-that browser suite; the default remains shared compatibility.
+The four private cases cover independent accounts, persistence, missed switch
+notifications, server-side session revocation, real satellite drawing/KML capture,
+and original download after re-login with foreign-account denials. The release
+also passed those cases from its frozen wheel against newly migrated empty
+canonical/application schemas, not just the copied reference-test schema.
+`--mode accounts` runs only that browser suite; the default remains shared compatibility.
 
 Account administration/recovery, MFA, session inventory, retention
 operations, cross-host HTTPS configuration and public deployment remain future
