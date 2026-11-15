@@ -114,8 +114,15 @@ worker discovery, session rotation/expiry/revocation, account-switch guards,
 persistent throttling, concurrent signup, genuine database-failure rollback and
 unrelated shared-data preservation. Tests use owned disposable PostgreSQL schemas.
 
-Private frontend session integration and browser acceptance are the next release
-increment. Account administration/recovery, MFA, session inventory, retention
+The frontend now integrates sign-up/sign-in/logout, private profile labels,
+in-memory CSRF/owner context, revocation handling and cross-tab clearing.
+Run `python scripts\workspace_browser_acceptance.py --frontend <checkout> --mode both`
+to build once and exercise shared/private suites with owned schemas/processes.
+The private suite covers independent accounts, persistence, missed switch
+notifications and server-side session revocation. `--mode accounts` runs only
+that browser suite; the default remains shared compatibility.
+
+Account administration/recovery, MFA, session inventory, retention
 operations, cross-host HTTPS configuration and public deployment remain future
 work. Do not seed a password or publish an unauthenticated fallback to solve a
 configuration problem. Stop the owned private services and repair their settings

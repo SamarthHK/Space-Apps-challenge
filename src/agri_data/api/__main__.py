@@ -13,7 +13,7 @@ from agri_data.workspace.settings import WorkspaceSettings
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Trusted-network shared workspace API")
+    parser = argparse.ArgumentParser(description="Trusted-network workspace API with shared or private-account access")
     parser.add_argument("--export-openapi", type=Path)
     args = parser.parse_args()
     settings = Settings.from_env()

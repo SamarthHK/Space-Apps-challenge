@@ -79,6 +79,9 @@ build or stops existing services. Logs/results remain under the ignored
 Field mutations run only against that owned copy, never the original corpus.
 The harness starts and verifies its own worker as well as the API/static server.
 Write browser tests require its `TEST_WRITES_ISOLATED=1` guard.
+Use `--mode both` for one build followed by both shared and private account
+browser suites. Each backend/worker pair is owned and stopped before the next
+mode starts; existing machine listeners are never reused or replaced.
 
 ## Versioned field writes
 

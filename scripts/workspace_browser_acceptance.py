@@ -18,6 +18,8 @@ import psycopg
 from psycopg import sql
 
 from agri_data.api.data import DataSettings, DataStore
+from agri_data.workspace.fields import FieldStore
+from agri_data.workspace.jobs import JobStore
 from agri_data.workspace.settings import WorkspaceSettings
 from agri_data.workspace.store import WorkspaceStore
 
@@ -36,10 +38,15 @@ def require_free_ports(ports):
             sock.close()
 
 
-def wait_ready(process, url, capability=None):
+def wait_ready(process, url, capability=None, predicate=None):
     for _ in range(100):
         if process.poll() is not None:
             raise RuntimeError("An owned acceptance service exited; inspect its run log")
+        if predicate is not None:
+            if predicate():
+                return
+            time.sleep(0.1)
+            continue
         try:
             with urlopen(url, timeout=1) as response:
                 if response.status == 200 and (capability is None or any(
@@ -94,6 +101,7 @@ def main():
     parser.add_argument("--frontend", required=True, type=Path)
     parser.add_argument("--api-port", type=int, default=18084)
     parser.add_argument("--frontend-port", type=int, default=11084)
+    parser.add_argument("--mode", choices=("shared", "accounts", "both"), default="shared")
     args = parser.parse_args()
     require_free_ports([args.api_port, args.frontend_port])
     prepared = DataSettings.from_env({
@@ -120,37 +128,15 @@ def main():
         AGRI_WORKSPACE_DATABASE_USER=settings.user, AGRI_WORKSPACE_SCHEMA=settings.schema,
         AGRI_WORKSPACE_ID=settings.workspace_id, VITE_API_BASE_URL=api_origin,
         TEST_API_ORIGIN=api_origin, TEST_FRONTEND_ORIGIN=frontend_origin, FRONTEND_HOST="127.0.0.1",
-        PLAYWRIGHT_OUTPUT_DIR=str(artifacts / "results"), TEST_WRITES_ISOLATED="1")
+        TEST_WRITES_ISOLATED="1", AGRI_AUTH_COOKIE_SECURE="false", AGRI_AUTH_SESSION_SECONDS="43200")
     node = shutil.which("node")
     npm = shutil.which("npm.cmd" if os.name == "nt" else "npm")
     if not node or not npm:
         parser.error("Node.js and npm are required")
     processes = []
     logs = []
-    try:
-        copy_scoped_reference(prepared, source.schema)
-        WorkspaceStore(settings).provision()
-        subprocess.run([npm, "test"], cwd=frontend, env=environment, check=True)
-        dist = artifacts / "dist"
-        subprocess.run([node, str(frontend / "node_modules" / "vite" / "bin" / "vite.js"),
-            "build", "--outDir", str(dist), "--emptyOutDir"], cwd=frontend, env=environment, check=True)
-        for name, command, cwd, url in [
-            ("api", [sys.executable, "-m", "agri_data.api"], root, api_origin + "/api/v1/health"),
-            ("frontend", [node, str(frontend / "node_modules" / "vite" / "bin" / "vite.js"),
-                "preview", "--host", "127.0.0.1", "--port", str(args.frontend_port),
-                "--outDir", str(dist)], frontend, frontend_origin),
-            ("worker", [sys.executable, "-m", "agri_data.workspace.worker"], root, api_origin + "/api/v1/workspace"),
-        ]:
-            log = (artifacts / (name + ".log")).open("w", encoding="utf-8")
-            logs.append(log)
-            process = subprocess.Popen(command, cwd=cwd, env=environment, stdout=log, stderr=log)
-            processes.append(process)
-            wait_ready(process, url, "imports" if name == "worker" else None)
-        subprocess.run([node, str(frontend / "node_modules" / "@playwright" / "test" / "cli.js"), "test"],
-                       cwd=frontend, env=environment, check=True)
-        print("Separate-instance acceptance passed. Artifacts:", artifacts)
-    finally:
-        for process in reversed(processes):
+    def stop(owned):
+        for process in reversed(owned):
             if process.poll() is None:
                 process.terminate()
                 try:
@@ -158,6 +144,45 @@ def main():
                 except subprocess.TimeoutExpired:
                     process.kill()
                     process.wait(timeout=5)
+
+    def launch(name, command, cwd, env, url, **readiness):
+        log = (artifacts / (name + ".log")).open("w", encoding="utf-8")
+        logs.append(log)
+        process = subprocess.Popen(command, cwd=cwd, env=env, stdout=log, stderr=log)
+        processes.append(process)
+        wait_ready(process, url, **readiness)
+        return process
+
+    try:
+        copy_scoped_reference(prepared, source.schema)
+        WorkspaceStore(settings).provision()
+        subprocess.run([npm, "test"], cwd=frontend, env=environment, check=True)
+        dist = artifacts / "dist"
+        subprocess.run([node, str(frontend / "node_modules" / "vite" / "bin" / "vite.js"),
+            "build", "--outDir", str(dist), "--emptyOutDir"], cwd=frontend, env=environment, check=True)
+        launch("frontend", [node, str(frontend / "node_modules" / "vite" / "bin" / "vite.js"),
+            "preview", "--host", "127.0.0.1", "--port", str(args.frontend_port), "--outDir", str(dist)],
+            frontend, environment, frontend_origin)
+        modes = ("shared", "accounts") if args.mode == "both" else (args.mode,)
+        for mode in modes:
+            env = dict(environment, AGRI_AUTH_MODE=mode, TEST_AUTH_MODE=mode,
+                       PLAYWRIGHT_OUTPUT_DIR=str(artifacts / ("results-" + mode)))
+            owned = []
+            try:
+                owned.append(launch("api-" + mode, [sys.executable, "-m", "agri_data.api"],
+                                    root, env, api_origin + "/api/v1/health"))
+                readiness = ({"predicate": JobStore(FieldStore(WorkspaceStore(settings), source),
+                              deployment_id=settings.workspace_id).available} if mode == "accounts"
+                             else {"capability": "imports"})
+                owned.append(launch("worker-" + mode, [sys.executable, "-m", "agri_data.workspace.worker"],
+                                    root, env, api_origin + "/api/v1/workspace", **readiness))
+                subprocess.run([node, str(frontend / "node_modules" / "@playwright" / "test" / "cli.js"), "test"],
+                               cwd=frontend, env=env, check=True)
+            finally:
+                stop(owned)
+        print("Separate-instance acceptance passed. Artifacts:", artifacts)
+    finally:
+        stop(processes)
         for log in logs:
             log.close()
         with psycopg.connect(settings.dsn) as connection:

@@ -31,7 +31,7 @@ class WorkspaceStore:
     @contextmanager
     def session(self):
         if self.settings is None:
-            raise WorkspaceUnavailable("Shared workspace storage is not configured")
+            raise WorkspaceUnavailable("Workspace storage is not configured")
         try:
             with psycopg.connect(self.settings.dsn, connect_timeout=3, row_factory=dict_row) as connection:
                 identity = connection.execute(
@@ -110,7 +110,7 @@ class WorkspaceStore:
         with self.session() as connection:
             profile = self._profile(connection)
         if profile is None:
-            raise WorkspaceUnavailable("Provision the shared workspace before using its profile")
+            raise WorkspaceUnavailable("Provision the workspace before using its profile")
         return profile
 
     def _revision(self, connection, request_id):
@@ -130,9 +130,9 @@ class WorkspaceStore:
         with self.session() as connection:
             current = self._profile(connection)
             if current is None:
-                raise WorkspaceUnavailable("Shared profile is not provisioned")
+                raise WorkspaceUnavailable("Workspace profile is not provisioned")
             if profile_etag(current) != etag:
-                raise WorkspaceError(412, "version_conflict", "The shared profile changed; reload before saving")
+                raise WorkspaceError(412, "version_conflict", "The profile changed; reload before saving")
             assignments = [sql.SQL("{}=%s").format(sql.Identifier(name)) for name in changes]
             profile = connection.execute(sql.SQL(
                 "UPDATE workspace_profiles SET {},version=version+1,updated_at=clock_timestamp() "
@@ -140,6 +140,6 @@ class WorkspaceStore:
             ).format(sql.SQL(",").join(assignments)),
                 (*changes.values(), self.settings.workspace_id, current["version"])).fetchone()
             if profile is None:
-                raise WorkspaceError(412, "version_conflict", "The shared profile changed; reload before saving")
+                raise WorkspaceError(412, "version_conflict", "The profile changed; reload before saving")
             self._revision(connection, request_id)
         return profile
