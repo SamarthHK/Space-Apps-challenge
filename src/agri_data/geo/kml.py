@@ -30,7 +30,7 @@ def _parse_coordinates(coord_str: str) -> List[tuple]:
     return coords
 
 
-def _extract_placemark_geometry(elem: ET.Element) -> Optional[Union[Polygon, MultiPolygon]]:
+def _extract_placemark_geometry(elem: Any) -> Optional[Union[Polygon, MultiPolygon]]:
     """Recursively extract Polygon or MultiPolygon from KML Placemark element."""
     polygon_elem = elem.find(f".//{KML_NS}Polygon")
     if polygon_elem is not None:
@@ -64,7 +64,7 @@ def _extract_placemark_geometry(elem: ET.Element) -> Optional[Union[Polygon, Mul
     return None
 
 
-def _extract_extended_data(elem: ET.Element) -> Dict[str, Any]:
+def _extract_extended_data(elem: Any) -> Dict[str, Any]:
     """Extract ExtendedData key-values from Placemark element."""
     data = {}
     ext_data = elem.find(f"{KML_NS}ExtendedData")

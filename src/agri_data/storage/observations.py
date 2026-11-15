@@ -7,6 +7,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 from .models import Observation, Field, Variable, DataSource, SourceAsset
+from agri_data.config import settings
 
 
 def record_observation(
@@ -40,6 +41,11 @@ def record_observation(
     source = None
     if source_code:
         source = session.query(DataSource).filter_by(source_id=source_code).first()
+        if source is None:
+            configured = settings.get_source(source_code)
+            configured_id = configured.get("id") if configured else None
+            if configured_id:
+                source = session.query(DataSource).filter_by(source_id=configured_id).first()
 
     obs = Observation(
         field_id=field.id,

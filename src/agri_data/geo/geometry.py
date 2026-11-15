@@ -6,6 +6,7 @@ from typing import Tuple, Dict, Any
 import geopandas as gpd
 from shapely.geometry import Polygon, MultiPolygon, Point
 from shapely.validation import make_valid, explain_validity
+from .area import get_utm_crs_for_lon_lat
 
 
 def validate_and_repair_geometry(geom: Any) -> Tuple[Any, bool, str]:
@@ -42,8 +43,18 @@ def calculate_centroids(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     for each plot in EPSG:4326.
     """
     res = gdf.copy()
-    centroids = res.geometry.centroid
-    rep_points = res.geometry.representative_point()
+    # Centroids are calculated in a local metric CRS, then transformed back;
+    # calculating them directly in EPSG:4326 can be materially inaccurate.
+    centroid_points = []
+    rep_points = []
+    for geom in res.geometry:
+        rep = geom.representative_point()
+        local_crs = get_utm_crs_for_lon_lat(rep.x, rep.y)
+        projected = gpd.GeoSeries([geom], crs=res.crs or "EPSG:4326").to_crs(local_crs)
+        centroid_points.append(gpd.GeoSeries([projected.iloc[0].centroid], crs=local_crs).to_crs("EPSG:4326").iloc[0])
+        rep_points.append(rep)
+    centroids = gpd.GeoSeries(centroid_points, index=res.index, crs="EPSG:4326")
+    rep_points = gpd.GeoSeries(rep_points, index=res.index, crs="EPSG:4326")
 
     res["centroid_lon"] = centroids.x
     res["centroid_lat"] = centroids.y

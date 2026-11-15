@@ -2,7 +2,16 @@
 
 > **Branch:** `backend`
 > **Last updated:** 2026-11-14
-> **Overall status:** 🟡 Phase 1 — Core architecture and first data integrations implemented. Notebooks, tests, docs, and several secondary modules remain.
+> **Overall status:** 🟢 Phase 1 prototype complete — executable offline end-to-end pipeline, rotation modules, reporting, tests, and core documentation implemented. Live-authenticated sources and notebook curriculum remain follow-up work.
+
+## ✅ Prototype completion update — 2026-11-14
+
+- Added configuration-driven acquisition and end-to-end orchestration in `src/agri_data/pipeline/`.
+- Added residue, moisture, compatibility, and multi-season sequence rotation modules.
+- Added project/field reporting and normalized observation persistence.
+- Added regression tests covering KML, geometry, sources, processing, units, and rotation (8 tests passing).
+- Added data dictionary, source catalog, schema, methodology, and KML workflow documentation.
+- Corrected geographic centroid calculation, KML annotation compatibility, EVI variable registration, and source alias resolution.
 
 ---
 

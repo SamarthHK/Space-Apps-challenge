@@ -18,7 +18,7 @@ def calculate_nutrient_balance(
     Net P = P_fertilizer - P_uptake
     Net K = K_fertilizer - K_uptake
     """
-    crop_cfg = settings.get_crop(crop_name)
+    crop_cfg = settings.get_crop(crop_name.lower())
     if not crop_cfg:
         return {}
 
@@ -54,5 +54,5 @@ def calculate_nutrient_balance(
             "phosphorus": net_p,
             "potassium": net_k
         },
-        "soil_impact": "Enriching" if net_n > 0 else "Depleting"
+        "soil_impact": "Enriching" if net_n > 0 else ("Balanced" if net_n == 0 else "Depleting")
     }

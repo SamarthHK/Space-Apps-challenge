@@ -241,6 +241,13 @@ variables:
     description: "Soil Adjusted Vegetation Index (L=0.5)"
     canonical_unit: "dimensionless"
     valid_range: [-1.0, 1.0]
+  evi:
+    category: historical_land
+    description: Enhanced Vegetation Index
+    canonical_unit: dimensionless
+    depth_dependent: false
+    temporal_type: date
+    valid_range: [-1.0, 1.0]
     measurement_types: ["satellite", "derived"]
     depth_dependent: false
 

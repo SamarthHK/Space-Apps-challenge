@@ -3,7 +3,7 @@ Export utilities for saving analytical datasets as Parquet, GeoPackage, GeoJSON,
 """
 
 from pathlib import Path
-from typing import Dict, Any, Union
+from typing import Dict, Any, Union, Optional
 import json
 import pandas as pd
 import geopandas as gpd

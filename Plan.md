@@ -1202,7 +1202,7 @@ agriculture-data-project/
 └── logs/
 ```
 
-The actual storage directory should be configurable. For large satellite datasets, I would place `data/` on a separate disk or volume rather than necessarily inside the project source directory.
+The actual storage directory should be configurable. For large satellite datasets, I would place `data` on a separate disk or volume rather than necessarily inside the project source directory.
 
 ## **5.3 How we organize raw data**
 
