@@ -4,6 +4,7 @@ import { createResource } from '../state/resource.js';
 import { createFieldMap } from '../map/fieldMap.js';
 import { createProfile } from './profile.js';
 import { createLandActions } from './landActions.js';
+import { createAccountAccess } from './accountAccess.js';
 
 const byId = id => document.getElementById(id);
 const node = (tag, text) => {
@@ -49,14 +50,22 @@ export function startWorkspace(origin) {
     byId('api-map').parentElement.classList.toggle('history-open', !collapsed);
   });
   let api;
+  let access;
+  let currentSession = null;
+  let profileName = null;
   try {
-    api = createClient(origin, { validate: validateResponse });
+    api = createClient(origin, { validate: validateResponse, onSessionLost: reason => access?.end(reason) });
   } catch (error) {
     byId('connection-status').textContent = `Configuration error: ${error.message}`;
     byId('retry-connection').disabled = true;
     return;
   }
-  const profile = createProfile(byId('shared-profile'), api);
+  const profile = createProfile(byId('shared-profile'), api, {
+    onChange(record) {
+      profileName = record.name;
+      byId('header-farmer-name').textContent = record.name || currentSession?.user?.login || 'Workspace profile';
+    },
+  });
   let fields = [];
   let fieldId = null;
   let fieldsCursor = null;
@@ -234,7 +243,8 @@ export function startWorkspace(origin) {
       select.disabled = fieldEditing || !fields.length;
       byId('fields-status').textContent = fields.length
         ? `${fields.length} fields loaded${fieldsCursor ? ' (more available)' : ''}. Area totals unavailable without explicit boundary selection.`
-        : 'No fields in the configured shared projects.';
+        : currentSession?.user ? 'No saved plots yet. Draw or import your first boundary.'
+          : 'No fields in the configured shared projects.';
       byId('more-fields').hidden = !fieldsCursor;
       byId('dash-metric-plots').textContent = `${fields.length}${fieldsCursor ? '+' : ''}`;
       byId('dash-plots-hint').textContent = fieldsCursor ? 'More plots available' : 'Saved in your workspace';
@@ -297,9 +307,14 @@ export function startWorkspace(origin) {
     if (state.status === 'loading') byId('connection-status').textContent = 'Connecting to backend...';
     else if (state.status === 'error') byId('connection-status').textContent = message(state.error);
     else if (state.status === 'ready') {
-      byId('connection-status').textContent = 'Connected - account-free shared workspace. Source evidence remains read-only.';
-      byId('workspace-access-label').textContent = 'Shared workspace';
-      byId('workspace-notice').textContent = 'Everyone permitted to reach this shared workspace can access its profile and plots.';
+      const privateAccount = state.data.data.access_mode === 'private_account';
+      byId('connection-status').textContent = privateAccount
+        ? `Connected - private workspace for ${currentSession.user.login}. Source evidence remains read-only.`
+        : 'Connected - account-free shared workspace. Source evidence remains read-only.';
+      byId('workspace-access-label').textContent = privateAccount ? 'Private workspace' : 'Shared workspace';
+      byId('workspace-notice').textContent = privateAccount
+        ? 'Your profile and plots belong to your signed-in account. No shared records are copied into it.'
+        : 'Everyone permitted to reach this shared workspace can access its profile and plots.';
       state.data.data.capabilities.forEach(capability => byId('capabilities').append(
         node('li', `${capability.capability_id}: ${capability.state}${capability.reason ? ` - ${capability.reason}` : ''}`)));
     }
@@ -327,13 +342,27 @@ export function startWorkspace(origin) {
     if (generation !== bootGeneration || workspace.state.status !== 'ready') return;
     const capabilities = workspace.state.data.data.capabilities;
     profile.setAvailable(capabilities.some(item => item.capability_id === 'profile' && item.state === 'ready'));
-    landActions.setCapabilities(capabilities, workspace.state.data.data.project_ids);
+    landActions.setCapabilities(capabilities, workspace.state.data.data.project_ids,
+      workspace.state.data.data.access_mode === 'private_account');
     canReadObservations = capabilities.some(item => item.capability_id === 'observations' && item.state === 'ready');
     byId('dash-metric-source').textContent = canReadObservations ? 'Connected' : 'Unavailable';
     if (capabilities.some(item => item.capability_id === 'fields' && item.state === 'ready')) await loadFields();
     else byId('fields-status').textContent = 'Field access is blocked. Configure the backend project scope and prepared database.';
   }
-  byId('retry-connection').addEventListener('click', connect);
+  access = createAccountAccess(api, {
+    onReady(session) {
+      currentSession = session;
+      profile.setIdentity(session.user);
+      byId('header-farmer-name').textContent = profileName || session.user?.login || 'Workspace profile';
+      return connect();
+    },
+    onState(text, state) {
+      byId('connection-status').textContent = text;
+      byId('connection-status').parentElement.dataset.state = state;
+    },
+    hasDraft: () => profile.hasDraft() || landActions.hasDraft(),
+  });
+  byId('retry-connection').addEventListener('click', () => access.check());
   byId('global-plot-select').addEventListener('change', event => selectField(event.target.value));
   byId('boundary-select').addEventListener('change', event => {
     const params = { boundary_id: event.target.value };
@@ -356,5 +385,5 @@ export function startWorkspace(origin) {
     loadObservations();
   });
   byId('next-evidence').addEventListener('click', () => inspect(selectedObservationId, evidenceCursor));
-  connect();
+  access.check();
 }

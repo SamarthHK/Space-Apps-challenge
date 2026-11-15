@@ -263,7 +263,7 @@ export function createLandActions(container, api, map, { refresh, lockSelection,
   });
   archive.addEventListener('click', async () => {
     if (!selected || archive.disabled || !window.confirm(
-      'Archive this shared field? It will disappear from normal views; boundary and evidence history is retained.')) return;
+      'Archive this field? It will disappear from normal views; boundary and evidence history is retained.')) return;
     writing = true;
     render();
     try {
@@ -446,6 +446,8 @@ export function createLandActions(container, api, map, { refresh, lockSelection,
   resume.addEventListener('click', resumeJob);
   render();
   return {
+    hasDraft: () => !!draft || writing || jobBusy || !!uploadSubmission || !!confirmSubmission
+      || !!exportSubmission || (!!currentPreview && !currentPreview.confirmed_job_id),
     startDrawing() {
       if (create.disabled) return;
       openDraft(null, null);
@@ -462,7 +464,7 @@ export function createLandActions(container, api, map, { refresh, lockSelection,
       if (!exportSubmission) { format.value = value; exportButton.click(); }
     },
     setField(record, etag) { selected = record; selectedEtag = etag; render(); },
-    setCapabilities(values, projectIds = []) {
+    setCapabilities(values, projectIds = [], privateAccount = false) {
       capabilities = new Set(values.filter(item => item.state === 'ready').map(item => item.capability_id));
       if (!draft && !writing) status.textContent = capabilities.has('field_writes')
         ? 'Draw or import a boundary to register a plot. Saved changes are retained by the backend.'
@@ -470,7 +472,8 @@ export function createLandActions(container, api, map, { refresh, lockSelection,
       projects = projectIds;
       for (const select of [project, importProject]) {
         const previous = select.value;
-        select.replaceChildren(...projects.map(value => new Option(value, value)));
+        select.parentElement.hidden = privateAccount;
+        select.replaceChildren(...projects.map(value => new Option(privateAccount ? 'My private plots' : value, value)));
         select.value = projects.includes(previous) ? previous : projects[0] ?? '';
       }
       if (currentPreview && !projects.includes(currentPreview.project_id)) {

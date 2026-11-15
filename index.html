@@ -10,6 +10,33 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet" />
 </head>
 <body>
+  <section id="account-access" class="account-access" aria-labelledby="account-title" hidden>
+    <div class="account-story">
+      <div class="account-globe" aria-hidden="true"><svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="60" cy="60" r="48"/><ellipse cx="60" cy="60" rx="23" ry="48"/><ellipse cx="60" cy="60" rx="48" ry="18"/><path d="M12 60h96M60 12v96"/></svg></div>
+      <p class="account-wordmark">BHUMI</p><h1>Your land.<br> Your workspace.</h1>
+      <p>Explore the Earth, draw your boundaries and keep your plots with you.</p>
+      <span class="account-privacy-label">Private profile &amp; saved boundaries</span>
+    </div>
+    <div class="account-form-area">
+      <div class="account-card">
+        <p class="account-eyebrow">AGRICULTURAL INTELLIGENCE</p>
+        <h2 id="account-title">Welcome back to your land</h2>
+        <p class="account-intro">Sign in to your private profile and plots. Other accounts cannot access your workspace.</p>
+        <form id="account-form">
+          <fieldset id="account-fields">
+            <label for="account-login">Login<input id="account-login" name="username" class="form-input" autocomplete="username" minlength="3" maxlength="100" required aria-describedby="account-login-help" /></label>
+            <small id="account-login-help">3-100 letters, numbers or . _ @ + -</small>
+            <label for="account-password">Password<input id="account-password" name="password" type="password" class="form-input" autocomplete="current-password" maxlength="1024" required /></label>
+            <label id="account-confirm-label" for="account-password-confirm" hidden>Confirm password<input id="account-password-confirm" type="password" class="form-input" autocomplete="new-password" maxlength="1024" /></label>
+          </fieldset>
+          <p id="account-status" role="status" aria-live="polite"></p>
+          <button id="account-submit" class="btn-primary" type="submit">Sign in</button>
+        </form>
+        <button id="account-mode-toggle" class="btn-secondary" type="button">Create an account</button>
+        <p class="account-footnote">New passwords need at least 12 characters. No account recovery is connected yet; keep your credentials safe. AI analysis is currently unavailable.</p>
+      </div>
+    </div>
+  </section>
   <div id="app-container">
     <nav id="left-sidebar-nav" aria-label="Main navigation">
       <div class="sidebar-brand">
@@ -47,6 +74,7 @@
         <span class="connection-dot" aria-hidden="true"></span>
         <p id="connection-status" role="status">Connecting to the configured backend...</p>
         <button id="retry-connection" class="btn-secondary btn-sm">Reconnect</button>
+        <button id="account-logout" class="btn-secondary btn-sm" hidden>Sign out</button>
       </div>
       <section id="view-dashboard" class="view-section active">
         <div class="view-wrapper">

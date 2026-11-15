@@ -14,9 +14,12 @@ export class ApiError extends Error {
   }
 }
 
-export function createClient(origin, { fetcher = fetch, timeoutMs = 15000, validate = () => true } = {}) {
+export function createClient(origin, { fetcher = fetch, timeoutMs = 15000, validate = () => true,
+  onSessionLost = () => {} } = {}) {
   const base = parseApiOrigin(origin);
+  let session = null;
   const client = {
+    setSession(value) { session = value; },
     async request(path, { method = 'GET', body: payload, rawBody, responseType = 'json',
       headers = {}, params = {}, signal, schema } = {}) {
       if (!path.startsWith('/') || path.startsWith('//') || path.includes('..') || path.includes('\\')) {
@@ -32,13 +35,18 @@ export function createClient(origin, { fetcher = fetch, timeoutMs = 15000, valid
       signal?.addEventListener('abort', abort, { once: true });
       if (signal?.aborted) controller.abort();
       const timer = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
+      const scoped = session?.userId && (!path.startsWith('/auth/') || path === '/auth/logout');
       try {
         const response = await fetcher(url, {
           method, body: rawBody ?? (payload === undefined ? undefined : JSON.stringify(payload)),
-          signal: controller.signal, credentials: 'omit', cache: 'no-store',
+          signal: controller.signal, credentials: session ? 'include' : 'omit', cache: 'no-store',
           redirect: 'error', headers: { Accept: 'application/json',
-            ...(payload === undefined ? {} : { 'Content-Type': 'application/json' }), ...headers },
+            ...(payload === undefined ? {} : { 'Content-Type': 'application/json' }),
+            ...(scoped ? { 'X-Account-ID': session.userId } : {}),
+            ...(method !== 'GET' && session?.csrfToken ? { 'X-CSRF-Token': session.csrfToken } : {}),
+            ...headers },
         });
+        if (scoped && response.status === 401) onSessionLost('unauthenticated');
         const requestId = response.headers.get('X-Request-ID');
         const metadata = { etag: response.headers.get('ETag'), requestId,
           location: response.headers.get('Location'), disposition: response.headers.get('Content-Disposition') };
@@ -66,6 +74,9 @@ export function createClient(origin, { fetcher = fetch, timeoutMs = 15000, valid
         }
         if (!response.ok) {
           const valid = validate('ErrorResponse', body);
+          if (scoped && valid && ['session_changed', 'csrf_invalid'].includes(body.error?.code)) {
+            onSessionLost(body.error.code);
+          }
           throw new ApiError(valid && body.error?.code || 'request_failed',
             valid && body.error?.message || 'Backend request failed.', {
               status: response.status, requestId, details: valid ? body.error?.details ?? [] : [],

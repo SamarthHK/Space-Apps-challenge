@@ -1,5 +1,5 @@
 export const profileFields = [
-  ['name', 'Shared profile name'],
+  ['name', 'Profile name'],
   ['kannada_name', 'Name in Kannada'],
   ['phone', 'Contact phone', null, 32],
   ['soil_health_card_no', 'Soil Health Card reference (not verified)', null, 100],

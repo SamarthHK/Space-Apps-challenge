@@ -146,3 +146,45 @@ test('binary failures still use error envelopes and no-content responses are han
   const noContent = createClient('http://localhost:8000', { fetcher: async () => new Response(null, { status: 204 }) });
   assert.equal((await noContent.request('/resource', { method: 'DELETE' })).body, null);
 });
+
+test('account transport includes cookies and binds writes to in-memory CSRF and owner context', async () => {
+  const calls = [];
+  const client = createClient('http://localhost:8080', { fetcher: async (url, options) => {
+    calls.push({ path: url.pathname, ...options });
+    return Response.json(envelope({}));
+  } });
+  client.setSession({ userId: 'owner-one', csrfToken: 'csrf-context' });
+  await client.request('/profile', { method: 'PATCH', body: { name: null }, headers: { 'If-Match': '"profile:one:1"' } });
+  await client.get('/auth/session');
+  await client.request('/auth/login', { method: 'POST', body: {}, headers: { 'X-CSRF-Token': 'bootstrap-context' } });
+  client.setSession(null);
+  await client.get('/fields');
+  assert.equal(calls[0].credentials, 'include');
+  assert.equal(calls[0].headers['X-Account-ID'], 'owner-one');
+  assert.equal(calls[0].headers['X-CSRF-Token'], 'csrf-context');
+  assert.equal(calls[1].headers['X-Account-ID'], undefined);
+  assert.equal(calls[1].headers['X-CSRF-Token'], undefined);
+  assert.equal(calls[2].headers['X-CSRF-Token'], 'bootstrap-context');
+  assert.equal(calls[3].credentials, 'omit');
+  assert.equal(calls[3].headers['X-Account-ID'], undefined);
+});
+
+test('expired or changed private sessions notify the UI without replaying or treating login failures as expiry', async () => {
+  const ended = [];
+  let calls = 0;
+  const client = createClient('http://localhost:8080', {
+    onSessionLost: reason => ended.push(reason),
+    fetcher: async url => {
+      calls++;
+      const changed = url.pathname.endsWith('/fields');
+      return Response.json({ error: { code: changed ? 'session_changed' : 'unauthenticated', message: 'Denied' } },
+        { status: changed ? 409 : 401 });
+    },
+  });
+  client.setSession({ userId: 'owner-one', csrfToken: 'csrf-context' });
+  await assert.rejects(client.get('/profile'), { status: 401 });
+  await assert.rejects(client.get('/fields'), { code: 'session_changed' });
+  await assert.rejects(client.request('/auth/login', { method: 'POST', body: {} }), { status: 401 });
+  assert.deepEqual(ended, ['unauthenticated', 'session_changed']);
+  assert.equal(calls, 3);
+});

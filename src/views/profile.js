@@ -6,7 +6,7 @@ const node = (tag, text) => {
   return element;
 };
 
-export function createProfile(container, api) {
+export function createProfile(container, api, { onChange = () => {} } = {}) {
   const status = node('p', 'Shared-profile storage is not connected.');
   status.id = 'profile-status';
   status.setAttribute('role', 'status');
@@ -43,6 +43,8 @@ export function createProfile(container, api) {
   let dirty = false;
   let needsReload = false;
   let generation = 0;
+  let privateAccount = false;
+  const label = () => privateAccount ? 'Profile' : 'Shared profile';
 
   function renderButtons() {
     controls.disabled = !available || busy || !record;
@@ -56,7 +58,9 @@ export function createProfile(container, api) {
     profileFields.forEach(([key]) => { form.elements.namedItem(key).value = record[key] ?? ''; });
     dirty = false;
     needsReload = false;
-    status.textContent = `Shared profile version ${record.version}. Visible to everyone with workspace access.`;
+    status.textContent = `${label()} version ${record.version}. ${privateAccount
+      ? 'Saved in your private account.' : 'Visible to everyone with workspace access.'}`;
+    onChange(record);
   }
   async function load() {
     if (!available || busy) return;
@@ -64,7 +68,7 @@ export function createProfile(container, api) {
     busy = true;
     renderButtons();
     errors.replaceChildren();
-    status.textContent = 'Loading shared profile...';
+    status.textContent = `Loading ${label().toLowerCase()}...`;
     try {
       const response = await api.request('/profile', { schema: 'ProfileResponse' });
       if (current === generation) apply(response);
@@ -88,13 +92,13 @@ export function createProfile(container, api) {
     busy = true;
     renderButtons();
     errors.replaceChildren();
-    status.textContent = 'Saving shared profile...';
+    status.textContent = `Saving ${label().toLowerCase()}...`;
     try {
       const response = await api.request('/profile', {
         method: 'PATCH', body, headers: { 'If-Match': etag }, schema: 'ProfileResponse',
       });
       apply(response);
-      status.textContent = `Saved shared profile version ${record.version}.`;
+      status.textContent = `Saved ${label().toLowerCase()} version ${record.version}.`;
     } catch (error) {
       needsReload = error.status === 412 || error.outcomeUncertain || !(error.status >= 400 && error.status < 500);
       status.textContent = `${error.message} Your edits were retained.${needsReload
@@ -108,11 +112,19 @@ export function createProfile(container, api) {
   reload.addEventListener('click', load);
   renderButtons();
   return {
+    hasDraft: () => dirty || busy,
+    setIdentity(user) {
+      privateAccount = !!user;
+      save.textContent = privateAccount ? 'Save profile' : 'Save shared profile';
+      document.getElementById('profile-privacy-notice').textContent = privateAccount
+        ? 'This profile is private to your signed-in account. Your declarations are not laboratory verification.'
+        : 'This profile is shared in the current workspace mode. Only enter information intended to be shared; no private donor records are imported.';
+    },
     setAvailable(value) {
       available = value;
       renderButtons();
       if (available && !record && !busy) load();
-      if (!available && !busy) status.textContent = 'Shared-profile storage is blocked or disconnected. Existing edits are retained.';
+      if (!available && !busy) status.textContent = `${label()} storage is blocked or disconnected. Existing edits are retained.`;
     },
   };
 }

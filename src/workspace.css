@@ -111,6 +111,26 @@ button:disabled, select:disabled { opacity: .55; cursor: not-allowed; }
 .profile-container-card form > button { margin: .3rem .5rem .3rem 0; }
 #profile-status { margin: .75rem 0; font-size: .75rem; line-height: 1.7; }
 
+.account-access { min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); background: var(--bg-surface-soft); }
+.account-story { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding: clamp(2rem, 6vw, 7rem); background: var(--green-900, #123a29); color: #fff; }
+.account-globe { width: clamp(110px, 18vw, 220px); color: #97c8a9; margin-bottom: 2rem; }
+.account-globe svg { display: block; width: 100%; }
+.account-wordmark { font-size: .8rem; font-weight: 700; letter-spacing: .3em; opacity: .8; }
+.account-story h1 { font-size: clamp(2.1rem, 4vw, 4.2rem); line-height: 1.2; font-weight: 700; letter-spacing: -.04em; margin: 1.2rem 0; }
+.account-story > p:not(.account-wordmark) { max-width: 370px; font-size: .95rem; line-height: 1.9; opacity: .8; }
+.account-privacy-label { margin-top: 2rem; padding: .6rem .8rem; border: 1px solid #ffffff40; border-radius: 5px; font-size: .7rem; }
+.account-form-area { display: grid; align-items: center; padding: 2.5rem; }
+.account-card { width: 100%; max-width: 430px; margin: 0 auto; }
+.account-eyebrow { font-size: .62rem; letter-spacing: .16em; color: var(--green-700); font-weight: 700; margin-bottom: .8rem; }
+.account-card h2 { font-size: clamp(1.4rem, 2.4vw, 2rem); line-height: 1.4; letter-spacing: -.035em; }
+.account-intro { margin: .85rem 0 1.75rem; font-size: .8rem; line-height: 1.8; color: var(--text-muted); }
+#account-fields { display: grid; gap: 1rem; padding: 0; border: 0; min-width: 0; }
+#account-fields label { display: grid; gap: .45rem; font-size: .76rem; font-weight: 600; }
+#account-login-help { margin-top: -.6rem; font-size: .66rem; color: var(--text-subtle); }
+#account-status { min-height: 1.2rem; margin: .9rem 0; font-size: .76rem; line-height: 1.7; color: var(--text-muted); overflow-wrap: anywhere; }
+#account-submit, #account-mode-toggle { width: 100%; justify-content: center; margin-bottom: .7rem; }
+.account-footnote { font-size: .67rem; line-height: 1.8; color: var(--text-subtle); margin-top: 1rem; }
+
 @media (max-width: 1250px) {
   .metric-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .cockpit-heading > .status-badge { display: none; }
@@ -159,4 +179,11 @@ button:disabled, select:disabled { opacity: .55; cursor: not-allowed; }
   .land-tools .api-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #field-editor .api-filters { grid-template-columns: minmax(0, 1fr); }
   .profile-form-grid { grid-template-columns: minmax(0, 1fr); }
+  .account-access { grid-template-columns: minmax(0, 1fr); }
+  .account-story { padding: 1.8rem; }
+  .account-globe, .account-privacy-label { display: none; }
+  .account-story h1 { font-size: 1.7rem; margin: .65rem 0; }
+  .account-story h1 br { display: none; }
+  .account-story > p:not(.account-wordmark) { font-size: .75rem; }
+  .account-form-area { padding: 1.75rem; }
 }

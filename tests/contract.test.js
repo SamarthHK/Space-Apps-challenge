@@ -10,11 +10,14 @@ test('pinned OpenAPI bytes match recorded backend artifact checksum', async () =
   assert.equal(createHash('sha256').update(bytes).digest('hex'), source.sha256);
 });
 
-test('shared workspace and pagination are validated before rendering', () => {
+test('shared/private workspace and pagination are validated before rendering', () => {
   const meta = { api_version: 'v1', request_id: 'contract-test' };
   const data = { access_mode: 'shared_trusted_network', contract_revision: 'shared-workspace-1',
     project_ids: [], capabilities: [] };
   assert.equal(validateResponse('WorkspaceResponse', { data, meta }), true);
+  assert.equal(validateResponse('WorkspaceResponse', {
+    data: { ...data, access_mode: 'private_account', contract_revision: 'private-workspace-2' }, meta,
+  }), true);
   assert.equal(validateResponse('WorkspaceResponse', { data: { ...data, access_mode: 'private' }, meta }), false);
   assert.equal(validateResponse('FieldsResponse', { data: [], meta }), false);
   assert.equal(validateResponse('FieldsResponse', { data: [], meta: { ...meta, next_cursor: null } }), true);

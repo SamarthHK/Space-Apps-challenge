@@ -7,15 +7,16 @@ Integration update: Milestones A and B implemented locally. Branch: `frontend`.
 The owner requested small commits only after rigorous affected tests pass.
 This policy applies to this project. Preserve unrelated backend work.
 
-Approved mode: no accounts, one shared Tailscale workspace. Frontend port 1080,
-API port 8000. All devices permitted by tailnet rules share access. Never
-publish this account-free mode through Funnel or a public proxy. Economics is
+Updated mode: private per-person accounts over Tailscale. Frontend port 1080,
+API port 8080. Shared access remains compatibility-only, not a private-mode
+fallback. Never publish through Funnel or a public proxy. Economics is
 deferred; pending evidence stays labelled; fields require polygon geometry.
 
 Read `frontendplan.md` and backend branch `backendplan.md`, `docs/api-contract.md`
-and `docs/api-running.md`. Implemented contract: `shared-workspace-1`.
+and `docs/api-running.md`. Implemented private contract: `private-workspace-2`,
+with `shared-workspace-1` compatibility.
 The exact generated schema and source commit/hash are pinned under `contracts`.
-Legacy per-user authentication tasks in the original plan are superseded.
+The earlier account-free decision is superseded by the approved private UI plan.
 
 ## Completed increments
 
@@ -30,22 +31,23 @@ Legacy per-user authentication tasks in the original plan are superseded.
 | Field writes | Backend `2163808`: scoped create/update/archive, source bytes, explicit current boundary and immutable history | Actual PostGIS lifecycle, idempotency, concurrency and rollback cases |
 | Durable workflows | Backend `a804cd2`: raw upload preview, explicit confirmation, leased worker and GeoJSON/KML/KMZ exports | Process recovery, atomic batch rollback/retry, version conflicts, scoped downloads and geometry roundtrips |
 | Connected field workflows | This increment: map drawing, complex GeoJSON editing, imports, job resume and Blob downloads | 16 frontend unit tests, production build and 14 real-browser cases using isolated authentic records and explicitly labelled topology probes |
-| Original UI restoration | Restore the `b59a73f` satellite cockpit, typography/cards, map toolbar, Earth view, direct drawing and responsive profile/tools layout | Existing connected journeys plus always-visible satellite imagery, direct drawing/undo and mobile layout |
+| Original UI restoration | Frontend `2f50c0f`: restore the `b59a73f` satellite cockpit, typography/cards, map toolbar, Earth view, direct drawing and responsive profile/tools layout | 16 units, production build and 15 browser cases, including actual satellite tile loading |
+| Private accounts | Backend `711d1e1` plus the themed frontend sign-up/sign-in/logout, CSRF/owner-bound requests and private profile labels | 84 backend API cases; 18 frontend units, production build, 15 shared and 3 private browser journeys |
 
 The owner has now approved private per-person accounts/plot ownership and saving
 drawn KML, with AI explicitly unavailable until its real input pipeline exists.
-Those follow-on changes are in progress; this presentation increment does not
-claim that authentication or arbitrary-field AI is already implemented.
+Account isolation and session UI are implemented. Default drawn-KML submission
+is the next increment; arbitrary-field AI is not implemented.
 
 All new code is independent of unrelated uncommitted backend modules. Read
 routes require a prepared canonical DB schema; they do not migrate it or call
-CLI proof commands. Writes use explicitly configured shared application storage;
+CLI proof commands. Writes use server-resolved private scopes or explicitly shared application storage;
 canonical observations and evidence remain read-only.
 
 ## Working behavior
 
 - Bootstrap workspace and capability states from the configured API.
-- List canonical fields only in explicitly configured projects.
+- List canonical fields only in the account's server-assigned project (or configured shared projects).
 - Select a recorded boundary version when "current" is ambiguous; render
   stored GeoJSON with Leaflet and server-calculated metrics when available.
 - Inspect canonical source values, units/basis, observation time/time standard,
@@ -56,7 +58,8 @@ canonical observations and evidence remain read-only.
   display honest unavailable states, not old fictional recommendations/prices.
 - No production import of legacy services/data modules; no authoritative
   localStorage, seeded profile or initial HTML scientific values.
-- Shared-profile saves preserve drafts on validation/conflict/transport failures.
+- Profile saves preserve drafts on ordinary validation/conflict/transport failures.
+  Logout or a revoked/changed identity clears private data and drafts instead.
 - Field draws and name/geometry edits use server versions and computed metrics;
   archived fields disappear without deleting their history or observations.
 - Imports require a nonmutating preview and explicit selection. Raw bytes and
@@ -74,7 +77,8 @@ Karnataka. POWER reference evidence is from a Dutch parcel.
 
 ## Remaining work
 
-The requested profile and field/import/export milestones are complete.
+The requested profile and field/import/export milestones and private accounts are complete.
+Default drawn-KML submission and the new 1080/8080 private hosting release are next.
 Still deferred: B05/F05 soil submissions/analysis, B06/F06 acquisition/satellite, B07/F07/F08 crop and
 market services, B08/F09 planting plans, then cleanup and full deployment gates.
 No full scientific or platform-completion claim: additional authentic geometry
