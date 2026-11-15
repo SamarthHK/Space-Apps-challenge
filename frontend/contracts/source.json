@@ -1,0 +1,9 @@
+{
+  "sha256": "0786d409b6f108ae39aa36253570e6131c5cb2f112aac1313bf79e61da44eb06",
+  "revision": "private-workspace-2",
+  "supported_revisions": [
+    "shared-workspace-1",
+    "private-workspace-2"
+  ],
+  "backend_commit": "e221e9894186949d520b0918d93136f5404df10b"
+}
