@@ -9,12 +9,36 @@ import uuid
 import requests
 
 
-def archive_response(url: str, destination: Path, params=None, timeout=60) -> dict:
+def system_trust_session():
+    """Use the operating system's certificate verification without disabling TLS."""
+    import ssl
+    import truststore
+    from requests.adapters import HTTPAdapter
+
+    context = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+
+    class SystemTrustAdapter(HTTPAdapter):
+        def build_connection_pool_key_attributes(self, request, verify, cert=None):
+            if verify is not True:
+                raise ValueError("System-trust acquisition requires certificate verification")
+            host, options = super().build_connection_pool_key_attributes(request, verify, cert)
+            options["ssl_context"] = context
+            return host, options
+
+    session = requests.Session()
+    session.mount("https://", SystemTrustAdapter())
+    return session
+
+
+def archive_response(url: str, destination: Path, params=None, timeout=60, *,
+                     session=None, method="GET", data=None) -> dict:
     """Make a fresh public request; never use a cache to establish connectivity."""
+    if method not in ("GET", "POST") or (method == "GET" and data is not None):
+        raise ValueError("Acquisition supports GET or a public POST form")
     started = datetime.now(timezone.utc).isoformat()
     destination.mkdir(parents=True, exist_ok=True)
     try:
-        response = requests.get(url, params=params, timeout=timeout)
+        response = (session or requests).request(method, url, params=params, data=data, timeout=timeout)
     except requests.RequestException as error:
         # This path is for public sources. Do not persist arbitrary exception
         # text, which may include authentication or proxy configuration.
@@ -38,6 +62,7 @@ def archive_response(url: str, destination: Path, params=None, timeout=60) -> di
             raise ValueError("Previously archived raw bytes have changed")
     evidence = {
         "request_id": uuid.uuid4().hex,
+        "request_method": method,
         "requested_url": response.request.url,
         "response_url": response.url,
         "http_status": response.status_code,
