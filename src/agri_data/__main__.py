@@ -53,15 +53,27 @@ def main():
     build_outcomes.add_argument("--config", type=Path, required=True)
     build_outcomes.add_argument("--corpus", type=Path, required=True)
     build_outcomes.add_argument("--output", type=Path, required=True)
+    train_outcomes = commands.add_parser("train-outcomes", help="Train and evaluate retrospective crop outcome models")
+    train_outcomes.add_argument("--dataset", type=Path, required=True)
+    train_outcomes.add_argument("--output", type=Path, required=True)
+    predict_outcome = commands.add_parser("predict-outcome", help="Research prediction from a complete prepared feature record")
+    predict_outcome.add_argument("--model", type=Path, required=True)
+    predict_outcome.add_argument("--input", type=Path, required=True)
     args = parser.parse_args()
     repository = Path.cwd()
-    if args.command in ("acquire-outcomes", "build-outcomes"):
+    if args.command in ("acquire-outcomes", "build-outcomes", "train-outcomes", "predict-outcome"):
         import json
         import yaml
         from agri_data.contracts.outcome_data import acquire_outcome_corpus, build_outcome_dataset
         try:
             if args.command == "acquire-outcomes":
                 result = {"corpus": str(acquire_outcome_corpus(args.contract, args.output).resolve())}
+            elif args.command == "train-outcomes":
+                from agri_data.contracts.outcome_model import train_outcomes
+                result = train_outcomes(args.dataset, args.output)
+            elif args.command == "predict-outcome":
+                from agri_data.contracts.outcome_model import predict_example
+                result = predict_example(args.model, json.loads(args.input.read_bytes()))
             else:
                 from agri_data.contracts.postgres import PostgresStore
                 database = yaml.safe_load(args.config.read_bytes())["database"]
