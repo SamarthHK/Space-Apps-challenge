@@ -1,6 +1,14 @@
 # Space-Apps-challenge
 The Hollows to the Nasa Space Apps Challenge
 
+## Current work: restore the original UI and add private plots
+
+The owner requested the appearance from frontend `b59a73f`, private per-person
+accounts/plots, saved drawn KML, and ports 1080/8080. AI remains unavailable
+pending a real field-to-model pipeline. See the
+[UI comparison and delivery plan](docs/merger/09-ui-restoration.md).
+This supersedes the shared-access target of the earlier release below.
+
 ## Implemented release: separate frontend and backend
 
 **Milestones A and B are implemented and committed locally:** shared profiles,
