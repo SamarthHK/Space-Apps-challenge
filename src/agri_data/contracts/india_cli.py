@@ -7,7 +7,7 @@ import sys
 import yaml
 
 
-COMMANDS = {"acquire-crop-profiles", "build-crop-profiles"}
+COMMANDS = {"acquire-crop-profiles", "build-crop-profiles", "acquire-india-outcomes", "build-india-outcomes"}
 
 
 def register_commands(commands):
@@ -18,6 +18,13 @@ def register_commands(commands):
     build.add_argument("--corpus", type=Path, required=True)
     build.add_argument("--config", type=Path, required=True)
     build.add_argument("--output", type=Path, required=True)
+    acquire_outcomes = commands.add_parser("acquire-india-outcomes", help="Acquire official Indian district APY reports")
+    acquire_outcomes.add_argument("--contract", type=Path, default=Path("config") / "india_model.yaml")
+    acquire_outcomes.add_argument("--output", type=Path, required=True)
+    build_outcomes = commands.add_parser("build-india-outcomes", help="Persist real Indian statistical outcomes and source units")
+    build_outcomes.add_argument("--corpus", type=Path, required=True)
+    build_outcomes.add_argument("--config", type=Path, required=True)
+    build_outcomes.add_argument("--output", type=Path, required=True)
 
 
 def database_store(config_path):
@@ -34,6 +41,12 @@ def run(args):
             result = {"corpus": str(acquire_crop_profiles(args.contract, args.output).resolve())}
         elif args.command == "build-crop-profiles":
             result = build_crop_profiles(args.corpus, args.output, database_store(args.config))
+        elif args.command == "acquire-india-outcomes":
+            from .india_outcomes import acquire_india_outcomes
+            result = {"corpus": str(acquire_india_outcomes(args.contract, args.output).resolve())}
+        elif args.command == "build-india-outcomes":
+            from .india_outcomes import build_india_outcomes
+            result = build_india_outcomes(args.corpus, args.output, database_store(args.config))
         else:
             raise ValueError("Unsupported India command")
         print(json.dumps(result, indent=2, allow_nan=False))
