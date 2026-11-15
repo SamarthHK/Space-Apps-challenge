@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import date
+from http import HTTPStatus
 from typing import Literal
 
 from fastapi import FastAPI, Query, Request, Response
@@ -20,6 +21,8 @@ from .pagination import Pagination, InvalidCursor, ChangedSnapshot
 from .profile import router as profile_router
 from .field_writes import router as field_router
 from .workflows import router as workflow_router
+from .reference import router as reference_router
+from .reference_store import ReferenceServiceError, ReferenceStore
 from agri_data.workspace.fields import FieldStore, field_etag
 from agri_data.workspace.jobs import JobStore
 from agri_data.workspace.errors import WorkspaceError, WorkspaceUnavailable
@@ -33,7 +36,7 @@ def error_response(request, status, code, message, *, details=None, retryable=Fa
     })
 
 
-def create_app(settings=None, data_settings=None, workspace_settings=None):
+def create_app(settings=None, data_settings=None, workspace_settings=None, reference_settings=None):
     if data_settings and workspace_settings and (
         data_settings.database == workspace_settings.database and data_settings.schema == workspace_settings.schema
     ):
@@ -42,7 +45,9 @@ def create_app(settings=None, data_settings=None, workspace_settings=None):
     app = FastAPI(
         title="AgriData shared workspace API", version="1.0.0",
         docs_url=None, redoc_url=None, openapi_url="/api/v1/openapi.json",
-        responses={code: {"model": ErrorResponse} for code in (400, 403, 404, 405, 409, 412, 413, 415, 422, 428, 500, 503)},
+        responses={code: {"model": ErrorResponse, "description": {
+            413: "Content Too Large", 422: "Unprocessable Content",
+        }.get(code, HTTPStatus(code).phrase)} for code in (400, 403, 404, 405, 409, 412, 413, 415, 422, 428, 500, 503)},
     )
     store = DataStore(data_settings)
     workspace_store = WorkspaceStore(workspace_settings)
@@ -51,9 +56,12 @@ def create_app(settings=None, data_settings=None, workspace_settings=None):
     app.state.field_store = field_store
     job_store = JobStore(field_store)
     app.state.job_store = job_store
+    reference_store = ReferenceStore(reference_settings)
+    app.state.reference_store = reference_store
     app.include_router(profile_router)
     app.include_router(field_router)
     app.include_router(workflow_router)
+    app.include_router(reference_router)
     pagination = Pagination()
     app.add_middleware(
         CORSMiddleware,
@@ -128,6 +136,10 @@ def create_app(settings=None, data_settings=None, workspace_settings=None):
     async def resource_missing(request, error):
         return error_response(request, 404, "not_found", "Resource not found")
 
+    @app.exception_handler(ReferenceServiceError)
+    async def reference_error(request, error):
+        return error_response(request, error.status, error.code, error.message, retryable=error.retryable)
+
     @app.exception_handler(InvalidCursor)
     async def invalid_cursor(request, error):
         return error_response(request, 400, "invalid_cursor", "Restart pagination with the current filters")
@@ -160,11 +172,13 @@ def create_app(settings=None, data_settings=None, workspace_settings=None):
                 "recommendations": ["createRecommendation", "listRecommendations", "getRecommendation"],
                 "markets": ["listMandis", "listMarkets"],
                 "plans": ["listPlans", "createPlan", "getPlan", "updatePlan"],
+                "reference_suitability": ["getReferenceModel", "listReferenceContexts", "predictReferenceSuitability"],
             }.items()
         ]
         ready = store.available()
         writer_ready = field_store.ready()
         worker_ready = writer_ready and job_store.available()
+        reference_state, reference_reason = reference_store.capability()
         for capability in capabilities:
             if capability.capability_id in ("fields", "observations"):
                 capability.state = "ready" if ready else "blocked"
@@ -181,6 +195,8 @@ def create_app(settings=None, data_settings=None, workspace_settings=None):
             elif capability.capability_id == "jobs":
                 capability.state = "ready" if field_store.configured() and workspace_store.ready() else "blocked"
                 capability.reason = None if capability.state == "ready" else "Configure scoped workspace job storage"
+            elif capability.capability_id == "reference_suitability":
+                capability.state, capability.reason = reference_state, reference_reason
         return WorkspaceResponse(
             data=Workspace(project_ids=list(data_settings.project_ids) if data_settings else [], capabilities=capabilities),
             meta=Meta(request_id=request.state.request_id),

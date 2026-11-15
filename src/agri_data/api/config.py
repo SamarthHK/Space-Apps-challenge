@@ -1,9 +1,10 @@
 """Fail-closed configuration for loopback or Tailscale-only serving."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from ipaddress import ip_address, ip_network
 import os
 import re
+from pathlib import Path
 from urllib.parse import urlsplit
 
 
@@ -72,3 +73,22 @@ class Settings:
 
 def request_id(value):
     return value if value and re.fullmatch(r"[A-Za-z0-9_-]{1,64}", value) else None
+
+
+@dataclass(frozen=True)
+class ReferenceSettings:
+    model_dir: Path = field(repr=False)
+    model_id: str
+
+    @classmethod
+    def from_env(cls, environ=None):
+        environ = os.environ if environ is None else environ
+        directory = environ.get("AGRI_REFERENCE_MODEL_DIR", "").strip()
+        identifier = environ.get("AGRI_REFERENCE_MODEL_ID", "").strip()
+        if not directory and not identifier:
+            return None
+        if not directory or not re.fullmatch(r"[0-9a-f]{64}", identifier):
+            raise ValueError("Configure both AGRI_REFERENCE_MODEL_DIR and a 64-character AGRI_REFERENCE_MODEL_ID")
+        if "://" in directory:
+            raise ValueError("The reference model must be an operator-configured local directory")
+        return cls(Path(directory).expanduser().resolve(), identifier)

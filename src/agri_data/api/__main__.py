@@ -7,7 +7,7 @@ from pathlib import Path
 import uvicorn
 
 from .app import create_app
-from .config import Settings
+from .config import ReferenceSettings, Settings
 from .data import DataSettings
 from agri_data.workspace.settings import WorkspaceSettings
 
@@ -17,7 +17,7 @@ def main():
     parser.add_argument("--export-openapi", type=Path)
     args = parser.parse_args()
     settings = Settings.from_env()
-    app = create_app(settings, DataSettings.from_env(), WorkspaceSettings.from_env())
+    app = create_app(settings, DataSettings.from_env(), WorkspaceSettings.from_env(), ReferenceSettings.from_env())
     if args.export_openapi:
         args.export_openapi.write_text(
             json.dumps(app.openapi(), indent=2, ensure_ascii=True) + "\n", encoding="utf-8",

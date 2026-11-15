@@ -2,6 +2,7 @@
 
 import json
 import os
+from pathlib import Path
 import socket
 import subprocess
 import sys
@@ -91,7 +92,7 @@ def test_live_health_and_workspace_are_honest_and_share_response_contract(server
     assert workspace["access_mode"] == "shared_trusted_network"
     assert workspace["project_ids"] == []
     assert all(item["state"] == ("blocked" if item["capability_id"] in (
-        "fields", "observations", "profile", "field_writes", "jobs", "imports", "exports")
+        "fields", "observations", "profile", "field_writes", "jobs", "imports", "exports", "reference_suitability")
                                 else "not_implemented") for item in workspace["capabilities"])
     assert "user_id" not in workspace and "token" not in workspace
 
@@ -127,12 +128,14 @@ def test_unknown_routes_methods_hosts_and_request_ids_are_handled(server):
 def test_openapi_export_is_deterministic_and_matches_live_routes(server, tmp_path):
     live = requests.get(server + "/openapi.json", timeout=2).json()
     assert live == create_app(settings()).openapi()
+    assert live == json.loads((Path(__file__).resolve().parents[2] / "docs" / "openapi.json").read_bytes())
     operations = {operation["operationId"] for path in live["paths"].values() for operation in path.values()}
     assert operations == {"getHealth", "getWorkspace", "listFields", "getField", "listObservations",
                           "getObservation", "listObservationEvidence", "getProfile", "updateProfile",
                           "createField", "updateField", "archiveField", "getJob",
                           "createBoundaryImport", "getBoundaryImport", "confirmBoundaryImport",
-                          "createExport", "downloadExport"}
+                          "createExport", "downloadExport", "getReferenceModel", "listReferenceContexts",
+                          "predictReferenceSuitability"}
     output = tmp_path / "openapi.json"
     result = subprocess.run(
         [sys.executable, "-m", "agri_data.api", "--export-openapi", str(output)],

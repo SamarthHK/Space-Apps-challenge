@@ -21,124 +21,124 @@
             }
           },
           "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Not Found"
+            }
           },
           "405": {
+            "description": "Method Not Allowed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Method Not Allowed"
+            }
           },
           "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "412": {
+            "description": "Precondition Failed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Failed"
+            }
           },
           "413": {
+            "description": "Content Too Large",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Content Too Large"
+            }
           },
           "415": {
+            "description": "Unsupported Media Type",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unsupported Media Type"
+            }
           },
           "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unprocessable Content"
+            }
           },
           "428": {
+            "description": "Precondition Required",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Required"
+            }
           },
           "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Internal Server Error"
+            }
           },
           "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Service Unavailable"
+            }
           }
         }
       },
@@ -185,124 +185,124 @@
             }
           },
           "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Not Found"
+            }
           },
           "405": {
+            "description": "Method Not Allowed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Method Not Allowed"
+            }
           },
           "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "412": {
+            "description": "Precondition Failed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Failed"
+            }
           },
           "413": {
+            "description": "Content Too Large",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Content Too Large"
+            }
           },
           "415": {
+            "description": "Unsupported Media Type",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unsupported Media Type"
+            }
           },
           "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unprocessable Content"
+            }
           },
           "428": {
+            "description": "Precondition Required",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Required"
+            }
           },
           "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Internal Server Error"
+            }
           },
           "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Service Unavailable"
+            }
           }
         }
       }
@@ -353,124 +353,124 @@
             }
           },
           "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Not Found"
+            }
           },
           "405": {
+            "description": "Method Not Allowed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Method Not Allowed"
+            }
           },
           "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "412": {
+            "description": "Precondition Failed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Failed"
+            }
           },
           "413": {
+            "description": "Content Too Large",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Content Too Large"
+            }
           },
           "415": {
+            "description": "Unsupported Media Type",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unsupported Media Type"
+            }
           },
           "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unprocessable Content"
+            }
           },
           "428": {
+            "description": "Precondition Required",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Required"
+            }
           },
           "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Internal Server Error"
+            }
           },
           "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Service Unavailable"
+            }
           }
         }
       },
@@ -520,124 +520,124 @@
             }
           },
           "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Not Found"
+            }
           },
           "405": {
+            "description": "Method Not Allowed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Method Not Allowed"
+            }
           },
           "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "412": {
+            "description": "Precondition Failed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Failed"
+            }
           },
           "413": {
+            "description": "Content Too Large",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Content Too Large"
+            }
           },
           "415": {
+            "description": "Unsupported Media Type",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unsupported Media Type"
+            }
           },
           "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unprocessable Content"
+            }
           },
           "428": {
+            "description": "Precondition Required",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Required"
+            }
           },
           "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Internal Server Error"
+            }
           },
           "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Service Unavailable"
+            }
           }
         }
       }
@@ -695,124 +695,124 @@
             }
           },
           "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Not Found"
+            }
           },
           "405": {
+            "description": "Method Not Allowed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Method Not Allowed"
+            }
           },
           "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "412": {
+            "description": "Precondition Failed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Failed"
+            }
           },
           "413": {
+            "description": "Content Too Large",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Content Too Large"
+            }
           },
           "415": {
+            "description": "Unsupported Media Type",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unsupported Media Type"
+            }
           },
           "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unprocessable Content"
+            }
           },
           "428": {
+            "description": "Precondition Required",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Required"
+            }
           },
           "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Internal Server Error"
+            }
           },
           "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Service Unavailable"
+            }
           }
         }
       },
@@ -858,124 +858,124 @@
             }
           },
           "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Not Found"
+            }
           },
           "405": {
+            "description": "Method Not Allowed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Method Not Allowed"
+            }
           },
           "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "412": {
+            "description": "Precondition Failed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Failed"
+            }
           },
           "413": {
+            "description": "Content Too Large",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Content Too Large"
+            }
           },
           "415": {
+            "description": "Unsupported Media Type",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unsupported Media Type"
+            }
           },
           "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unprocessable Content"
+            }
           },
           "428": {
+            "description": "Precondition Required",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Required"
+            }
           },
           "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Internal Server Error"
+            }
           },
           "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Service Unavailable"
+            }
           }
         }
       },
@@ -1021,124 +1021,124 @@
             }
           },
           "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Not Found"
+            }
           },
           "405": {
+            "description": "Method Not Allowed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Method Not Allowed"
+            }
           },
           "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "412": {
+            "description": "Precondition Failed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Failed"
+            }
           },
           "413": {
+            "description": "Content Too Large",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Content Too Large"
+            }
           },
           "415": {
+            "description": "Unsupported Media Type",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unsupported Media Type"
+            }
           },
           "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unprocessable Content"
+            }
           },
           "428": {
+            "description": "Precondition Required",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Required"
+            }
           },
           "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Internal Server Error"
+            }
           },
           "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Service Unavailable"
+            }
           }
         }
       }
@@ -1170,124 +1170,124 @@
             }
           },
           "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Not Found"
+            }
           },
           "405": {
+            "description": "Method Not Allowed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Method Not Allowed"
+            }
           },
           "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "412": {
+            "description": "Precondition Failed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Failed"
+            }
           },
           "413": {
+            "description": "Content Too Large",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Content Too Large"
+            }
           },
           "415": {
+            "description": "Unsupported Media Type",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unsupported Media Type"
+            }
           },
           "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unprocessable Content"
+            }
           },
           "428": {
+            "description": "Precondition Required",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Required"
+            }
           },
           "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Internal Server Error"
+            }
           },
           "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Service Unavailable"
+            }
           }
         }
       }
@@ -1360,124 +1360,124 @@
             }
           },
           "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Not Found"
+            }
           },
           "405": {
+            "description": "Method Not Allowed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Method Not Allowed"
+            }
           },
           "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "412": {
+            "description": "Precondition Failed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Failed"
+            }
           },
           "413": {
+            "description": "Content Too Large",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Content Too Large"
+            }
           },
           "415": {
+            "description": "Unsupported Media Type",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unsupported Media Type"
+            }
           },
           "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unprocessable Content"
+            }
           },
           "428": {
+            "description": "Precondition Required",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Required"
+            }
           },
           "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Internal Server Error"
+            }
           },
           "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Service Unavailable"
+            }
           }
         },
         "requestBody": {
@@ -1520,124 +1520,124 @@
             }
           },
           "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Not Found"
+            }
           },
           "405": {
+            "description": "Method Not Allowed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Method Not Allowed"
+            }
           },
           "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "412": {
+            "description": "Precondition Failed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Failed"
+            }
           },
           "413": {
+            "description": "Content Too Large",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Content Too Large"
+            }
           },
           "415": {
+            "description": "Unsupported Media Type",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unsupported Media Type"
+            }
           },
           "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unprocessable Content"
+            }
           },
           "428": {
+            "description": "Precondition Required",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Required"
+            }
           },
           "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Internal Server Error"
+            }
           },
           "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Service Unavailable"
+            }
           }
         }
       }
@@ -1697,124 +1697,124 @@
             }
           },
           "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Not Found"
+            }
           },
           "405": {
+            "description": "Method Not Allowed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Method Not Allowed"
+            }
           },
           "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "412": {
+            "description": "Precondition Failed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Failed"
+            }
           },
           "413": {
+            "description": "Content Too Large",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Content Too Large"
+            }
           },
           "415": {
+            "description": "Unsupported Media Type",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unsupported Media Type"
+            }
           },
           "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unprocessable Content"
+            }
           },
           "428": {
+            "description": "Precondition Required",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Required"
+            }
           },
           "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Internal Server Error"
+            }
           },
           "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Service Unavailable"
+            }
           }
         }
       }
@@ -1865,124 +1865,124 @@
             }
           },
           "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Not Found"
+            }
           },
           "405": {
+            "description": "Method Not Allowed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Method Not Allowed"
+            }
           },
           "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "412": {
+            "description": "Precondition Failed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Failed"
+            }
           },
           "413": {
+            "description": "Content Too Large",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Content Too Large"
+            }
           },
           "415": {
+            "description": "Unsupported Media Type",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unsupported Media Type"
+            }
           },
           "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unprocessable Content"
+            }
           },
           "428": {
+            "description": "Precondition Required",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Required"
+            }
           },
           "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Internal Server Error"
+            }
           },
           "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Service Unavailable"
+            }
           }
         }
       }
@@ -2027,124 +2027,617 @@
             }
           },
           "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Not Found"
+            }
           },
           "405": {
+            "description": "Method Not Allowed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Method Not Allowed"
+            }
           },
           "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "412": {
+            "description": "Precondition Failed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Failed"
+            }
           },
           "413": {
+            "description": "Content Too Large",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Content Too Large"
+            }
           },
           "415": {
+            "description": "Unsupported Media Type",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unsupported Media Type"
+            }
           },
           "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unprocessable Content"
+            }
           },
           "428": {
+            "description": "Precondition Required",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Required"
+            }
           },
           "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Internal Server Error"
+            }
           },
           "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Service Unavailable"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reference-model": {
+      "get": {
+        "tags": [
+          "reference suitability"
+        ],
+        "summary": "Model Info",
+        "operationId": "getReferenceModel",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceModelResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Content Too Large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Media Type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reference-model/contexts": {
+      "get": {
+        "tags": [
+          "reference suitability"
+        ],
+        "summary": "Reference Contexts",
+        "operationId": "listReferenceContexts",
+        "parameters": [
+          {
+            "name": "model_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Model Id"
+            }
+          },
+          {
+            "name": "period_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 32
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Period Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 4096
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceContextsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Content Too Large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Media Type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reference-model/predictions": {
+      "post": {
+        "tags": [
+          "reference suitability"
+        ],
+        "summary": "Reference Prediction",
+        "description": "Stateless historical reference scoring, not a field recommendation or persisted job.",
+        "operationId": "predictReferenceSuitability",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferencePredictionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferencePredictionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Content Too Large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Media Type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Precondition Required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -2547,124 +3040,124 @@
             }
           },
           "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Not Found"
+            }
           },
           "405": {
+            "description": "Method Not Allowed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Method Not Allowed"
+            }
           },
           "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "412": {
+            "description": "Precondition Failed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Failed"
+            }
           },
           "413": {
+            "description": "Content Too Large",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Content Too Large"
+            }
           },
           "415": {
+            "description": "Unsupported Media Type",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unsupported Media Type"
+            }
           },
           "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unprocessable Content"
+            }
           },
           "428": {
+            "description": "Precondition Required",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Required"
+            }
           },
           "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Internal Server Error"
+            }
           },
           "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Service Unavailable"
+            }
           }
         }
       }
@@ -2705,124 +3198,124 @@
             }
           },
           "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Not Found"
+            }
           },
           "405": {
+            "description": "Method Not Allowed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Method Not Allowed"
+            }
           },
           "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "412": {
+            "description": "Precondition Failed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Failed"
+            }
           },
           "413": {
+            "description": "Content Too Large",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Content Too Large"
+            }
           },
           "415": {
+            "description": "Unsupported Media Type",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unsupported Media Type"
+            }
           },
           "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unprocessable Content"
+            }
           },
           "428": {
+            "description": "Precondition Required",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Required"
+            }
           },
           "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Internal Server Error"
+            }
           },
           "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Service Unavailable"
+            }
           }
         }
       }
@@ -2892,124 +3385,124 @@
             }
           },
           "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Not Found"
+            }
           },
           "405": {
+            "description": "Method Not Allowed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Method Not Allowed"
+            }
           },
           "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "412": {
+            "description": "Precondition Failed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Failed"
+            }
           },
           "413": {
+            "description": "Content Too Large",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Content Too Large"
+            }
           },
           "415": {
+            "description": "Unsupported Media Type",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unsupported Media Type"
+            }
           },
           "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Unprocessable Content"
+            }
           },
           "428": {
+            "description": "Precondition Required",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Precondition Required"
+            }
           },
           "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Internal Server Error"
+            }
           },
           "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Service Unavailable"
+            }
           }
         }
       }
@@ -5022,6 +5515,759 @@
         ],
         "title": "ProfileResponse"
       },
+      "RankedReferenceCrop": {
+        "properties": {
+          "crop_id": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9_]*:[A-Za-z0-9._-]+$",
+            "title": "Crop Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "crop_group": {
+            "type": "string",
+            "title": "Crop Group"
+          },
+          "reference_score": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Reference Score"
+          },
+          "relative_preference": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Relative Preference"
+          },
+          "empirical_reference_error_band": {
+            "prefixItems": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              }
+            ],
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Empirical Reference Error Band"
+          },
+          "missing_features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing Features"
+          },
+          "outside_training_numeric_range": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Outside Training Numeric Range"
+          },
+          "unseen_categorical_features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unseen Categorical Features"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "crop_id",
+          "display_name",
+          "crop_group",
+          "reference_score",
+          "relative_preference",
+          "empirical_reference_error_band",
+          "missing_features",
+          "outside_training_numeric_range",
+          "unseen_categorical_features"
+        ],
+        "title": "RankedReferenceCrop"
+      },
+      "ReferenceContext": {
+        "properties": {
+          "context_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Context Id"
+          },
+          "site_id": {
+            "type": "string",
+            "title": "Site Id"
+          },
+          "latitude": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude"
+          },
+          "analysis_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Analysis Start"
+          },
+          "analysis_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Analysis End"
+          },
+          "period_id": {
+            "type": "string",
+            "title": "Period Id"
+          },
+          "support": {
+            "type": "string",
+            "const": "native_5_arcminute_GAEZ_reference_cell",
+            "title": "Support"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "context_id",
+          "site_id",
+          "latitude",
+          "longitude",
+          "analysis_start",
+          "analysis_end",
+          "period_id",
+          "support"
+        ],
+        "title": "ReferenceContext"
+      },
+      "ReferenceContextsResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ReferenceContext"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PageMeta"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "ReferenceContextsResponse"
+      },
+      "ReferenceCrop": {
+        "properties": {
+          "crop_id": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9_]*:[A-Za-z0-9._-]+$",
+            "title": "Crop Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "crop_group": {
+            "type": "string",
+            "title": "Crop Group"
+          },
+          "production_systems": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "HRLM",
+                "HILM",
+                "LRLM",
+                "LILM"
+              ]
+            },
+            "type": "array",
+            "title": "Production Systems"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "crop_id",
+          "display_name",
+          "crop_group",
+          "production_systems"
+        ],
+        "title": "ReferenceCrop"
+      },
+      "ReferenceEvidenceContext": {
+        "properties": {
+          "context_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Context Id"
+          },
+          "site_id": {
+            "type": "string",
+            "title": "Site Id"
+          },
+          "latitude": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude"
+          },
+          "analysis_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Analysis Start"
+          },
+          "analysis_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Analysis End"
+          },
+          "period_id": {
+            "type": "string",
+            "title": "Period Id"
+          },
+          "support": {
+            "type": "string",
+            "const": "native_5_arcminute_GAEZ_reference_cell",
+            "title": "Support"
+          },
+          "nasa_support_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Nasa Support Ids"
+          },
+          "source_record_ids": {
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "type": "object",
+            "title": "Source Record Ids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "context_id",
+          "site_id",
+          "latitude",
+          "longitude",
+          "analysis_start",
+          "analysis_end",
+          "period_id",
+          "support",
+          "nasa_support_ids",
+          "source_record_ids"
+        ],
+        "title": "ReferenceEvidenceContext"
+      },
+      "ReferenceModelInfo": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "1",
+            "title": "Schema Version"
+          },
+          "model_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Model Id"
+          },
+          "dataset_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Dataset Id"
+          },
+          "task": {
+            "type": "string",
+            "const": "india_published_reference_suitability",
+            "title": "Task"
+          },
+          "mode": {
+            "type": "string",
+            "const": "historical_reference_analysis",
+            "title": "Mode"
+          },
+          "comparison_scope": {
+            "type": "string",
+            "const": "reference_climate_only",
+            "title": "Comparison Scope"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "baseline",
+              "catboost",
+              "mlp"
+            ],
+            "title": "Method"
+          },
+          "reference_score_unit": {
+            "type": "string",
+            "const": "GAEZ_suitability_index_rescaled_0_to_100",
+            "title": "Reference Score Unit"
+          },
+          "preference_semantics": {
+            "type": "string",
+            "const": "relative_GAEZ_reference_preference_not_probability_of_farming_success",
+            "title": "Preference Semantics"
+          },
+          "periods": {
+            "items": {
+              "$ref": "#/components/schemas/ReferencePeriod"
+            },
+            "type": "array",
+            "title": "Periods"
+          },
+          "crops": {
+            "items": {
+              "$ref": "#/components/schemas/ReferenceCrop"
+            },
+            "type": "array",
+            "title": "Crops"
+          },
+          "context_count": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Context Count"
+          },
+          "maximum_candidates": {
+            "type": "integer",
+            "const": 100,
+            "title": "Maximum Candidates"
+          },
+          "operational_recommendation_ready": {
+            "type": "boolean",
+            "const": false,
+            "title": "Operational Recommendation Ready"
+          },
+          "rotation_effects_supported": {
+            "type": "boolean",
+            "const": false,
+            "title": "Rotation Effects Supported"
+          },
+          "preplant_supported": {
+            "type": "boolean",
+            "const": false,
+            "title": "Preplant Supported"
+          },
+          "strict_as_of_supported": {
+            "type": "boolean",
+            "const": false,
+            "title": "Strict As Of Supported"
+          },
+          "unassessed_requirement_axes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unassessed Requirement Axes"
+          },
+          "attribution": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Attribution"
+          },
+          "example_request": {
+            "$ref": "#/components/schemas/ReferencePredictionInput"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "schema_version",
+          "model_id",
+          "dataset_id",
+          "task",
+          "mode",
+          "comparison_scope",
+          "method",
+          "reference_score_unit",
+          "preference_semantics",
+          "periods",
+          "crops",
+          "context_count",
+          "maximum_candidates",
+          "operational_recommendation_ready",
+          "rotation_effects_supported",
+          "preplant_supported",
+          "strict_as_of_supported",
+          "unassessed_requirement_axes",
+          "attribution",
+          "example_request"
+        ],
+        "title": "ReferenceModelInfo"
+      },
+      "ReferenceModelResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ReferenceModelInfo"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "ReferenceModelResponse"
+      },
+      "ReferencePeriod": {
+        "properties": {
+          "period_id": {
+            "type": "string",
+            "title": "Period Id"
+          },
+          "analysis_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Analysis Start"
+          },
+          "analysis_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Analysis End"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "period_id",
+          "analysis_start",
+          "analysis_end"
+        ],
+        "title": "ReferencePeriod"
+      },
+      "ReferencePrediction": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "1",
+            "title": "Schema Version"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scored_reference_context",
+              "abstained"
+            ],
+            "title": "Status"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "no_eligible_trained_candidates"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "task": {
+            "type": "string",
+            "const": "india_published_reference_suitability",
+            "title": "Task"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "baseline",
+              "catboost",
+              "mlp"
+            ],
+            "title": "Method"
+          },
+          "model_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Model Id"
+          },
+          "dataset_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Dataset Id"
+          },
+          "context": {
+            "$ref": "#/components/schemas/ReferenceEvidenceContext"
+          },
+          "production_system": {
+            "type": "string",
+            "enum": [
+              "HRLM",
+              "HILM",
+              "LRLM",
+              "LILM"
+            ],
+            "title": "Production System"
+          },
+          "requested_candidates": {
+            "items": {
+              "type": "string",
+              "maxLength": 80,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9_]*:[A-Za-z0-9._-]+$"
+            },
+            "type": "array",
+            "title": "Requested Candidates"
+          },
+          "candidate_set": {
+            "items": {
+              "type": "string",
+              "maxLength": 80,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9_]*:[A-Za-z0-9._-]+$"
+            },
+            "type": "array",
+            "title": "Candidate Set"
+          },
+          "ranked": {
+            "items": {
+              "$ref": "#/components/schemas/RankedReferenceCrop"
+            },
+            "type": "array",
+            "title": "Ranked"
+          },
+          "withheld": {
+            "items": {
+              "$ref": "#/components/schemas/WithheldReferenceCrop"
+            },
+            "type": "array",
+            "title": "Withheld"
+          },
+          "preference_semantics": {
+            "type": "string",
+            "const": "relative_GAEZ_reference_preference_not_probability_of_farming_success",
+            "title": "Preference Semantics"
+          },
+          "calibration_scope": {
+            "type": "string",
+            "title": "Calibration Scope"
+          },
+          "reference_score_unit": {
+            "type": "string",
+            "const": "GAEZ_suitability_index_rescaled_0_to_100",
+            "title": "Reference Score Unit"
+          },
+          "operational_recommendation_ready": {
+            "type": "boolean",
+            "const": false,
+            "title": "Operational Recommendation Ready"
+          },
+          "rotation_effects_supported": {
+            "type": "boolean",
+            "const": false,
+            "title": "Rotation Effects Supported"
+          },
+          "unassessed_requirement_axes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unassessed Requirement Axes"
+          },
+          "attribution": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Attribution"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "schema_version",
+          "status",
+          "reason",
+          "task",
+          "method",
+          "model_id",
+          "dataset_id",
+          "context",
+          "production_system",
+          "requested_candidates",
+          "candidate_set",
+          "ranked",
+          "withheld",
+          "preference_semantics",
+          "calibration_scope",
+          "reference_score_unit",
+          "operational_recommendation_ready",
+          "rotation_effects_supported",
+          "unassessed_requirement_axes",
+          "attribution",
+          "limitations",
+          "warnings"
+        ],
+        "title": "ReferencePrediction"
+      },
+      "ReferencePredictionInput": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "1",
+            "title": "Schema Version"
+          },
+          "task": {
+            "type": "string",
+            "const": "india_published_reference_suitability",
+            "title": "Task"
+          },
+          "mode": {
+            "type": "string",
+            "const": "historical_reference_analysis",
+            "title": "Mode"
+          },
+          "comparison_scope": {
+            "type": "string",
+            "const": "reference_climate_only",
+            "title": "Comparison Scope"
+          },
+          "context_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Context Id"
+          },
+          "analysis_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Analysis Start"
+          },
+          "analysis_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Analysis End"
+          },
+          "production_system": {
+            "type": "string",
+            "enum": [
+              "HRLM",
+              "HILM",
+              "LRLM",
+              "LILM"
+            ],
+            "title": "Production System"
+          },
+          "crop_ids": {
+            "items": {
+              "type": "string",
+              "maxLength": 80,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9_]*:[A-Za-z0-9._-]+$"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Crop Ids"
+          },
+          "excluded_crop_ids": {
+            "items": {
+              "type": "string",
+              "maxLength": 80,
+              "minLength": 1,
+              "pattern": "^[a-z][a-z0-9_]*:[A-Za-z0-9._-]+$"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Excluded Crop Ids"
+          },
+          "minimum_reference_score": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Minimum Reference Score",
+            "default": 0
+          },
+          "model_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Model Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "schema_version",
+          "task",
+          "mode",
+          "comparison_scope",
+          "context_id",
+          "analysis_start",
+          "analysis_end",
+          "production_system",
+          "crop_ids",
+          "model_id"
+        ],
+        "title": "ReferencePredictionInput"
+      },
+      "ReferencePredictionResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ReferencePrediction"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "ReferencePredictionResponse"
+      },
       "SharedProfile": {
         "properties": {
           "name": {
@@ -5212,6 +6458,52 @@
           "updated_at"
         ],
         "title": "SharedProfile"
+      },
+      "WithheldReferenceCrop": {
+        "properties": {
+          "crop_id": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9_]*:[A-Za-z0-9._-]+$",
+            "title": "Crop Id"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "excluded_by_farmer",
+              "no_target_bearing_training_support",
+              "below_requested_reference_score"
+            ],
+            "title": "Reason"
+          },
+          "relative_preference": {
+            "type": "number",
+            "const": 0.0,
+            "title": "Relative Preference"
+          },
+          "reference_score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Score"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "crop_id",
+          "reason",
+          "relative_preference"
+        ],
+        "title": "WithheldReferenceCrop"
       },
       "Workspace": {
         "properties": {

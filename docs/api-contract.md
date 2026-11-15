@@ -1,7 +1,7 @@
 # Frontend/backend integration contract
 
 Revision: `shared-workspace-1`, 2026-11-15.
-Status: **shared reads, profiles, field writes, imports/jobs and geometry exports implemented**.
+Status: **shared reads, profiles, field writes, imports/jobs, geometry exports and optional reference-model inference implemented**.
 Other resource contracts below remain proposals.
 
 Approved deployment: no accounts for now; one shared workspace over Tailscale.
@@ -101,7 +101,10 @@ can proceed only when independent of unresolved source/method dependencies.
 **Implemented:** getHealth/getWorkspace, listFields/getField,
 listObservations/getObservation/listObservationEvidence, getProfile/updateProfile,
 createField/updateField/archiveField, createBoundaryImport/getBoundaryImport/
-confirmBoundaryImport, getJob, createExport/downloadExport.
+confirmBoundaryImport, getJob, createExport/downloadExport,
+getReferenceModel/listReferenceContexts/predictReferenceSuitability.
+The additive reference-model operations do not implement the field
+recommendation or market contracts.
 The implementation column identifies the backend task, not current readiness.
 Resource IDs, nested resources, downloads and jobs must stay within the explicit
 shared project scope. No login routes exist.
@@ -130,6 +133,9 @@ shared project scope. No login routes exist.
 | createAcquisition | POST `/fields/{field_id}/acquisitions` | `source_id`, `variable_ids`, `start_date`, `end_date`, `boundary_id`; 202 Job | B06 |
 | createExport | POST `/exports` | Explicit fields [{field_id,boundary_id}], format = geojson/kml/kmz; 202 Job | B04 |
 | downloadExport | GET `/exports/{export_id}/download` | Authorized bytes, correct MIME and Content-Disposition; not JSON envelope | B04/B06 |
+| getReferenceModel | GET `/reference-model` | Pinned model/task identity, supported periods/crop systems, reference-only limits and an actual saved example request | I08 |
+| listReferenceContexts | GET `/reference-model/contexts` | Required `model_id`, optional `period_id`, normal `limit`/`cursor`; page of saved native contexts, not arbitrary field matches | I08 |
+| predictReferenceSuitability | POST `/reference-model/predictions` | ReferencePredictionInput; 200 ReferencePrediction in the standard envelope; no persistent job or mutation | I08 |
 | listScenes | GET `/fields/{field_id}/scenes` | Date range; page of Scene | B06 |
 | getVegetationSeries | GET `/fields/{field_id}/vegetation-series` | Date range, `index` = `ndvi` or `ndwi`; VegetationSeries | B06 |
 | listCrops | GET `/crops` | Region/season filters when supported; page of Crop | B07 |
@@ -148,6 +154,54 @@ Capabilities distinguish `ready`, `blocked`, `not_implemented`, with `reason`
 and `operation_ids`. The frontend disables unsupported operations; direct calls
 receive 404 before implementation, or 503 when an implemented route has a
 missing dependency. A successful health response is not feature readiness.
+
+### Reference-model serving increment
+
+The independent `reference_suitability` capability reports only the configured
+GAEZ-reference model. `recommendations`, `crops` and `markets` do not become ready
+because it is available. The public reference corpus is shared; it does not
+read, infer ownership of, or attach observations to any workspace field.
+
+The operator must configure both `AGRI_REFERENCE_MODEL_DIR` and
+`AGRI_REFERENCE_MODEL_ID`. The directory is local, server-only configuration;
+clients never supply artifact paths, URLs, weights, traits or environmental
+values. Loading verifies the artifact checksums and pinned identity. Missing,
+incompatible or changed artifacts return a redacted 503 instead of fallback
+scores. Loading/inference is serialized per API process with one cached CPU
+model; overlapping model requests receive retryable 503
+`reference_model_busy`, not an unbounded work queue. Replacing model files
+requires a process restart, not an implicit hot swap.
+Artifact checksums are verified on initial load; subsequent requests hash all
+serving files and the manifest and check the remaining bundle members for
+filesystem changes. Missing ML dependencies or insufficient shared-memory
+reserve leave this capability blocked without stopping the rest of the API.
+
+`ReferencePredictionInput` extends the saved CLI request with a required
+`model_id`: schema version `1`, task `india_published_reference_suitability`,
+mode `historical_reference_analysis`, comparison scope `reference_climate_only`,
+saved `context_id`, exact `analysis_start`/`analysis_end`, production system
+`HRLM`/`HILM`/`LRLM`/`LILM`, `crop_ids`, optional `excluded_crop_ids` and a
+0-100 `minimum_reference_score`. Each candidate/exclusion list has at most 100
+bounded crop identifiers; repeated candidates and unknown input properties
+return 422. Field coordinates and seasonal/strict-as-of/rotation requests
+are not accepted. A stale model ID returns 409; an absent saved context returns
+404; a changed reference interval returns 422. Context pagination is bound to
+the model ID, period filter and snapshot.
+
+The prediction response preserves the CLI's scores, masked relative
+preferences, source IDs/native support, missingness and extrapolation warnings,
+reference-error bands, attribution and explicit unassessed requirements.
+Unsupported or excluded crops have zero preference; an empty eligible set
+returns a 200 abstention. Singleton preference is not certain agricultural
+success. Metadata exposes only public model information, not local filenames,
+training telemetry/process IDs or dataset source paths.
+
+This POST is a bounded, stateless calculation, not a mutating create:
+it returns 200 without `Location`, a Job or an idempotency receipt.
+The existing configured-Origin requirement still applies. No model operation
+downloads data, trains weights, connects to PostgreSQL or opens the test set.
+Reference agreement is not independent farm validation or a recommendation
+about what to plant next season.
 
 ## 5. First-slice DTOs
 
