@@ -1,0 +1,147 @@
+schema_version: 1
+scope: bounded implementation tasks, not full scientific acceptance
+full_scope:
+  complete: false
+  feature_families_required: 306
+  source_categories_required: 63
+  instrument_categories_required: 14
+  atomic_registry_complete: false
+  scientific_acceptance_claimed: false
+  blockers:
+    - Full family and atomic source-binding registries are not yet implemented.
+    - Authentic submitted boundaries and inspected agricultural evidence are not available.
+    - Field, worker, domain and remaining frontend implementations are pending.
+  next_action: Expand the owning registry before each domain; retain all required families.
+verification:
+  backend_command: python -m pytest tests\api -q
+  backend_passed: 44
+  frontend_command: npm test
+  frontend_passed: 8
+  browser_command: python scripts\browser_acceptance.py
+  browser_passed: 3
+  frontend_build: passed
+  frontend_commit: 7b3f032
+  backend_browser_harness_commit: 31cc576
+  notes:
+    - Counts describe focused checks, not full named API/WEB/DB/scientific case acceptance.
+    - Backend Starlette TestClient deprecation warning remains.
+    - Inherited frontend Vite toolchain has two npm audit findings.
+tasks:
+  - task_id: S01.approved-wire-contract
+    step_id: S01
+    depends_on: []
+    feature_ids: []
+    source_binding_ids: []
+    frontend_mapping_ids: [M01]
+    files: [docs/frontend_api_contract.md, docs/openapi.json, src/agri_data/api/schemas.py]
+    acceptance_case_ids: [API-05]
+    status: done
+    evidence_paths: [tests/api/test_openapi.py, docs/frontend_api_contract.md]
+    blockers: []
+    next_action: Extend implemented OpenAPI only when the field slice is ready.
+  - task_id: S01.full-inventory
+    step_id: S01
+    depends_on: []
+    feature_ids: []
+    source_binding_ids: []
+    frontend_mapping_ids: []
+    files: [backendplan.md]
+    acceptance_case_ids: []
+    status: pending
+    evidence_paths: []
+    blockers: []
+    next_action: Register all 306 families, 63 sources and 14 instruments; expand first-domain children.
+  - task_id: S02.postgis-identity-storage
+    step_id: S02
+    depends_on: [S01.approved-wire-contract]
+    feature_ids: []
+    source_binding_ids: []
+    frontend_mapping_ids: [M01]
+    files: [src/agri_data/services/database.py, src/agri_data/migrations/001_identity.sql]
+    acceptance_case_ids: [DB-01, DB-02]
+    status: done
+    evidence_paths: [tests/api/test_database.py, tests/api/test_http_process.py]
+    blockers: []
+    next_action: Add a new immutable field migration; never edit applied migration 001.
+  - task_id: S04.session-profile-api
+    step_id: S04
+    depends_on: [S02.postgis-identity-storage]
+    feature_ids: []
+    source_binding_ids: []
+    frontend_mapping_ids: [M01]
+    files: [src/agri_data/api/identity.py, src/agri_data/services/identity.py]
+    acceptance_case_ids: [API-01, API-02, API-03, API-04]
+    status: done
+    evidence_paths: [tests/api/test_identity.py, tests/api/test_http_process.py, tests/api/test_foundation.py]
+    blockers: []
+    next_action: Reuse the same ownership/session/error services for fields.
+  - task_id: S04.frontend-profile
+    step_id: S04
+    depends_on: [S04.session-profile-api]
+    feature_ids: []
+    source_binding_ids: []
+    frontend_mapping_ids: [M01]
+    files: [scripts/browser_acceptance.py, config/frontend_field_mapping.yaml]
+    acceptance_case_ids: [API-05, API-12]
+    status: done
+    evidence_paths: [scripts/browser_acceptance.py, tests/api/test_browser_harness.py]
+    blockers: []
+    next_action: Use frontend commit 7b3f032; expand tests and mappings with the field slice.
+  - task_id: S02.field-storage
+    step_id: S02
+    depends_on: [S02.postgis-identity-storage]
+    feature_ids: []
+    source_binding_ids: []
+    frontend_mapping_ids: [M02, M03, M18]
+    files: []
+    acceptance_case_ids: []
+    status: pending
+    evidence_paths: []
+    blockers: []
+    next_action: Add owned fields, geometry revisions and related asset storage in new migrations.
+  - task_id: S03.boundary-service
+    step_id: S03
+    depends_on: [S02.field-storage]
+    feature_ids: []
+    source_binding_ids: []
+    frontend_mapping_ids: [M02, M03, M18]
+    files: []
+    acceptance_case_ids: [GEO-01, GEO-02, GEO-03, GEO-07]
+    status: pending
+    evidence_paths: []
+    blockers:
+      - Final authentic-field acceptance requires actual frontend-submitted geometry.
+    next_action: Implement preview, explicit confirmation, holes/MultiPolygon and revision-preserving export.
+  - task_id: S04.field-api-frontend
+    step_id: S04
+    depends_on: [S04.session-profile-api, S03.boundary-service]
+    feature_ids: []
+    source_binding_ids: []
+    frontend_mapping_ids: [M02, M03, M18]
+    files: []
+    acceptance_case_ids: [API-06]
+    status: pending
+    evidence_paths: []
+    blockers: []
+    next_action: Add versioned owned field routes and connect frontend F04 with real browser checks.
+  - task_id: S04.source-harness-worker
+    step_id: S04
+    depends_on: [S02.postgis-identity-storage, S01.full-inventory]
+    feature_ids: []
+    source_binding_ids: []
+    frontend_mapping_ids: []
+    files: []
+    acceptance_case_ids: []
+    status: pending
+    evidence_paths: []
+    blockers: []
+    next_action: Register first soil/climate bindings and build durable jobs before acquisition.
+remaining_stages:
+  S05: pending
+  S06: pending
+  S07: pending
+  S08: pending
+  S09: pending
+  S10: pending
+  S11: pending
+  S12: pending

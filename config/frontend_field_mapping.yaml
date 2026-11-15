@@ -1,0 +1,101 @@
+schema_version: 1
+contract: docs/openapi.json
+design_reference: docs/frontend_api_contract.md
+frontend_branch: frontend
+frontend_commit: 7b3f032
+scope: Active profile bindings plus explicit pending groups; not complete atomic UI mapping.
+default_unimplemented_policy: Show unavailable; never substitute demo values or inferred scientific data.
+mappings:
+  - mapping_id: M01
+    consumer: src/bootstrap.js profile form and header
+    owner_task: S04.frontend-profile
+    status: implemented
+    operations: [GET /api/v1/me/profile, PATCH /api/v1/me/profile]
+    read_schema: Profile
+    write_schema: ProfilePatch
+    availability_policy: Require authenticated response; preserve edits on errors and version conflicts.
+    unit_derivation_rule: Text and enums roundtrip unchanged; blank controls submit null; no invented defaults.
+    property_key_basis: Legacy view property on the left; current form control and API property on the right.
+    properties:
+      name: name
+      kannadaName: kannada_name
+      phone: phone
+      soilHealthCardNo: soil_health_card_no
+      village: village
+      taluk: taluk
+      district: district
+      state: state
+      farmerCategory: farmer_category
+      preferredLanguage: preferred_language
+      riskTolerance: risk_tolerance
+      primaryObjective: primary_objective
+    concurrency_property: version
+  - mapping_id: M02
+    consumer: Field selector and parcel details
+    owner_task: S04.field-api-frontend
+    status: pending
+  - mapping_id: M03
+    consumer: Add-field form
+    owner_task: S04.field-api-frontend
+    status: pending
+  - mapping_id: M04
+    consumer: Soil form and laboratory verification badge
+    owner_step: S05
+    status: pending
+  - mapping_id: M05
+    consumer: Soil values and interpretations
+    owner_step: S05
+    status: pending
+  - mapping_id: M06
+    consumer: Water audit
+    owner_step: S06
+    status: pending
+  - mapping_id: M07
+    consumer: Climate analysis
+    owner_step: S05
+    status: pending
+  - mapping_id: M08
+    consumer: Scene selection, metadata and map overlay
+    owner_step: S06
+    status: pending
+  - mapping_id: M09
+    consumer: Vegetation drawer
+    owner_step: S06
+    status: pending
+  - mapping_id: M10
+    consumer: Date/cloud controls and forecast
+    owner_step: S05
+    status: pending
+  - mapping_id: M11
+    consumer: Crop selector and cards
+    owner_step: S07
+    status: pending
+  - mapping_id: M12
+    consumer: Recommendation ranking
+    owner_step: S10
+    status: pending
+  - mapping_id: M13
+    consumer: Financial cards and scenario controls
+    owner_step: S10
+    status: pending
+  - mapping_id: M14
+    consumer: Market grid and filters
+    owner_step: S10
+    status: pending
+  - mapping_id: M15
+    consumer: Support prices and farm-gate economics
+    owner_step: S10
+    status: pending
+  - mapping_id: M16
+    consumer: Plan form and cards
+    owner_step: S10
+    status: pending
+  - mapping_id: M17
+    consumer: Dashboard and plan totals
+    owner_step: S10
+    status: pending
+  - mapping_id: M18
+    consumer: Exports and browser record migration
+    owner_task: S04.field-api-frontend
+    status: pending
+    availability_policy: Remove demo reset; preserve existing records until explicit approved migration.
