@@ -1,8 +1,10 @@
 # 04. Dependency-ordered implementation
 
-This is a plan, not completed implementation. Owners below are roles to assign.
-Work in separate frontend/backend branches and runtimes; the merger branch
-holds the coordination documents only.
+This is the original dependency-ordered plan. Milestones A and B have since
+been implemented in separate frontend/backend branches and runtimes; see
+[implementation status and remaining release gates](08-implementation.md).
+The merger branch holds coordination documents only. The original gates below
+are not blanket claims of production or scientific acceptance.
 
 ## Milestone A: combine the built solutions
 

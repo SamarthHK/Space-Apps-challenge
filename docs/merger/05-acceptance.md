@@ -1,5 +1,10 @@
 # 05. Audit evidence and integration acceptance
 
+This document preserves evidence from the planning audit and its proposed
+acceptance gates. For checks performed during implementation, their exact
+scope, and remaining operational/scientific gaps, see
+[the implementation handoff](08-implementation.md).
+
 ## Checks actually performed during this restarted audit
 
 | Check | Result | What it establishes |

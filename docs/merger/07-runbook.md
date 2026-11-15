@@ -1,163 +1,189 @@
 # 07. Independent startup and integration runbook
 
-This runbook distinguishes **existing read-only interfaces** from future shared
-profile work. It was not executed as a deployment during this planning task.
-Use it after T0 delivers a reproducible approved backend environment and a
-prepared, scoped PostgreSQL/PostGIS dataset.
+This runbook describes the implemented release in
+[08-implementation.md](08-implementation.md), not the authenticated donor pair.
+The existing live services were not restarted or reconfigured. Provisioning
+and normal deployment below remain deliberate operator actions.
 
-## Current source choices
+## Source and prerequisites
 
-Frontend: F `Space-Apps-challenge-frontend`.
-Backend: A `Space-Apps-challenge`.
-B and its nested P frontend are profile donors, not services to start alongside
-the final pair. Do not start both frontends on the same address/port.
+| Application | Local checkout | Branch |
+| --- | --- | --- |
+| Backend API and worker | `D:\Code\SpaceApps\Space-Apps-challenge\.local\integration-backend` | `backend` |
+| Independent frontend | `D:\Code\SpaceApps\Space-Apps-challenge-frontend` | `frontend` |
 
-Use one terminal/process environment per application. Each application should
-also work from an arbitrary independent checkout on another machine.
-The absolute paths below are local development examples, not runtime coupling.
+The original `Space-Apps-challenge` checkout is being used concurrently on
+`backend-ai`; do not switch, reset or deploy it as this release. Its nested
+integration worktree is a maintained source checkout, not disposable cache.
+The named `Space-Apps-challenge-backend` and its nested frontend remain donors.
+These local release commits have not been pushed to GitHub.
 
-## Before starting
+Each application also works from its own unrelated deployment directory or
+machine. The paths above are examples, not runtime coupling. Backend needs its
+own locked Python environment and prepared PostgreSQL/PostGIS data. Frontend
+needs Node.js >=22 and its npm lock for building, but its deployed static
+artifact does not require Python or access to the backend filesystem.
 
-1. Confirm approved source SHAs and clean prerequisite publication. A's current
-   dirty worktree/partial `.venv` is not the reproducible release.
-2. In a clean integration-owned backend checkout, restore the chosen locked
-   development environment with the supported Python version. Current backend
-   documented command is `uv sync --locked --extra dev`; do not run it over an
-   active owner's environment without coordination.
-3. Supply a prepared canonical database/schema and explicit project allow-list.
-   The API does not initialize/migrate/seed or fetch providers on startup.
-   Canonical views/tables and their actual preparation code must be available.
-4. Inspect port availability before starting anything. Do not kill or reuse a
-   listener merely because it occupies a documented port. Choose another
-   configured test port or coordinate with its owner.
-5. Keep credentials in process environment/secret handling such as PGPASSFILE.
-   Do not print, commit or place them in Vite variables.
+Restore missing backend dependencies with `uv sync --locked --extra dev` in an
+integration-owned environment; restore missing frontend dependencies with
+`npm ci`. Do not repair somebody else's active environment. The backend API
+does not prepare canonical schemas, fetch providers or seed data at startup.
+Use explicitly authorized prepared projects and actual DB/role/schema names.
 
-## Terminal 1: existing backend read API
+Check port ownership before starting anything. A collision is not permission
+to stop another process. Supply credentials through secure environment/PGPASSFILE
+handling; never put passwords in Git, terminal examples or `VITE_*` variables.
 
-From the selected backend checkout, with a working isolated environment:
+## Backend configuration
+
+Use a dedicated backend terminal. Replace every placeholder with actual
+prepared identifiers; the example DSNs contain no password.
 
 ```powershell
-Set-Location 'D:\Code\SpaceApps\Space-Apps-challenge'
+Set-Location 'D:\Code\SpaceApps\Space-Apps-challenge\.local\integration-backend'
 $env:AGRI_API_HOST = '127.0.0.1'
 $env:AGRI_API_PORT = '8000'
 $env:AGRI_ALLOWED_ORIGINS = 'http://127.0.0.1:1080'
 
-# Supply all five data settings together using actual prepared identifiers.
 $env:AGRI_API_DATABASE_URL = 'postgresql://<reader-role>@127.0.0.1:<db-port>/<database>'
 $env:AGRI_API_DATABASE_NAME = '<database>'
 $env:AGRI_API_DATABASE_USER = '<reader-role>'
 $env:AGRI_API_SCHEMA = '<prepared-agri_-schema>'
 $env:AGRI_API_PROJECT_IDS = '<project-id-1>,<project-id-2>'
 
+$env:AGRI_WORKSPACE_DATABASE_URL = 'postgresql://<writer-role>@127.0.0.1:<db-port>/<database>'
+$env:AGRI_WORKSPACE_DATABASE_NAME = '<database>'
+$env:AGRI_WORKSPACE_DATABASE_USER = '<writer-role>'
+$env:AGRI_WORKSPACE_SCHEMA = 'agri_workspace'
+$env:AGRI_WORKSPACE_ID = '<stable-workspace-id>'
+```
+
+Configure all five workspace values together, or none. Workspace ID is a stable
+operator-selected identifier, not a user ID or a transient project list.
+Canonical and application schemas must use the same PostgreSQL endpoint/database
+for atomic field/job transactions, but separate roles and schemas are supported.
+Canonical reads remain read-only. The writer needs the documented application
+and field/boundary/source-asset privileges, not scientific-observation writes;
+see backend `docs\shared_workspace.md`.
+
+Under an authorized setup role, apply the additive workspace migrations and
+provision an empty shared profile:
+
+```powershell
+& .\.venv\Scripts\python.exe -m agri_data.workspace.admin provision
+& .\.venv\Scripts\python.exe -m agri_data.workspace.admin check
+```
+
+Repeat provisioning on upgrade to apply new migrations. It does not reset
+existing values or copy private donor profiles. GET never provisions records.
+Use the intended runtime role/settings when launching services:
+
+```powershell
 & .\.venv\Scripts\python.exe -m agri_data.api
 ```
 
-Replace placeholders before running. The API verifies DB/user identity and
-schema requirements; no wildcard projects. The DSN is plain PostgreSQL syntax,
-not B's SQLAlchemy `postgresql+psycopg` setting.
+In another backend terminal, supply the same workspace/canonical configuration
+and its secure credentials, then run:
 
-A reads environment variables explicitly, not B's ignored `.env`. Its
-`python -m agri_data.api` launcher supplies both network and data settings.
-Do not substitute B's `uvicorn ...create_app --factory` command: A's factory
-without `data_settings` does not automatically load the configured data scope.
+```powershell
+Set-Location 'D:\Code\SpaceApps\Space-Apps-challenge\.local\integration-backend'
+& .\.venv\Scripts\python.exe -m agri_data.workspace.worker
+```
 
-For Tailscale, set API host to the actual permitted Tailscale IP and allow the
-exact frontend browser origin. Configure F to that API origin. Current
-validators allow loopback/Tailscale literal addresses, not arbitrary public,
-LAN or MagicDNS hostnames. Do not use `0.0.0.0` as a bind/browser shortcut.
+PowerShell environment changes do not propagate into an unrelated terminal.
+The worker is backend infrastructure, not a second browser-facing API.
+Provisioning does not start it. A matching recent heartbeat enables import/
+export capabilities; existing job status remains readable while it is offline.
+`--once` processes at most one queued job, not a replacement for a running worker.
+Python does not implicitly load `.env`; use the module launcher above, not the
+authenticated donor's factory or migration commands.
 
-## Terminal 2: existing standalone frontend
-
-Restore dependencies only when setting up the selected clean build environment
-or they are missing. Current F requires Node >=22 and has an npm lock.
+## Independent frontend
 
 ```powershell
 Set-Location 'D:\Code\SpaceApps\Space-Apps-challenge-frontend'
 $env:VITE_API_BASE_URL = 'http://127.0.0.1:8000'
 $env:FRONTEND_HOST = '127.0.0.1'
-
 npm run build
 npm run preview
 ```
 
-Open `http://127.0.0.1:1080`. `npm run dev` is an alternative for development;
-preview serves the built artifact. Changing an environment variable after a
-build does not rewrite the bundled API origin. Rebuild deliberately.
+Open `http://127.0.0.1:1080`. The API origin has no `/api/v1` suffix.
+Changing the origin after a build requires rebuilding; the frontend receives
+no DB connection settings. `npm run dev` is an alternative for development.
 
-Use consistent hostnames for deterministic Host/Origin checks, even without
-cookies. The frontend/API may run on different machines; each gets its actual
-host/origin configuration. Do not copy the other application's `.env`.
+For Tailscale, use the actual permitted literal IPs and exact browser origin on
+each machine. Validators permit loopback/Tailscale addresses, not arbitrary
+public/LAN/MagicDNS hosts or wildcard binds. Do not expose account-free shared
+access through Funnel or a public proxy. CORS is not authentication.
 
-## Readiness and manual smoke journey
+## Readiness and a manual journey
 
 ```powershell
-curl.exe --fail-with-body --max-time 10 `
-  -H 'Origin: http://127.0.0.1:1080' `
-  'http://127.0.0.1:8000/api/v1/health'
-
 curl.exe --fail-with-body --max-time 10 `
   -H 'Origin: http://127.0.0.1:1080' `
   'http://127.0.0.1:8000/api/v1/workspace'
 ```
 
-Health must report the shared revision, but does not prove DB readiness.
-Workspace must report intended project IDs and ready `fields`/`observations`;
-503 or blocked state is a real prerequisite failure, not empty data.
+Check actual capability readiness, not only `/health`: fields/observations need
+prepared canonical data, profile needs provisioned application storage, field
+writes need a compatible writer, and imports/exports need the matching worker.
 
-In the browser: connect, list fields, explicitly select a boundary where
-ambiguous, display stored geometry/metrics, filter canonical observations, open
-source evidence, paginate, reconnect, and navigate all seven views. Pending
-records remain labelled and unavailable domains remain unavailable.
+Inspect a stored field/boundary and its canonical evidence, preserving pending
+labels. Save a shared profile and read it from another browser. Draw or explicitly
+enter geometry, save/reload, edit and archive without deleting history. Upload a
+KML/KMZ/GeoJSON file, inspect the unsaved preview, explicitly select candidates,
+confirm, reload while monitoring the job, and download a real geometry export.
+Conflicts/lost responses retain drafts and require deliberate resolution; they
+must not generate duplicate writes or invented observations.
 
-During profile implementation, add a documented DB/schema readiness check for
-the writer. Do not call B `/ready` against A or report all capabilities healthy
-because one shared liveness request succeeds.
+## Repeatable isolated checks
 
-## Current focused validation interfaces
-
-From F:
-
-```powershell
-npm test
-npm run build
-$env:TEST_API_ORIGIN = $env:VITE_API_BASE_URL
-npm run test:browser
-```
-
-The existing browser runner starts its own preview on `127.0.0.1:1080` and
-refuses reuse. Stop only a preview process you own or select a parameterized
-test configuration after implementing it. API origins must allow the runner's
-origin; the build and TEST_API_ORIGIN must agree. The browser suite requires
-the prepared reference data. Install Chromium only if the runner reports it
-missing; do not substitute fabricated provider fixtures.
-
-From A, after its own environment is working:
+In a dedicated backend test terminal, supply the five prepared-data settings:
+`AGRI_TEST_DATABASE_URL`, `AGRI_TEST_DATABASE_NAME`, `AGRI_TEST_DATABASE_USER`,
+`AGRI_TEST_SCHEMA`, and `AGRI_TEST_PROJECT_IDS`. Use an authorized test role
+able to create/drop its own schemas. Do not inherit live API/workspace settings.
 
 ```powershell
-& .\.venv\Scripts\python.exe -m pytest tests\api\test_foundation.py -q
-& .\.venv\Scripts\python.exe -m pytest tests\api\test_data.py -q
+Set-Location 'D:\Code\SpaceApps\Space-Apps-challenge\.local\integration-backend'
+& .\.venv\Scripts\python.exe -m pytest tests\api -q
+& .\.venv\Scripts\python.exe scripts\workspace_browser_acceptance.py `
+  --frontend 'D:\Code\SpaceApps\Space-Apps-challenge-frontend'
 ```
 
-Foundation tests expect no API data configuration in their temporary server
-environment; use an isolated test process with `AGRI_API_DATABASE_*`,
-`AGRI_API_SCHEMA` and `AGRI_API_PROJECT_IDS` unset for that selector.
-Data tests take real prepared settings with `AGRI_TEST_` replacing `AGRI_API_`.
-Missing data prerequisites fail rather than skip. Do not run mutating
-engineering-health/proof/acquisition CLI commands just to make these GETs pass.
+The browser harness runs frontend units/build/browser cases, copies authentic
+scoped data into owned canonical/application schemas, and starts/verifies its
+own API, worker and static server. It refuses occupied ports (18084/11084 by
+default), does not replace the normal frontend build, and cleans up only its
+schemas/processes. Logs remain under backend `.local\workspace-acceptance`.
+Write specs require its `TEST_WRITES_ISOLATED=1` guard.
 
-## Future shared-profile rollout
+Use installed Playwright Chromium, with `PLAYWRIGHT_BROWSERS_PATH` if needed.
+Install it only if the runner reports it missing. Do not run the full mutating
+browser suite against live canonical data. For the read-only frontend suite
+against a deliberately configured API/build, use
+`npm run test:browser -- workspace.spec.js`; its preview port must also be free.
 
-T3 must supply real workspace-schema migration/provisioning commands, writer
-settings and diagnostics; none exists in A today. Do not run B
-`agri_data.api.admin migrate` and assume it provisions a shared profile.
+After a tested backend contract commit, pin from the correct release checkout:
 
-Deploy the additive `/profile` contract, verify storage and write preflight,
-export/pin the artifact, then deploy F with the new profile component. Confirm
-cross-browser save/read, stale If-Match conflict and unaffected field/evidence
-journeys. Record the backend/frontend SHA pair and contract hash.
+```powershell
+Set-Location 'D:\Code\SpaceApps\Space-Apps-challenge-frontend'
+node scripts\pin-contract.js 'D:\Code\SpaceApps\Space-Apps-challenge\.local\integration-backend'
+```
 
-No login, session cookie, default user, second API service or backend-served
-frontend build is required. Shut down only integration-owned processes by
-their actual process/session IDs, leaving unrelated services and persistent
-data intact.
+This development command reads committed Git artifact bytes and records the
+backend SHA/checksum; it is not needed by the deployed frontend.
+
+## Recovery and remaining operational work
+
+To pause writes, stop only the worker you own and restart the current API
+without all `AGRI_WORKSPACE_*` settings, retaining its canonical read settings.
+This blocks profile/mutations/jobs while preserving current-boundary and archive
+filtering in reads. Restore the workspace settings to resume. Do not downgrade
+to an older archive-unaware API or reverse migrations over saved writes.
+
+Back up application assets/revisions/jobs together with canonical field/boundary
+dependencies. A physical database backup/restore rehearsal and production-scale
+capacity/retention checks remain operator gates, not checks already passed.
+No automatic retention cleanup, public authentication rollout or scientific
+acceptance is supplied by this release.

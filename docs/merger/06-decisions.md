@@ -1,5 +1,12 @@
 # 06. Decisions, open details and handoff
 
+Historical planning snapshot: the subsequent owner request authorized
+implementation of **Milestones A and B**, with tested commits between steps.
+Its results and resolved blockers are recorded in
+[the implementation handoff](08-implementation.md). The original limitations
+on overwriting unrelated work, private-data migration and public deployment
+remain in force.
+
 ## Confirmed in this request
 
 - Restart planning from the changed built solutions, not the earlier snapshot.
