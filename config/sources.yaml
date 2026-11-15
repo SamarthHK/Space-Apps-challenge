@@ -1,0 +1,194 @@
+sources:
+  soilgrids:
+    id: "SRC_SOILGRIDS"
+    name: "ISRIC SoilGrids 2.0"
+    domain: "soil"
+    type: "rest_api"
+    base_url: "https://rest.isric.org/soilgrids/v2.0"
+    spatial_resolution_m: 250
+    temporal_type: "static"
+    auth_required: false
+    variables:
+      - "sand_content"
+      - "silt_content"
+      - "clay_content"
+      - "soil_ph"
+      - "organic_carbon"
+      - "total_nitrogen"
+      - "bulk_density"
+      - "cation_exchange_capacity"
+      - "coarse_fragments"
+    depth_intervals_cm:
+      - [0, 5]
+      - [5, 15]
+      - [15, 30]
+      - [30, 60]
+      - [60, 100]
+      - [100, 200]
+
+  soil_health_card:
+    id: "SRC_SHC"
+    name: "Soil Health Card (India)"
+    domain: "soil"
+    type: "manual_laboratory"
+    base_url: null
+    spatial_resolution_m: 0
+    temporal_type: "sample_date"
+    auth_required: true
+    variables:
+      - "soil_ph"
+      - "electrical_conductivity"
+      - "organic_carbon"
+      - "available_nitrogen"
+      - "available_phosphorus"
+      - "available_potassium"
+      - "sulphur"
+      - "zinc"
+      - "iron"
+      - "copper"
+      - "manganese"
+      - "boron"
+
+  nasa_power:
+    id: "SRC_NASA_POWER"
+    name: "NASA Prediction Of Worldwide Energy Resources (POWER)"
+    domain: "climate"
+    type: "rest_api"
+    base_url: "https://power.larc.nasa.gov/api/temporal/daily/point"
+    spatial_resolution_m: 55000  # ~0.5 degree
+    temporal_type: "daily"
+    auth_required: false
+    variables:
+      - "daily_rainfall"
+      - "temperature_mean"
+      - "temperature_max"
+      - "temperature_min"
+      - "relative_humidity"
+      - "wind_speed"
+      - "solar_radiation"
+    parameter_mapping:
+      daily_rainfall: "PRECTOTCORR"
+      temperature_mean: "T2M"
+      temperature_max: "T2M_MAX"
+      temperature_min: "T2M_MIN"
+      relative_humidity: "RH2M"
+      wind_speed: "WS2M"
+      solar_radiation: "ALLSKY_SFC_SW_DWN"
+
+  ksndmc:
+    id: "SRC_KSNDMC"
+    name: "Karnataka State Natural Disaster Monitoring Centre"
+    domain: "climate"
+    type: "station_network"
+    base_url: null
+    spatial_resolution_m: 0
+    temporal_type: "sub_daily"
+    auth_required: true
+    variables:
+      - "daily_rainfall"
+      - "rainfall_intensity"
+      - "temperature_mean"
+      - "relative_humidity"
+
+  copernicus_dem:
+    id: "SRC_COP_DEM"
+    name: "Copernicus GLO-30 DEM"
+    domain: "terrain"
+    type: "downloadable_raster"
+    base_url: "https://copernicus-dem-30m.s3.amazonaws.com"
+    spatial_resolution_m: 30
+    temporal_type: "static"
+    auth_required: false
+    variables:
+      - "elevation"
+      - "slope"
+      - "aspect"
+      - "terrain_curvature"
+      - "topographic_wetness_index"
+
+  sentinel_2:
+    id: "SRC_SENTINEL_2"
+    name: "Copernicus Sentinel-2 MSI"
+    domain: "historical_land"
+    type: "geospatial_api"
+    base_url: "https://earthengine.google.com"
+    spatial_resolution_m: 10
+    temporal_type: "repeat_5_day"
+    auth_required: true
+    variables:
+      - "ndvi"
+      - "ndmi"
+      - "savi"
+      - "evi"
+
+  cgwb:
+    id: "SRC_CGWB"
+    name: "Central Ground Water Board (India)"
+    domain: "water"
+    type: "observation_network"
+    base_url: "https://india-wris.nrsc.gov.in"
+    spatial_resolution_m: 0
+    temporal_type: "seasonal"
+    auth_required: false
+    variables:
+      - "groundwater_depth"
+      - "groundwater_trend"
+      - "aquifer_type"
+      - "water_ec"
+      - "water_ph"
+
+  fao_ecocrop:
+    id: "SRC_ECOCROP"
+    name: "FAO EcoCrop Database"
+    domain: "crop_requirements"
+    type: "research_database"
+    base_url: "https://ecocrop.fao.org"
+    spatial_resolution_m: null
+    temporal_type: "crop_profile"
+    auth_required: false
+    variables:
+      - "temp_min"
+      - "temp_opt_min"
+      - "temp_opt_max"
+      - "temp_max"
+      - "rainfall_min"
+      - "rainfall_opt_min"
+      - "rainfall_opt_max"
+      - "rainfall_max"
+      - "ph_min"
+      - "ph_opt_min"
+      - "ph_opt_max"
+      - "ph_max"
+      - "soil_depth_min_cm"
+      - "salinity_tolerance"
+
+  faostat:
+    id: "SRC_FAOSTAT"
+    name: "FAOSTAT Crop Production Statistics"
+    domain: "crop_performance"
+    type: "rest_api"
+    base_url: "https://fenixservices.fao.org/faostat/api/v1/en"
+    spatial_resolution_m: null
+    temporal_type: "annual"
+    auth_required: false
+    variables:
+      - "historical_yield"
+      - "harvested_area"
+      - "production_tonnes"
+
+  apsim_dssat:
+    id: "SRC_CROP_MODELS"
+    name: "APSIM / DSSAT Agronomic Models"
+    domain: "crop_development_rotation"
+    type: "scientific_model"
+    base_url: null
+    spatial_resolution_m: null
+    temporal_type: "daily_simulation"
+    auth_required: false
+    variables:
+      - "lai_curve"
+      - "biomass_accumulation"
+      - "nitrogen_fixation"
+      - "crop_water_consumption"
+      - "residue_production"
+      - "nitrogen_depletion"

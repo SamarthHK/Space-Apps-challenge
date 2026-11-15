@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Karnataka Agricultural Pilot Farms</name>
+    <description>Sample multi-plot agricultural boundaries in Mandya district, Karnataka</description>
+    <Folder>
+      <name>Mandya Research &amp; Commercial Plots</name>
+      
+      <Placemark>
+        <name>North Field (Sugarcane)</name>
+        <description>Perennial canal-irrigated plot, primarily sugarcane</description>
+        <ExtendedData>
+          <Data name="owner"><value>Ramesh Gowda</value></Data>
+          <Data name="irrigation_type"><value>Canal + Borewell</value></Data>
+          <Data name="soil_texture_field"><value>Clay Loam</value></Data>
+        </ExtendedData>
+        <Polygon>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+                76.8912,12.5245,0
+                76.8945,12.5245,0
+                76.8945,12.5218,0
+                76.8912,12.5218,0
+                76.8912,12.5245,0
+              </coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+
+      <Placemark>
+        <name>South Field (Ragi / Pulses)</name>
+        <description>Rainfed dryland plot suitable for millets and legumes</description>
+        <ExtendedData>
+          <Data name="owner"><value>Suresh Kumar</value></Data>
+          <Data name="irrigation_type"><value>Rainfed</value></Data>
+          <Data name="soil_texture_field"><value>Red Sandy Loam</value></Data>
+        </ExtendedData>
+        <Polygon>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+                76.8915,12.5195,0
+                76.8950,12.5195,0
+                76.8950,12.5165,0
+                76.8915,12.5165,0
+                76.8915,12.5195,0
+              </coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+
+      <Placemark>
+        <name>Irrigated Field (Maize &amp; Groundnut)</name>
+        <description>Drip-irrigated plot with groundwater tube-well access</description>
+        <ExtendedData>
+          <Data name="owner"><value>Anitha Patel</value></Data>
+          <Data name="irrigation_type"><value>Drip Tube-well</value></Data>
+          <Data name="soil_texture_field"><value>Loam</value></Data>
+        </ExtendedData>
+        <Polygon>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+                76.8965,12.5235,0
+                76.9002,12.5235,0
+                76.9002,12.5202,0
+                76.8965,12.5202,0
+                76.8965,12.5235,0
+              </coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+
+      <Placemark>
+        <name>Dryland Field (Pigeonpea Seed Farm)</name>
+        <description>Rainfed legume plot under certified seed production</description>
+        <ExtendedData>
+          <Data name="owner"><value>Kisan Cooperative</value></Data>
+          <Data name="irrigation_type"><value>Protective Sprinkler</value></Data>
+          <Data name="soil_texture_field"><value>Red Loamy Soil</value></Data>
+        </ExtendedData>
+        <Polygon>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+                76.8970,12.5185,0
+                76.9015,12.5185,0
+                76.9015,12.5150,0
+                76.8970,12.5150,0
+                76.8970,12.5185,0
+              </coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+
+    </Folder>
+  </Document>
+</kml>

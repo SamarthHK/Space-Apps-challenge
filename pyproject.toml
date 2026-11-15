@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agri-data"
+version = "0.1.0"
+description = "Geospatial agricultural data collection, processing, and multi-domain analysis platform"
+readme = "README.md"
+authors = [
+    { name = "AgriData Team" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "geopandas>=0.14.0",
+    "shapely>=2.0.0",
+    "rasterio>=1.3.0",
+    "rioxarray>=0.15.0",
+    "xarray>=2023.1.0",
+    "requests>=2.31.0",
+    "matplotlib>=3.7.0",
+    "scipy>=1.10.0",
+    "pyproj>=3.5.0",
+    "rasterstats>=0.19.0",
+    "sqlalchemy>=2.0.0",
+    "geoalchemy2>=0.14.0",
+    "pyarrow>=14.0.0",
+    "pyyaml>=6.0.0",
+    "python-dotenv>=1.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.22.0",
+    "pydantic>=2.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
+    "jupyterlab>=4.0.0",
+    "nbformat>=5.9.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-v --tb=short"
