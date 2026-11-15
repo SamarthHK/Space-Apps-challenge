@@ -12,6 +12,7 @@ from psycopg import sql
 from psycopg.types.json import Jsonb
 
 from .observation import Observation
+from .canonical import AUDIT_FIELDS
 
 
 class PostgresStore:
@@ -19,13 +20,16 @@ class PostgresStore:
         if not database or not user or not re.fullmatch(r"agri_[a-z0-9_]+", schema):
             raise ValueError("Expected database/user and an explicitly acceptance-owned agri_* schema are required")
         self.database, self.user, self.schema = database, user, schema
+        self.connection_env = connection_env
         self.dsn = os.environ.get(connection_env)
         if not self.dsn or not self.dsn.startswith(("postgresql://", "postgres://")):
             raise ValueError("Configure a PostgreSQL connection environment variable; no database fallback is allowed")
 
     @contextmanager
-    def session(self):
+    def session(self, *, repeatable_read=False):
         with psycopg.connect(self.dsn, connect_timeout=10) as connection:
+            if repeatable_read:
+                connection.isolation_level = psycopg.IsolationLevel.REPEATABLE_READ
             identity = connection.execute(
                 "SELECT current_database(), current_user, version(), PostGIS_Full_Version()"
             ).fetchone()
@@ -70,8 +74,10 @@ class PostgresStore:
             "SELECT record FROM observations WHERE observation_id=%s", (observation.observation_id,)
         ).fetchone()
         if previous:
-            if previous[0] != record:
+            if ({k: v for k, v in previous[0].items() if k not in AUDIT_FIELDS}
+                    != {k: v for k, v in record.items() if k not in AUDIT_FIELDS}):
                 raise ValueError("Observation ID conflict: changed evidence requires a distinct version/context ID")
+            self._save_receipt(connection, record)
             return False
         scalar_fields = (
             "observation_id", "schema_version", "variable_id", "feature_id", "subject_id",
@@ -96,11 +102,26 @@ class PostgresStore:
             connection.execute(
                 "INSERT INTO observation_lineage VALUES (%s,%s)", (observation.observation_id, parent)
             )
+        self._save_receipt(connection, record)
         return True
+
+    def _save_receipt(self, connection, record):
+        previous = connection.execute(
+            "SELECT acquired_record FROM acquisition_observations "
+            "WHERE extraction_job_id=%s AND observation_id=%s",
+            (record["extraction_job_id"], record["observation_id"]),
+        ).fetchone()
+        if previous and previous[0] != record:
+            raise ValueError("An acquisition receipt cannot be changed in place")
+        connection.execute(
+            "INSERT INTO acquisition_observations VALUES (%s,%s,%s) ON CONFLICT DO NOTHING",
+            (record["extraction_job_id"], record["observation_id"], Jsonb(record)),
+        )
 
     def read_observations(self, job_id):
         with self.session() as connection:
             records = connection.execute(
-                "SELECT record FROM observations WHERE extraction_job_id=%s ORDER BY observation_id", (job_id,)
+                "SELECT acquired_record FROM acquisition_observations "
+                "WHERE extraction_job_id=%s ORDER BY observation_id", (job_id,)
             ).fetchall()
             return [Observation.model_validate(row[0]) for row in records]
