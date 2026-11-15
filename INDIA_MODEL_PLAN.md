@@ -1,7 +1,7 @@
 # India crop and rotation model plan
 
 Source/access review: **2026-11-15**. Development branch: **`backend-ai`**.
-Status: **implementation in progress, not yet a trained Indian recommendation model**.
+Status: **Indian reference-suitability models trained and evaluated; field/seasonal rotation recommendations remain evidence-gated**. See section 12 for actual scores, artifacts and uncompleted gates.
 
 ## 1. Recommended direction and boundaries
 
@@ -22,15 +22,15 @@ Access statements below describe the reviewed route and date, not a guarantee of
 | Source | Data role and useful content | Verified access and remaining work |
 | --- | --- | --- |
 | [FAO EcoCrop][eco] | Versioned, published crop requirements: temperature, annual water/rainfall, pH, soil categories, altitude, photoperiod and crop cycle. Crop-trait inputs and reference compatibility, not observed yield or best-crop labels. | The public [production application][eco-home] works. Archived its 2,568-name global catalogue and 25 requirement sheets. The older `ecocrop.review.fao.org` route redirects to sign-in. Build a maintained normalizer; retain source IDs and references. Catalogue metadata lists CC-BY-4.0; preserve attribution and check any linked material's terms. |
-| [FAO GAEZ v5][gaez] | Published model-derived suitability and attainable yield for specified crops, climate periods, water regimes and input/management levels. A potential reference-suitability training target, not field observations. | Overview and portal are accessible; Indian crop rasters and their download/readback have not yet been verified. V5, released in 2025, includes additions such as mango, cashew, avocado, watermelon, sesame and finger millet. Verify the actual crop-code inventory before admitting classes. |
-| [DSSAT][dssat] | Crop/cultivar parameters, daily weather, layered soil and management definitions; licensed observed experiment/evaluation datasets where available. | About page accessible; the models landing page is largely a placeholder. More than 45 crop models are described, but the exact release/crop roster and download rights must be pinned. Simulated yields are not observed labels and will not populate this corpus. |
+| [FAO GAEZ v5][gaez] | Published model-derived suitability and attainable yield for specified crops, climate periods, water regimes and input/management levels. Reference-suitability training targets, not field observations. | Acquired and verified 360 historical suitability rasters: 45 crop/use classes, two periods and four water/input regimes. Also normalized 24 matching climate variables and three soil/terrain references. The actual official catalogue controls inclusion; no future scenarios or observed-yield claims. |
+| [DSSAT][dssat] | Crop/cultivar parameters, daily weather, layered soil and management definitions; licensed observed experiment/evaluation datasets where available. | The public experimental-data repository is accessible. Its reviewed Indian sequence file `ITHY7501.SQX` explicitly says `HYPOTHETICAL EXPERIMENT`; it is excluded, not converted into observed rotation labels. No suitable authorized Indian longitudinal outcome corpus has been imported. |
 | [APSIM][apsim] | Crop/soil/management structures and authentic observed validation experiments; potentially useful for real rotation evidence. | Next Generation documentation accessible. Some Classic crop/license pages returned 403. Do not assume Classic and Next Generation support identical crops. Confirm version, experiment-data rights and intended-use licence before acquisition. No simulations were run. |
 | [ICRISAT VDSA][vdsa] | Potentially valuable plot lists, cropping patterns, cultivation schedules, rainfall and repeated farm observations; meso agricultural statistics also exist. | Portal and documentation accessible, but microdata require login/registration. No plot survey files acquired. Separate SAT India, East India and Bangladesh records. This is a promising rotation source, not an already available nationwide label set. |
 | [FAOSTAT crop production][faostat] | Country/year/crop area, production and yield; national crop-presence checks, trend context and aggregation QA. Preserve official/estimated/imputed flags. | Catalogue and item schema accessible; a current India-filtered production extract is still required. Reviewed metadata spans 1961-2024. National annual rows cannot become district, field or seasonal observations. The older item schema is not current India-presence proof. |
-| [Indian DES APY reports][des] and [UPAg][upag] | District/state, crop, season and agricultural-year area/production/yield: the preferred broad Indian outcome corpus. | DES report selectors accessible. UPAg is largely client-rendered in direct requests; actual exports remain to be verified. Data.gov.in access returned 403. Use documented exports or an authorized API; report access blocks rather than substitute unofficial or generated data. |
+| [Indian DES APY reports][des] and [UPAg][upag] | District/state, crop, season and agricultural-year area/production/yield: the preferred broad Indian outcome corpus. | Verified native-TLS DES form/POST acquisition and persisted 179,734 nonempty district records, 38 commodities, eight states, reporting-year starts 1997-2022. Entirely blank layout combinations are omitted. Historical district boundaries, planting dates and product-basis refinements remain unresolved, so these outcomes are not used as field/preplant labels. UPAg/data.gov.in routes remain separate access work. |
 | [NHB statistics][nhb-stats] and [crop project references][nhb] | Indian horticultural crop presence, published growing conditions, and real statistical fruit/vegetable outcomes where available. | Crop reference pages accessible. The indexed `FinalEstimates.xls` is a historical 2010-11 resource, not current statistics; its tabular import remains unverified. Separate final and advance estimates. Bankable-project projected yields/costs are assumptions, not observed training labels. |
 | [Indian crop calendar][calendar], ICAR/state agricultural-university guidance and dated farmer records | Region/crop sowing windows, production systems, cultivars, phenology and management constraints. | Calendar landing page accessible; machine-readable region/crop records still need acquisition and validation. Acquire identifiable official publications, not unsourced universal planting-month lists. |
-| [NASA POWER][power] | Daily temperature, rainfall, humidity, wind and solar radiation; the existing pipeline already handles these seven variables at authentic UK sites. | Reuse the acquisition path, but prove coverage and metadata at Indian locations and dates. A working UK request does not validate every Indian grid/time window. |
+| [NASA POWER][power] | Daily variables for the UK pilot; exact monthly humidity, wind and solar histories for matched Indian reference normals. | Indian monthly regional acquisition is verified. Persisted 12,888 complete-window native-grid normals. RH/wind cover 1981-2000 and 2001-2020; solar covers only 2001-2020. The climatology route ignored requested years and returned 2001-2025: those mismatched responses are explicitly rejected. |
 | [SoilGrids][soilgrids], dated laboratory reports and farmer observations | Soil pH, texture, SOC and other supported properties; actual measurements for drainage, salinity, effective depth and management where available. | SoilGrids documents 250 m mapped estimates and six depth intervals. Its REST service is paused; documented WCS/WebDAV alternatives still need a real sample/download proof. Mapped estimates are not contemporaneous field measurements. |
 
 Additional sources to investigate only for a specific missing input: SMAP soil moisture, GPM rainfall, Landsat/MODIS vegetation, ECOSTRESS thermal/ET products, NASA elevation, IMD or licensed station observations, and hourly ERA5-Land for chilling. They are **candidates**, not verified integrations. Avoid acquiring overlapping products merely to increase feature counts.
@@ -156,7 +156,7 @@ Every admitted crop gets a machine-readable `requirement -> feature -> source ->
 | Management and farmer constraints | Irrigation access, recorded pre-decision plans, equipment/market exclusions and farmer priority weights | Actual dated farmer records and experiments, planned. Future realized fertilizer, irrigation and harvested area cannot be preplant predictors. No invented profit targets. |
 | Perennial context | Establishment date/age, cultivar, bearing status, pruning/ratoon/flowering stage and commitment horizon | Orchard/plantation records and crop guidance, planned. Unknown age/phenology blocks the corresponding orchard-specific claim. |
 
-The practical first cohort uses the existing seven daily weather variables plus genuine calendar/crop context and whatever compatible soil/terrain inputs are actually acquired. Expand with independent information, not every correlated raster available. Report the full planned crosswalk and its missing axes; a weather-only model must be labelled weather-only, not a complete soil/rotation assessment.
+The implemented first cohort is **historical GAEZ reference suitability**, using matching climate normals, NASA humidity/wind/solar, soil groups, terrain and qualified crop traits. It does not use a fabricated planting calendar or turn twenty-year normals into daily/seasonal observations. An eventual seasonal outcome cohort can reuse the seven daily weather variables once authentic calendar/boundary joins exist. Report the full crosswalk and its missing axes; reference soil groups and crop pH requirements are not measured field pH or a complete soil/rotation assessment.
 
 Train-only feature selection removes duplicate aliases, constant/all-missing columns and deterministic duplicates such as rainfall total plus its mean over the same complete fixed-length window. Correlation alone does not make two measurements identical. Use validation ablations to choose among overlapping providers or summaries. Keep provenance/coverage/quality metadata without counting it as extra agronomic information; missingness masks may be model inputs only with a recorded policy.
 
@@ -279,7 +279,7 @@ Observed at **2026-11-15 05:36:38 -08:00**:
 | GPU | NVIDIA GeForce RTX 4080 SUPER |
 | VRAM | 16,376 MiB total; 13,175 MiB free, approximately 12.87 GiB |
 
-This is a shared-machine snapshot, **not an allocation or a promise that those resources remain free**. Scheduling is proposed here, not yet implemented.
+This is a shared-machine snapshot, **not an allocation or a promise that those resources remain free**. The implemented first experiment uses sequential, two-thread **CPU-only** admission, real-data profiling, a 6 GiB RAM reserve and a 25% growth margin. It allocates no GPU memory; GPU/concurrent-job scheduling remains a future extension, not a claimed feature.
 
 Before every run, remeasure free RAM/VRAM and profile a bounded real-data batch. Reserve at least **6 GiB RAM and 3 GiB VRAM** for other activity; require an additional 25% margin over the measured incremental peak, including outstanding growth of already admitted jobs.
 
@@ -383,37 +383,95 @@ Hard regression cases should use authentic archived records or deterministic che
 
 Commit each coherent implementation increment on `backend-ai` after its relevant hard case and regression checks pass. Keep documentation/source-audit commits separate from adapter/model changes. Preserve unrelated work and the existing UK artifacts; do not bundle an unfinished architecture into a successful data-ingestion commit.
 
-## 12. Current completion and next implementation decision
+## 12. Implemented reference model and remaining gates
 
-Completed for this planning task: review of all seven requested source families, additional Indian horticulture/calendar/soil routes, a broader staged crop catalogue, 25 archived EcoCrop condition profiles, the feature/time/storage contracts, competing architectures, resource policy and held-out evaluation design.
+### 12.1 Actual source and training scope
 
-**Implemented source/reference foundation:** verified native-TLS public form acquisition; typed EcoCrop acquisition and normalization; 25 crop identities and 475 crop-specific requirement assertions; immutable source/definition lineage; migration 008; canonical repeat-import protection; PostgreSQL readback and Parquet exports. These are 19 assertion types per profile, not 475 independent predictors. Real-source, missing-value, misbound-identity and independent-process database replay checks pass. The existing outcome-dataset roundtrip remains compatible.
+The first Indian **reference-suitability experiment is trained, evaluated and reloadable**. Its task is reproducing GAEZ scores at saved Indian native grid cells, not predicting which crop a farmer should plant next season. No DES outcome, hypothetical DSSAT sequence, project-budget yield or invented observation was substituted for the GAEZ target.
 
-DES public reports now return actual district/crop/season/year records through an anonymous, certificate-verified form session. A genuine Karnataka rice/maize report was acquired. Its full reusable outcome normalizer and broader intake remain separate work below.
+| Retained bundle under `data\exports` | Actual contents |
+| --- | --- |
+| `india-profiles-v2` | 25 EcoCrop identities and 475 typed requirement assertions, with source definitions and explicit missing/conflicting semantics. |
+| `india-des-v1` | 179,734 authentic district statistical records across eight states and 38 commodities. 102,769 entirely blank source-layout combinations were excluded. |
+| `india-gaez-v1` | 237,240 suitability targets, 31,632 climate normals, 1,977 soil/terrain references and 659 native five-arcminute cells. |
+| `india-registry-v1` | 108 source-qualified entries: 45 GAEZ, 38 DES and 25 EcoCrop. Statistical aggregates do not transfer outcomes into child taxa; a global reference alone does not prove cultivation in India. |
+| `india-nasa-v1` | 12,888 complete-month-derived normals on actual NASA native grids. Calendar-day weighting excludes annual `YYYY13` values; missing months are not scaled or filled. |
+| `india-reference-dataset-v1` | 237,240 target-bearing examples linked to 1,318 shared environmental contexts and 45 crop/use classes. |
+| `india-reference-cv-v1` | Six predeclared candidate runs, each with three spatial development folds, fitted preprocessing/checkpoints, out-of-fold predictions and resource telemetry. |
+| `india-reference-models-v1` | Final baseline, CatBoost and MLP; calibration objects; frozen selection; all calibration/test predictions; inference context/crop snapshots and a genuine example request. |
+| `india-reference-verification-v1` | Independent-process replay proof for 267,840 saved predictions, with maximum absolute error zero. Frozen model files were not rewritten. |
 
-**Not completed:** Indian APY/NHB/VDSA outcome ingestion, India-wide crop/use mapping and presence verification, Indian-reference conflict resolution, GAEZ Indian raster acquisition, new environmental adapters, Indian training/evaluation, resource scheduling or a field-rotation API. Those are implementation gates above, not implied by working crop-reference storage.
+Raw corpora remain under `data\raw\india-profiles-v1`, `india-des-v2`, `india-gaez-v1` and `india-nasa-v1`. The DES v2 corpus reuses immutable acquired bytes with corrected nonempty-row counts. Source bundles and the derived dataset have canonical PostgreSQL membership and verified Parquet readback; trained weights and prediction bundles are local checksummed artifacts, not Git-tracked data or a new database model registry.
 
-### Implemented crop-reference commands
+The fitted CatBoost/MLP use **46 selected columns**: 23 GAEZ climate values, three NASA values, three soil/terrain references, 13 crop-requirement bounds, latitude/longitude, crop identity and production regime. Training-only selection removes four of the original 50 columns: the constant extreme-heat count and three entirely missing altitude bounds. Neural observation masks are computational representations, not additional measured environmental features.
 
-Install the optional dependencies only in the separate ML environment:
+Both historical periods, **1981-2000 and 2001-2020**, retain their exact support. NASA values come from the native footprint containing the selected GAEZ cell center, without fine-scale interpolation. Modern soil groups are versioned reference context, not historical soil tests. Solar for 1981-2000 remains missing. Crop cycles, pH measurements, cultivar/age and planting calendars are not invented.
+
+### 12.2 Frozen comparison and scores
+
+The dataset was saved before tuning: **147,960 development**, **41,040 calibration** and **48,240 locked-test** examples. There are 102 two-degree spatial split groups: 65 development, 16 calibration and 21 test. All periods, crop alternatives and production regimes from one native cell stay together; shared NASA footprints cannot cross partitions. The test covers 134 native cells. These are spatially grouped reference records, **not 48,240 independent farms**.
+
+Every evaluated crop/system has target-bearing training support in every fold. The six declared development candidates were the median baseline, two CatBoost depths, the embedding MLP, and depth-six CatBoost ablations without NASA or crop traits. Their mean-fold macro MAE values were 19.4606, 9.8647, 9.2469, 9.0479, 9.7740 and 9.8218 respectively. The ablations do not establish that every additional feature improves prediction; no test-driven feature selection was performed.
+
+| Final model | Development mean-fold macro MAE | Locked-test MAE | Locked-test RMSE | Locked-test NDCG@5 |
+| --- | --- | --- | --- | --- |
+| Per-crop/system median | 19.46 | 20.52 | 28.39 | 0.8521 |
+| CatBoost, depth 8 | 9.25 | 8.33 | 12.45 | **0.9169** |
+| Embedding MLP, 128/64 hidden units | **9.05** | **6.97** | **11.77** | 0.8942 |
+
+MAE/RMSE are **points on the rescaled 0-100 GAEZ index**, not classification error percentages. NDCG measures ranking agreement; it is not crop-success accuracy. The **MLP is the serving champion because development MAE was the predeclared selection metric**. CatBoost has better ranking agreement and remains saved; the test result did not change the champion.
+
+Calibration fits a temperature against a declared GAEZ preference distribution on the separate calibration partition. The final MLP temperature is 0.1. Empirical per-crop reference-error bands cover approximately 91.9% of the held-out MLP targets, without a farm-level coverage guarantee. Per-crop, period, water/input-system and spatial-group scores are in `report.json`.
+
+The saved model identifier is `0696c370daa2825c79c43943daef090e8788e561f1c9f2dce7e2eda2493720c3`; its dataset is `6fd3e2388c9c41809a9c8b488a1942eb2f4a42fddf16e07a700849afeaa2dca7`. Core model/feature code, locked dependencies, configuration, source identities and artifact checksums are recorded. Final fits use two CPU threads, no GPU allocation, and measured admission with a 6 GiB shared-RAM reserve. The largest final-fit process RSS was about 1.12 GiB, with at least 10.79 GiB free during those runs. This is observed telemetry, not a future capacity promise.
+
+The actual test includes a soil group absent from development (`Cryosols - CR`, 2,520 target rows); calibration includes an unseen slope category (360 rows). The frozen MLP uses its unknown-category embedding for these cases. Inference now explicitly reports unseen categorical features and the untrained-embedding limitation; weights and frozen scores are unchanged.
+
+### 12.3 Run and verify the saved model
+
+Use the existing separate ML interpreter. Restoring a missing environment requires the declared extras, not replacement of the shared default environment:
 
 ```powershell
 $env:UV_PROJECT_ENVIRONMENT = ".local\ml-env"
-uv sync --locked --extra ml --extra dev --extra india --python 3.12
-$env:PYTHONPATH = "src"
-
-& .local\ml-env\Scripts\python.exe -m agri_data acquire-crop-profiles `
-  --contract config\india_model.yaml --output data\raw\india-profiles-new
-
-# Configure DATABASE_URL and PostgreSQL authentication for the existing server.
-& .local\ml-env\Scripts\python.exe -m agri_data build-crop-profiles `
-  --config config\acceptance.yaml --corpus data\raw\india-profiles-new\corpus.json `
-  --output data\exports\india-profiles-new
+uv sync --locked --extra ml --extra dev --extra india --extra india-ml --python 3.12
 ```
 
-Use new output directories. Acquisition is fresh; builds replay checksum-verified assets without re-querying the provider. Current retained bundles are `data\raw\india-profiles-v1` and `data\exports\india-profiles-v2`. Missing categories and unresolved latitude/cycle meanings remain explicit; no Indian cultivation evidence or observed outcome labels are created from EcoCrop.
+Prediction and verification use local artifacts and do not need a database connection or live provider access:
 
-Recommended next implementation: I01/I02, followed by a real coverage audit to freeze the first task/vocabulary. Train B0/B1/B2 on the same viable corpus before spending resources on additional architectures. Keep all 12 initial reporting groups in intake, but activate only supported classes; expand horticulture from evidence rather than promising every listed crop on day one.
+```powershell
+$env:PYTHONPATH = "src"
+$models = "data\exports\india-reference-models-v1"
+$dataset = "data\exports\india-reference-dataset-v1"
+
+& .local\ml-env\Scripts\python.exe -m agri_data predict-india-reference `
+  --models $models --input (Join-Path $models "example_request.json")
+
+& .local\ml-env\Scripts\python.exe -m agri_data verify-india-models `
+  --models $models --dataset $dataset
+```
+
+The version-1 input explicitly declares `historical_reference_analysis`, `reference_climate_only`, a saved `context_id`, exact start/end dates, production system and requested `crop_ids`. Optional farmer exclusions and a minimum reference-score threshold mask candidates. Unknown or untrained crops get zero preference; no eligible candidates returns abstention. A singleton preference of 1 is explicitly not certainty of agricultural success.
+
+The CLI refuses arbitrary field coordinates, shortened seasonal windows, strict-as-of mode and field-rotation tasks. Its output includes source record IDs, native supports, missing features, extrapolation warnings, reference-error bands and unassessed requirement axes. It does **not** expose an HTTP route or let callers replace missing historical observations with guessed values.
+
+For a genuinely new experiment, use `build-india-dataset`, `train-india-candidate` and `finalize-india-models` with fresh output directories and a newly declared evaluation protocol. Never overwrite the retained bundles or repeatedly tune against this already-opened locked test. Source acquisition/build commands remain available for EcoCrop, DES, GAEZ, the registry and NASA.
+
+### 12.4 Gate-by-gate status
+
+| Gate | Implemented | Still unavailable or deferred |
+| --- | --- | --- |
+| I01 | Typed EcoCrop assertions, crop/use registry, qualified links, lineage and repeat-import safety. | Broader Indian-reference conflict resolution and cultivation evidence for every global reference crop. |
+| I02 | Authentic DES statistics across eight states and 38 commodities; source-unit reconciliation. | Historical district/calendar/product-basis joins and authorized NHB/VDSA field/outcome imports. |
+| I03 | Matched GAEZ/NASA reference normals, typed soil groups, slope classes and elevation. | Dated field soil tests, current moisture, stage-specific observations and seasonal outcome inputs. |
+| I04 | Reproducible reference Parquet views and crop-covered spatial splits. | Operational as-of and seasonal/field datasets; no false temporal backtest claim. |
+| I05-I07 | Baseline, CatBoost, masked MLP, three-fold comparison, separate calibration, saved locked test and reload parity. | Temporal/attention/two-tower models and ensembles are deferred, not necessary evidence-free additions. |
+| I08 | Versioned, guarded offline inference CLI and clean-process replay. | HTTP/backend integration; no model-serving endpoint was added to the separately owned API. |
+| I09 | Explicit field-sequence evidence gates and task refusals. | Learned rotation effects, measured soil transitions and three validated field-rotation alternatives. |
+| I10 | Broad 45-class reference coverage, including vegetables, fruit, plantation and forage uses. | Orchard establishment/age/phenology models and unsupported additional crops. Reference coverage is not a perennial planting recommendation. |
+
+Four fresh extension checks are archived in `data\raw\india-extension-review-v1\review.json`. VDSA still requires microdata registration; public questionnaires are not completed observations. The official DSSAT sequence example [ITHY7501.SQX][dssat-sequence] is explicitly hypothetical. NHB mango is a bankable-project reference, not an observed orchard panel; APSIM framework documentation is not a dataset of measured transitions. None was used to manufacture training labels. These are precise limits of the reviewed evidence, not a claim that no suitable Indian trials exist elsewhere.
+
+The first reference-model increment is complete. The full crop-rotation plan is **not** complete: next-season field decisions require authentic calendar/boundary/soil joins, and learned rotations or orchard claims require authorized dated field observations. Scientific sign-off is not the blocker; missing compatible evidence and integration are.
 
 ## Sources
 
@@ -425,6 +483,7 @@ Primary sources are linked where their findings are used above; the condition ta
 [eco-rain]: https://ecocrop.apps.fao.org/ecocrop/srv/en/helpShow?id=2001
 [gaez]: https://www.fao.org/gaez/en/
 [dssat]: https://dssat.net/about/
+[dssat-sequence]: https://github.com/DSSAT/dssat-csm-data/blob/99c95b340acb9515c2d0a8ab582f5fbbf076f345/Sequence/ITHY7501.SQX
 [apsim]: https://docs.apsim.info/docs/
 [vdsa]: https://vdsa.icrisat.org/vdsa-database.aspx
 [faostat]: https://data.fao.org/catalog/dataset/d24a448b-3b62-4c09-8c1d-4a39bb599876
