@@ -86,3 +86,37 @@ test('clearing a resource prevents in-flight completion from restoring data', as
   await pending;
   assert.equal(resource.state.data, null);
 });
+
+test('conditional writes preserve ETags and field errors without credentials or retry', async () => {
+  let calls = 0;
+  const client = createClient('http://localhost:8000', { fetcher: async (_, options) => {
+    calls++;
+    assert.equal(options.method, 'PATCH');
+    assert.equal(options.headers['If-Match'], '"profile:shared:1"');
+    assert.equal(options.headers['Content-Type'], 'application/json');
+    assert.equal(options.credentials, 'omit');
+    assert.deepEqual(JSON.parse(options.body), { name: null });
+    return Response.json(envelope({ version: 2 }), { headers: { ETag: '"profile:shared:2"' } });
+  } });
+  const result = await client.request('/profile', { method: 'PATCH', body: { name: null },
+    headers: { 'If-Match': '"profile:shared:1"' } });
+  assert.equal(result.etag, '"profile:shared:2"');
+  assert.equal(calls, 1);
+  const failing = createClient('http://localhost:8000', { fetcher: async () => Response.json({
+    error: { code: 'validation_error', message: 'Invalid profile', retryable: false,
+      details: [{ path: 'body.phone', code: 'value_error', message: 'Invalid phone' }] },
+  }, { status: 422 }) });
+  await assert.rejects(failing.request('/profile', { method: 'PATCH', body: {} }), error =>
+    error.details[0].path === 'body.phone' && !error.outcomeUncertain);
+});
+
+test('lost write responses are ambiguous and are never replayed', async () => {
+  let calls = 0;
+  const client = createClient('http://localhost:8000', { fetcher: async () => {
+    calls++;
+    throw new TypeError('Connection lost');
+  } });
+  await assert.rejects(client.request('/profile', { method: 'PATCH', body: { name: null } }),
+    error => error.outcomeUncertain && error.code === 'network_error');
+  assert.equal(calls, 1);
+});

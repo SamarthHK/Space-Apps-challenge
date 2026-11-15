@@ -2,6 +2,7 @@ import { createClient } from '../api/client.js';
 import { validateResponse } from '../api/validation.js';
 import { createResource } from '../state/resource.js';
 import { createFieldMap } from '../map/fieldMap.js';
+import { createProfile } from './profile.js';
 
 const byId = id => document.getElementById(id);
 const node = (tag, text) => {
@@ -34,6 +35,7 @@ export function startWorkspace(origin) {
     byId('retry-connection').disabled = true;
     return;
   }
+  const profile = createProfile(byId('shared-profile'), api);
   let fields = [];
   let fieldId = null;
   let fieldsCursor = null;
@@ -187,13 +189,14 @@ export function startWorkspace(origin) {
     if (state.status === 'loading') byId('connection-status').textContent = 'Connecting to backend...';
     else if (state.status === 'error') byId('connection-status').textContent = message(state.error);
     else if (state.status === 'ready') {
-      byId('connection-status').textContent = 'Connected - account-free shared workspace. Read-only source inspection.';
+      byId('connection-status').textContent = 'Connected - account-free shared workspace. Source evidence remains read-only.';
       state.data.data.capabilities.forEach(capability => byId('capabilities').append(
         node('li', `${capability.capability_id}: ${capability.state}${capability.reason ? ` - ${capability.reason}` : ''}`)));
     }
   });
   async function connect() {
     const generation = ++bootGeneration;
+    profile.setAvailable(false);
     fieldList.clear();
     field.clear();
     observations.clear();
@@ -208,6 +211,7 @@ export function startWorkspace(origin) {
     await workspace.load('workspace', signal => api.get('/workspace', { signal, schema: 'WorkspaceResponse' }));
     if (generation !== bootGeneration || workspace.state.status !== 'ready') return;
     const capabilities = workspace.state.data.data.capabilities;
+    profile.setAvailable(capabilities.some(item => item.capability_id === 'profile' && item.state === 'ready'));
     canReadObservations = capabilities.some(item => item.capability_id === 'observations' && item.state === 'ready');
     if (capabilities.some(item => item.capability_id === 'fields' && item.state === 'ready')) await loadFields();
     else byId('fields-status').textContent = 'Field access is blocked. Configure the backend project scope and prepared database.';

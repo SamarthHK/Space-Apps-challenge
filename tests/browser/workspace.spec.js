@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 const apiOrigin = process.env.TEST_API_ORIGIN;
+const frontendOrigin = process.env.TEST_FRONTEND_ORIGIN || 'http://127.0.0.1:1080';
 if (!apiOrigin) throw new Error('Set TEST_API_ORIGIN to the real, prepared backend used by the production build.');
 
 test('field geometry and canonical values reconcile with actual API records', async ({ page, request }) => {
@@ -75,7 +76,7 @@ test('all seven views are usable and unsupported capabilities never activate dem
   expect(html).not.toContain('Shivalingaiah');
   expect(html).not.toContain('41,732');
   expect(html).not.toContain('100% accurate');
-  await expect(page.getByRole('button', { name: 'Save Profile' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toHaveCount(0);
 });
 
 test('network failure is explicit and reconnect restores real data', async ({ page }) => {
@@ -94,7 +95,7 @@ test('browser origin and request failures cannot become fake scientific data', a
   // Transport-only interception: no provider or agricultural payload is fabricated.
   await page.route(`${apiOrigin}/api/v1/workspace`, route => route.fulfill({
     status: 200, contentType: 'text/html', body: '<h1>Upstream failure</h1>',
-    headers: { 'Access-Control-Allow-Origin': 'http://127.0.0.1:1080' },
+    headers: { 'Access-Control-Allow-Origin': frontendOrigin },
   }));
   await page.goto('/');
   await expect(page.locator('#connection-status')).toContainText('invalid JSON');
@@ -110,7 +111,7 @@ test('untrusted field labels remain inert text and mobile navigation stays usabl
   realFields.data[0].name = label;
   await page.route(`${apiOrigin}/api/v1/fields`, route => route.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify(realFields),
-    headers: { 'Access-Control-Allow-Origin': 'http://127.0.0.1:1080' },
+    headers: { 'Access-Control-Allow-Origin': frontendOrigin },
   }));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
