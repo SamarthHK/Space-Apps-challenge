@@ -193,8 +193,8 @@ def test_invalid_archives_fail_without_creating_fields(field_store, actual_geome
 
 
 @pytest.mark.parametrize("format_name", ["geojson", "kml", "kmz"])
-def test_topology_only_probe_retains_parts_holes_altitude_and_metadata(format_name):
-    # Diagnostic topology only; never persisted or presented as authentic field/provider evidence.
+def test_topology_only_probe_retains_parts_holes_altitude_and_metadata(field_store, format_name):
+    # Diagnostic topology in an owned disposable schema, never authentic field/provider evidence.
     geometry = {"type": "MultiPolygon", "coordinates": [
         [[[10, 10, 3], [14, 10, 4], [14, 14, 5], [10, 14, 6], [10, 10, 3]],
          [[11, 11, 3], [11, 12, 3], [12, 12, 3], [12, 11, 3], [11, 11, 3]]],
@@ -214,6 +214,25 @@ def test_topology_only_probe_retains_parts_holes_altitude_and_metadata(format_na
         assert candidates[0]["metadata"]["folders"] == ["Folder & <text>"]
         values = {item["name"]: json.loads(item["value"]) for item in candidates[0]["metadata"]["extended_data"]}
         assert values["source_metadata"] == features[0]["properties"]["source_metadata"]
+    jobs = JobStore(field_store)
+    submitted = jobs.submit_import(content, "probe." + format_name, "boundary-integration", "diagnostic", "topology")
+    jobs.run_once("topology-preview")
+    assert jobs.get(submitted["job_id"])["status"] == "succeeded"
+    info = jobs.import_info(submitted["resource_id"])
+    confirmed = jobs.confirm(info["import_id"], confirmation(info), "topology-confirm")
+    jobs.run_once("topology-confirm")
+    assert jobs.get(confirmed["job_id"])["status"] == "succeeded"
+    stored = DataStore(field_store.settings).fields()[0]
+    assert shape(stored["geometry"]).equals_exact(force_2d(shape(geometry)), 1e-12)
+    assert DataStore(field_store.settings).observations(stored["field_id"]) == []
+    exported = jobs.submit_export({"format": format_name, "fields": [{
+        "field_id": stored["field_id"], "boundary_id": stored["selected_boundary_id"]}]}, "topology-export")
+    jobs.run_once("topology-export")
+    assert jobs.get(exported["job_id"])["status"] == "succeeded"
+    download = jobs.download(exported["resource_id"])
+    persisted, rejected = parse_upload(bytes(download["content"]), download["filename"], "topology-only", "diagnostic")
+    assert not rejected
+    assert json.loads(json.dumps(persisted[0]["original_geometry"])) == geometry
 
 
 def test_job_http_contract_exposes_binary_download_and_honest_worker_readiness(field_store, actual_geometry):
