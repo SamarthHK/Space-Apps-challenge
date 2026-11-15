@@ -57,7 +57,8 @@ def result_response(request, response, result):
 
 @router.post("/fields", operation_id="createField", response_model=FieldMutationResponse, status_code=201)
 def create_field(body: FieldCreate, request: Request, response: Response,
-                 key: str | None = Header(None, alias="Idempotency-Key")):
+                 key: str | None = Header(None, alias="Idempotency-Key",
+                    description="Workspace-wide submission key. Receipts are retained without expiry; different input or operation returns 409.")):
     result = request.app.state.field_store.create(body, key, request.state.request_id)
     response.headers["Location"] = "/api/v1/fields/" + result["field_id"]
     return result_response(request, response, result)

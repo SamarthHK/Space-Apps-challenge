@@ -1,7 +1,8 @@
 # Frontend/backend integration contract
 
 Revision: `shared-workspace-1`, 2026-11-15.
-Status: **foundation implemented; remaining resource contracts proposed**.
+Status: **shared reads, profiles, field writes, imports/jobs and geometry exports implemented**.
+Other resource contracts below remain proposals.
 
 Approved deployment: no accounts for now; one shared workspace over Tailscale.
 Frontend port 1080, backend port 8000. Configure the actual Tailscale IP rather
@@ -17,11 +18,12 @@ This is the single cross-branch integration contract. Backend tasks are in
 Both plans refer to the operation IDs below instead of independently inventing
 paths or JSON shapes. All paths in this document are HTTP paths, not local files.
 
-During B01/F01, turn the agreed first-slice schemas into a backend-owned
-`docs/openapi.json`, with unique operation IDs matching this document. Export it
+The implemented schemas are in backend-owned `docs/openapi.json`, with unique
+operation IDs matching this document. Export it
 from the actual FastAPI application; pin an identical artifact and its SHA-256
 in the frontend's `contracts` directory. Record the backend commit when committed.
-Until then this document is a design specification, not evidence of an API.
+See `docs/shared_workspace.md` for the implemented ownership, persistence,
+preconditions, worker lifecycle and deployment contract.
 Do not generate placeholder agricultural response examples to fill the artifact.
 
 Change a contract in this order: update this specification, backend schemas and
@@ -66,28 +68,30 @@ can proceed only when independent of unresolved source/method dependencies.
 - Errors: `{error: {code, message, details: [{path, code, message}], retryable},
   meta: {request_id, api_version}}`. `details` may be empty; messages never
   contain DSNs, local paths, stack traces or secrets.
-- Common HTTP outcomes: 400 malformed request/cursor; 401 no valid session;
+- Common implemented HTTP outcomes: 400 malformed request/cursor;
   403 prohibited action; 404 absent OR unowned resource; 409 state/idempotency
   conflict; 412 stale ETag; 413 upload too large; 415 unsupported media;
-  422 semantic validation; 428 missing required If-Match; 429 rate limit;
-  501 capability not implemented; 503 configured dependency unavailable.
-  429/503 may include `Retry-After`. Normalize FastAPI validation errors too.
+  422 semantic validation; 428 missing required If-Match/Idempotency-Key;
+  503 configured dependency unavailable. No session, rate-limit, or
+  unimplemented-operation stub is implied by this registry.
 - POST creates return 201 and `Location`; asynchronous submission returns 202
   with a Job and `Location` for `getJob`. PATCH returns the updated resource.
   Future 204 responses have no JSON body; no session DELETE exists in this mode.
-- Profile, field and planting-plan responses carry a strong `ETag` and positive
-  integer `version`; PATCH requires `If-Match` from the last read. Omitted
+- Profile responses and dedicated field-mutation responses carry a positive
+  integer `version`. Profile and field GETs carry strong ETags; existing field
+  read bodies deliberately have no new version property. PATCH requires
+  `If-Match` from the last read. Omitted
   properties stay unchanged; explicit null clears only nullable properties.
   Project scope, identifiers, provenance and computed values are not writable.
 - All mutating POST operations require `Idempotency-Key`. Scope keys by
-  workspace+operation, compare payload hashes, persist their result transactionally.
+  workspace, compare operation and payload hashes, and persist results transactionally.
   Same key/body replays the original resource/job; changed body returns 409.
-  Publish retention in OpenAPI before implementation. Never auto-retry an
+  Receipts have no automatic expiry; retention is stated in OpenAPI. Never auto-retry an
   ambiguous write without this guarantee.
-- Return `X-Request-ID`; CORS for future writes must allow If-Match and
-  Idempotency-Key, and expose ETag, Location, Content-Disposition, Retry-After
+- Return `X-Request-ID`; CORS allows Content-Type, If-Match and
+  Idempotency-Key, and exposes ETag, Location, Content-Disposition
   and X-Request-ID. Use explicit origin allow-lists and no cookies/credentials.
-  Foundation CORS allows GET and X-Request-ID only; expand with actual writes.
+  GET/POST/PATCH/DELETE are supported; mutations require a configured Origin.
   Set API responses to `Cache-Control: no-store`.
 - Never run acquisition on a GET, expose an acceptance/health-check CLI as a
   public endpoint, or let callers supply filesystem paths/provider URLs.
@@ -95,7 +99,9 @@ can proceed only when independent of unresolved source/method dependencies.
 ## 4. Operation registry
 
 **Implemented:** getHealth/getWorkspace, listFields/getField,
-listObservations/getObservation/listObservationEvidence.
+listObservations/getObservation/listObservationEvidence, getProfile/updateProfile,
+createField/updateField/archiveField, createBoundaryImport/getBoundaryImport/
+confirmBoundaryImport, getJob, createExport/downloadExport.
 The implementation column identifies the backend task, not current readiness.
 Resource IDs, nested resources, downloads and jobs must stay within the explicit
 shared project scope. No login routes exist.
@@ -106,22 +112,23 @@ shared project scope. No login routes exist.
 | getWorkspace | GET `/workspace` | Shared access mode, project IDs and capabilities; no user/token | B02 |
 | getProfile | GET `/profile` | Profile, including legitimately null unset fields | B02 |
 | updateProfile | PATCH `/profile` | Profile writable properties; Profile + ETag | B02 |
-| listFields | GET `/fields` | `archived=false` by default; page of FieldSummary | B03 |
-| createField | POST `/fields` | CreateField; Field + ETag | B04 |
+| listFields | GET `/fields` | Archived records excluded; page of unchanged FieldRecord DTOs | B03 |
+| createField | POST `/fields` | project_id, nullable name, geometry; FieldMutation + ETag | B04 |
 | getField | GET `/fields/{field_id}` | Field including current authoritative geometry + ETag | B03 |
-| updateField | PATCH `/fields/{field_id}` | Name/location/declarations, geometry or archived; Field + ETag | B04 |
+| updateField | PATCH `/fields/{field_id}` | name and/or geometry; FieldMutation + ETag | B04 |
+| archiveField | DELETE `/fields/{field_id}` | If-Match; FieldMutation with archived=true, without deleting history | B04 |
 | listObservations | GET `/fields/{field_id}/observations` | `variable_id`, inclusive `start_date`, `end_date`, `validation_status` (default `all`); page of CanonicalObservation | B03 |
 | getObservation | GET `/fields/{field_id}/observations/{canonical_observation_id}` | CanonicalObservation plus complete, paginated evidence through listObservationEvidence | B03 |
 | listObservationEvidence | GET `/fields/{field_id}/observations/{canonical_observation_id}/evidence` | Page of source Observation records, redacted as specified below | B03 |
 | getAnalysis | GET `/fields/{field_id}/analysis` | Explicit `start_date`, `end_date`; Analysis sections/metrics with availability | B05 |
 | listSoilRecords | GET `/fields/{field_id}/soil-records` | Page of SoilRecord | B05 |
 | createSoilRecord | POST `/fields/{field_id}/soil-records` | SoilSubmission; append-only SoilRecord, never automatically verified | B05 |
-| createBoundaryImport | POST `/boundary-imports` | Multipart `file`, `origin`; 202 Job for preview preparation | B04 |
-| getBoundaryImport | GET `/boundary-imports/{import_id}` | ImportPreview when ready; status/reasons otherwise | B04 |
-| confirmBoundaryImport | POST `/boundary-imports/{import_id}/confirm` | `preview_version`, `selected_candidate_ids`; 202 Job | B04 |
+| createBoundaryImport | POST `/imports` | Raw bytes; filename, project_id, source_namespace query parameters; 202 Job | B04 |
+| getBoundaryImport | GET `/imports/{import_id}` | BoundaryImport with preview candidates/rejections and job IDs | B04 |
+| confirmBoundaryImport | POST `/imports/{import_id}/confirm` | `preview_hash`, `candidate_ids`; 202 Job | B04 |
 | getJob | GET `/jobs/{job_id}` | Job; no internal output path | B04 |
 | createAcquisition | POST `/fields/{field_id}/acquisitions` | `source_id`, `variable_ids`, `start_date`, `end_date`, `boundary_id`; 202 Job | B06 |
-| createExport | POST `/fields/{field_id}/exports` | `boundary_id`, `format` = `geojson`, `kml`, `kmz` or `profile`; 202 Job | B04/B06 |
+| createExport | POST `/exports` | Explicit fields [{field_id,boundary_id}], format = geojson/kml/kmz; 202 Job | B04 |
 | downloadExport | GET `/exports/{export_id}/download` | Authorized bytes, correct MIME and Content-Disposition; not JSON envelope | B04/B06 |
 | listScenes | GET `/fields/{field_id}/scenes` | Date range; page of Scene | B06 |
 | getVegetationSeries | GET `/fields/{field_id}/vegetation-series` | Date range, `index` = `ndvi` or `ndwi`; VegetationSeries | B06 |
@@ -144,19 +151,19 @@ missing dependency. A successful health response is not feature readiness.
 
 ## 5. First-slice DTOs
 
-### Implemented read-slice limits (authoritative over future write DTOs below)
+### Compatible read DTOs
 
-`docs/openapi.json` is the exact implemented schema. Fields do not yet have a
-version/ETag/archive mechanism: no writes are enabled. They return field_id,
+`docs/openapi.json` is the exact implemented schema. Field GET bodies retain field_id,
 project_id, nullable name/current_boundary_id/selected_boundary_id, geometry_status,
 boundary_versions and nullable geometry/metric_crs/area_m2/area_ha/perimeter_m/
 representative_point/repair_notes. No invented version, bounds, declarations,
-location or financial fields are returned. The later DTO extensions below must
-be introduced with their implementing task.
+location or financial fields are returned. ETags come from the same read snapshot;
+version/archive information is returned by the dedicated mutation response.
 
 `getField` accepts optional boundary_id. When more than one stored version
-exists, geometry_status is selection_required and geometry is null until an
-explicit version is selected. A sole recorded boundary is unambiguous.
+exists without an explicitly recorded current version, geometry_status is
+selection_required and geometry is null until a version is selected.
+A sole recorded boundary or explicitly recorded current version is unambiguous.
 Unprepared canonical schema or missing configuration is 503, not an empty list.
 Observation date filters must be supplied as an ordered start_date/end_date
 pair; dates filter actual provider observed_at, never retrieval timestamps.
@@ -172,32 +179,22 @@ Workspace: `access_mode: shared_trusted_network`, `project_ids`,
 `contract_revision`, `capabilities`. Project scope is configured server-side,
 not supplied by the browser.
 
-Profile (future shared resource): `workspace_id`, `version`, `name`, `kannada_name`, `phone`, `village`,
+SharedProfile: `workspace_id`, `version`, `created_at`, `updated_at`, `name`, `kannada_name`, `phone`, `village`,
 `taluk`, `district`, `state`, `soil_health_card_no`, `farmer_category`,
 `preferred_language`, `risk_tolerance`, `primary_objective`.
-All properties except workspace_id/version are nullable user submissions; GET never
-seeds a person's data. Freeze allowed preference codes in B01: HTML and
-storageService currently disagree on primary-objective codes. A soil-card number
+User-submission properties are nullable; identity/version/timestamps are server-owned.
+GET never seeds a person's data. Preference codes are frozen in ProfilePatch and
+SharedProfile in OpenAPI and use the shared-profile adapter, not legacy storageService. A soil-card number
 on a profile is not a laboratory record and does not imply verification.
 
 ### Fields
 
-FieldSummary: `field_id`, `project_id`, `name`, `version`, `archived`,
-`current_boundary_id`, `area_m2`, `area_ha`, `representative_point`,
-`geometry_status`. Fields from legacy evidence with no reviewed current boundary
-have null geometry metrics and a reason, never an arbitrary "latest" boundary.
-No soil/recommendation counts are promised by this first-slice DTO.
+FieldRecord uses the unchanged read properties listed above. FieldMutation
+contains `field_id`, `version`, `current_boundary_id`, and `archived`.
+Location/declarations and soil/recommendation summaries remain outside this release.
 
-Field extends FieldSummary with `geometry` (EPSG:4326 GeoJSON geometry or null),
-`bounds` (`[west,south,east,north]` or null), `perimeter_m`, `metric_crs`,
-`repair_notes`, `location`, `declarations`, `source_asset_id`. Location has
-nullable district/taluk/village/survey_number strings. Declarations retain
-user-entered irrigation_type, water_availability, previous_crops and soil_texture,
-with submitted_at and provenance; they are not measured observations.
-
-CreateField: `name`, `geometry`, `origin`, optional `location` and `declarations`.
-An explicit shared-project configuration supplies project_id; if multiple
-projects require browser selection, add and authorize that property in B01.
+FieldCreate requires `project_id` and `geometry`, with optional nullable `name`.
+The selected project must belong to the configured server allow-list.
 Reject missing geometry, invalid/nonpolygon geometry and client-supplied
 authoritative area. Server-generated IDs persist across geometry revisions.
 No `plot_id` alias on the wire. Browser acre/gunta display is a documented unit
@@ -208,7 +205,8 @@ GeoJSON through `L.geoJSON`; manually converting a Point to Leaflet uses
 `[latitude, longitude]`, never mutates the wire coordinates.
 Backend computes area/perimeter with a documented projection and reconciles
 PostGIS results. Current ingestion first computes pyproj/Shapely metrics and
-then checks PostGIS; do not describe that as an already-existing HTTP calculation.
+then checks PostGIS. HTTP writes now compute persisted measurements with PostGIS;
+preview measurements remain provisional until confirmation.
 
 ### Canonical observations, evidence and missing data
 
@@ -244,7 +242,7 @@ Missing source values are feature-status records, not Observation objects with
 all value columns null. Add persistence for these gaps in B05: normalize_power()
 currently returns them separately, and storage-proof writes them to a report.
 
-## 6. Analysis and asynchronous DTOs
+## 6. Proposed analysis and implemented asynchronous DTOs
 
 Analysis: `field_id`, `boundary_id`, `start_date`, `end_date`, `sections`.
 Each section has a stable `section_id` (`soil`, `water`, `climate`),
@@ -274,33 +272,29 @@ SoilRecord adds server `soil_record_id`, field_id, submitted_at, source lineage
 and `validation_status: pending` initially. Preserve revisions append-only.
 Do not accept a client `verified` boolean or reinterpret untyped "inches" as flow.
 
-Job: `job_id`, `kind`, `state`, `created_at`, `started_at`, `completed_at`,
-`result` (nullable typed reference), `error` (nullable standard error object),
-`warnings`, `retry_after_seconds`. States:
-`queued`, `running`, `succeeded`, `partial`, `failed`, `blocked`.
-Terminal states are the last four; partial is not succeeded.
-Result references identify import_id, field_ids, export_id or run_id, never paths.
-Map existing `in_progress` to running, `complete` to succeeded, and preserve
-boundary-import partial/failed. New durable job storage is needed: existing
-extraction_jobs cannot queue before source_asset_id exists and imports are
-synchronous. Persist recovery/retry state, not just an in-process background task.
+Job: `job_id`, `resource_id`, `kind`, `status`, `attempts`, `created_at`,
+`updated_at`, nullable `result`, and nullable `error {code,message,retryable}`.
+Statuses are queued/running/succeeded/failed; kinds are import_preview,
+import_confirm, and export. Jobs are durably leased in the application schema,
+not aliases for the old synchronous proof workflow or extraction receipts.
 
-ImportPreview: `import_id`, `preview_version`, `state`, `source_asset_id`,
-`origin`, `candidates`, `rejected_records`, `reason`.
-Candidates have stable candidate_id, source locator, metadata, geometry,
-provisional metrics and repair requirements. Preview must not create active fields.
-Confirmation names selected candidates and the exact preview version; stale
-confirmation = 409. Current ingest_boundaries() writes immediately, so refactor
-parse/preview/commit boundaries instead of calling it for preview.
+BoundaryImport includes import/project/source identity, original filename/checksum,
+preview and confirmation job IDs, `preview_hash`, candidates, and rejections.
+Candidates include stable IDs, source locator/metadata, original and 2D geometry,
+provisional metrics, expected field version and create/update action.
+Preview writes no canonical fields, boundaries, or source assets.
+Confirmation names selected valid candidate IDs and the exact preview hash.
+A mismatched hash returns 409; a later field-version conflict fails the job
+without partial writes. The HTTP worker calls the parser, not ingest_boundaries().
 No one-click implicit repair: current parser requires an authentic reviewed
 reference plus area/shape tolerances. Until an authorized repair-evidence workflow
 is specified, repair-required candidates remain blocked.
 
-Exports snapshot the requested owned boundary version. `profile` exports a ZIP
-bundle with a completeness/availability manifest; it must not claim full Plan.md
-coverage. GeoJSON export can reuse present functionality. KML/KMZ and HTTP
-streaming are new work; preserve holes, multipart geometry and escaped metadata.
-Unimplemented formats return 501 and are not advertised as ready.
+Exports snapshot explicit field/boundary selections. GeoJSON, KML and KMZ are
+implemented, including multipart geometry, holes, escaped source metadata, and
+retained original altitude. Missing legacy altitude is labelled, never invented.
+Profile/proof bundles and other formats are not supported; invalid format values
+return 422. See shared_workspace.md for limits, retention, recovery and downloads.
 
 ## 7. Later-resource schema gates
 

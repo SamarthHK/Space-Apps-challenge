@@ -325,8 +325,10 @@
                   "type": "null"
                 }
               ],
+              "description": "Workspace-wide submission key. Receipts are retained without expiry; different input or operation returns 409.",
               "title": "Idempotency-Key"
-            }
+            },
+            "description": "Workspace-wide submission key. Receipts are retained without expiry; different input or operation returns 409."
           }
         ],
         "requestBody": {
@@ -1340,8 +1342,10 @@
                   "type": "null"
                 }
               ],
+              "description": "Workspace-wide submission key. Receipts are retained without expiry; different input or operation returns 409.",
               "title": "Idempotency-Key"
-            }
+            },
+            "description": "Workspace-wide submission key. Receipts are retained without expiry; different input or operation returns 409."
           }
         ],
         "responses": {
@@ -1665,8 +1669,10 @@
                   "type": "null"
                 }
               ],
+              "description": "Workspace-wide submission key. Receipts are retained without expiry; different input or operation returns 409.",
               "title": "Idempotency-Key"
-            }
+            },
+            "description": "Workspace-wide submission key. Receipts are retained without expiry; different input or operation returns 409."
           }
         ],
         "requestBody": {
@@ -1831,8 +1837,10 @@
                   "type": "null"
                 }
               ],
+              "description": "Workspace-wide submission key. Receipts are retained without expiry; different input or operation returns 409.",
               "title": "Idempotency-Key"
-            }
+            },
+            "description": "Workspace-wide submission key. Receipts are retained without expiry; different input or operation returns 409."
           }
         ],
         "requestBody": {

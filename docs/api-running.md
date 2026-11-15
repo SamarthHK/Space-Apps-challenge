@@ -44,15 +44,24 @@ Use a prepared, provenance-verified database and an appropriate restricted
 deployment role; no migration or acceptance acquisition is run by the API.
 The canonical schema (including canonical_fields, canonical_observations and
 observation_evidence) must already exist. Database preparation remains a
-separate backend prerequisite. The API issues only read-only transactions,
+separate backend prerequisite. The canonical reader issues only read-only transactions,
 checks database/user/schema identity and applies the project allow-list to
 every field and nested evidence query. It does not expose all projects.
 Absent configuration or schema returns a blocked capability and HTTP 503, not
-an empty successful query. Profiles and all mutations remain unimplemented.
+an empty successful query.
 
-Multiple boundary versions require explicit selection through
+Shared profiles, versioned field create/update/archive, durable import
+preview/confirmation and GeoJSON/KML/KMZ exports are implemented separately.
+See [shared_workspace.md](shared_workspace.md) for the five explicit workspace
+database/ID settings, additive provisioning, writer permissions, worker command,
+limits, browser acceptance harness, and safe write-disable recovery.
+No users, authentication cookies, model execution, or private-profile migration
+are introduced. The API never provisions application state on a GET.
+
+Legacy ambiguous boundary versions require explicit selection through
 `GET /api/v1/fields/{field_id}?boundary_id=...`. The API does not guess "current"
-from hashes or retrieval dates; area stays null without recorded metric CRS.
+from hashes or retrieval dates. New field writes record an explicit current
+boundary; older versions remain selectable. Area stays null without recorded metric CRS.
 Canonical observations include pending status, units, provider-local dates,
 conflicting revisions and evidence counts; raw acquisition copies are not
 presented as independent observations.

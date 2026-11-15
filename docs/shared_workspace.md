@@ -63,11 +63,15 @@ For the real, separate-instance browser gate, run
 `python scripts\workspace_browser_acceptance.py --frontend <frontend-checkout>`
 with the same test data settings and installed Playwright Chromium. If browser
 binaries live outside Playwright's default cache, set `PLAYWRIGHT_BROWSERS_PATH`.
-The harness refuses occupied ports (defaults: API 18084, frontend 11084), creates
-only an isolated application schema, builds to its own artifact directory, and
+The harness refuses occupied ports (defaults: API 18084, frontend 11084), copies
+the scoped authentic reference rows into a separate canonical test schema,
+creates an isolated application schema, builds to its own artifact directory, and
 terminates only processes it started. It never replaces the normal frontend
 build or stops existing services. Logs/results remain under the ignored
 `.local\workspace-acceptance` directory.
+Field mutations run only against that owned copy, never the original corpus.
+The harness starts and verifies its own worker as well as the API/static server.
+Write browser tests require its `TEST_WRITES_ISOLATED=1` guard.
 
 ## Versioned field writes
 
@@ -83,6 +87,10 @@ of profile readiness and checks these permissions.
 It requires an `Idempotency-Key`; replaying the same input returns the saved
 result, while using that key for different input returns 409. Only configured,
 existing projects are writable. The server assigns field and boundary IDs.
+Keys are workspace-wide, including across operations; receipts have no automatic
+expiry. Original assets, jobs, revisions and exports likewise have no automatic
+retention cleanup. Monitor database capacity and back up the application schema
+with its canonical field/boundary dependencies.
 
 `GET /api/v1/fields/{id}` retains its existing JSON schema and now exposes an ETag
 from the same read snapshot. `PATCH` accepts a name and/or replacement geometry
@@ -153,3 +161,25 @@ positions per field, 256 KMZ entries, 32 MiB expanded KML/output. External links
 entities/DTDs, unsafe archive paths, excessive nesting/compression, and encrypted
 archives are rejected. There is no implicit geometry repair, provider acquisition,
 scientific acceptance, or fabricated observation generation in these workflows.
+
+## Staged rollout and write-disable recovery
+
+Keep both applications independently deployed. In a controlled backend
+environment, set the five `AGRI_WORKSPACE_*` values above, run provisioning,
+start the API, and start the worker in another backend process with the same
+settings. The frontend only receives `VITE_API_BASE_URL`; rebuild it after an
+origin change. No frontend checkout or Node.js is needed by the running API.
+
+If rollout must be paused, stop the owned worker and restart the current API
+without the `AGRI_WORKSPACE_*` settings. Keep its `AGRI_API_*` canonical read
+settings. Writes/profile/jobs become blocked, while field/evidence reads retain
+explicit current boundaries and archival filtering. This mode is covered by a
+real-PostgreSQL regression. Restore the original workspace settings to resume;
+do not drop tables, reverse applied migrations, or overwrite newly saved data.
+An older API predating archival filtering is not a safe rollback target.
+
+The canonical reader's original strict JSON DTOs remain unchanged. Field
+versioning is carried in GET headers and dedicated mutation responses, not
+added to old read bodies. New upload endpoints deliberately use raw bytes
+instead of multipart; exports accept explicit field/boundary lists at `/exports`.
+These choices are recorded in the generated contract and the frontend pin.
