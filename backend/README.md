@@ -1,5 +1,10 @@
 # AgriData
 
+For the combined application, use the repository-root [setup/run guide](../README.md).
+It covers Docker Compose and native private-account startup, with no original
+machine data required. The material below describes the separate, unfinished
+**scientific preparation contract**, not the implemented private API/UI workflows.
+
 The backend is being rewritten against **Plan.md**, the implementation and
 acceptance authority. **The rewrite is incomplete and S01 is blocked.**
 No connection, database, feature or end-to-end acceptance gate has passed for

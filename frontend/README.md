@@ -1,5 +1,9 @@
 # Bhumi agricultural intelligence frontend
 
+In the combined repository, start with the root [setup/run guide](../README.md).
+Its root `.env` and portable launcher configure both instances together. The
+commands below remain useful when developing this frontend independently.
+
 Vite, vanilla JavaScript and Leaflet. The frontend now connects to a separately
 deployed Python API for **private accounts, saved profile/field workflows and read-only source evidence**, not demo forecasts.
 Read [progress.md](progress.md) for exact implemented and blocked capabilities,

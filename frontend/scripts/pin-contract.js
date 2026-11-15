@@ -23,5 +23,6 @@ writeFileSync(new URL('../contracts/openapi.json', import.meta.url), bytes);
 writeFileSync(new URL('../contracts/source.json', import.meta.url), JSON.stringify({
   sha256: createHash('sha256').update(bytes).digest('hex'),
   revision: revisions.at(-1), supported_revisions: revisions, backend_commit: backendCommit,
+  artifact_path: `${prefix}docs/openapi.json`,
 }, null, 2) + '\n');
 console.log(`Pinned workspace contract from ${backendCommit}`);

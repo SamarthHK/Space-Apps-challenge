@@ -31,6 +31,7 @@ test('contract pinning works in standalone and nested repositories and refuses d
       assert.deepEqual(readFileSync(join(frontend, 'contracts', 'openapi.json')), bytes);
       const pin = JSON.parse(readFileSync(join(frontend, 'contracts', 'source.json')));
       assert.equal(pin.backend_commit, git('rev-parse', 'HEAD').toString().trim());
+      assert.equal(pin.artifact_path, `${nested ? 'backend/' : ''}docs/openapi.json`);
       writeFileSync(artifact, '{}\n');
       assert.throws(() => execFileSync(process.execPath, [script, backend], { stdio: 'pipe' }));
       assert.deepEqual(readFileSync(join(frontend, 'contracts', 'openapi.json')), bytes);

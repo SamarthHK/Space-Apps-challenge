@@ -223,6 +223,7 @@ test('a private Earth drawing saves real KML, survives sign-in and denies anothe
     }
     await page.reload();
     await expect(page.locator('#global-plot-select')).toHaveValue(identifier);
+    await expect(page.locator('#download-export')).toBeEnabled();
     await page.getByRole('button', { name: 'Sign out', exact: true }).click();
     await signIn(page, 'browser-kml-owner');
     await page.getByRole('button', { name: 'My Land', exact: true }).click();

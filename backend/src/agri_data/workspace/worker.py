@@ -46,10 +46,10 @@ class AccountWorker:
         return JobStore(self.accounts.scoped_fields(account)).run_once(worker_id)
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(description="Durable workspace import/export worker; no model execution")
     parser.add_argument("--once", action="store_true", help="Process at most one queued job, then exit")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     store = WorkspaceStore(WorkspaceSettings.from_env())
     data_settings = DataSettings.from_env()
     accounts = AccountStore(store, data_settings, AccountSettings.from_env())

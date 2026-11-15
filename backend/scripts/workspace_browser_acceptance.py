@@ -16,8 +16,10 @@ from uuid import uuid4
 
 import psycopg
 from psycopg import sql
+from dotenv import load_dotenv
 
 from agri_data.api.data import DataSettings, DataStore
+from agri_data.deployment import deployment_environment, frontend_environment
 from agri_data.workspace.fields import FieldStore
 from agri_data.workspace.jobs import JobStore
 from agri_data.workspace.settings import WorkspaceSettings
@@ -102,13 +104,22 @@ def main():
     parser.add_argument("--api-port", type=int, default=18084)
     parser.add_argument("--frontend-port", type=int, default=11084)
     parser.add_argument("--mode", choices=("shared", "accounts", "both"), default="shared")
+    parser.add_argument("--empty-private", action="store_true",
+                        help="Use root .env and the portable startup commands with fresh, empty private test schemas")
     args = parser.parse_args()
     require_free_ports([args.api_port, args.frontend_port])
-    prepared = DataSettings.from_env({
-        key.replace("AGRI_TEST_", "AGRI_API_"): value
-        for key, value in os.environ.items() if key.startswith("AGRI_TEST_")
-    })
-    if not prepared or not DataStore(prepared).available():
+    if args.empty_private:
+        if args.mode != "accounts":
+            parser.error("--empty-private requires --mode accounts")
+        load_dotenv(Path(".env"), override=False, interpolate=False)
+        os.environ.update(deployment_environment(os.environ))
+        prepared = DataSettings.from_env()
+    else:
+        prepared = DataSettings.from_env({
+            key.replace("AGRI_TEST_", "AGRI_API_"): value
+            for key, value in os.environ.items() if key.startswith("AGRI_TEST_")
+        })
+    if not prepared or (not args.empty_private and not DataStore(prepared).available()):
         parser.error("Set AGRI_TEST_* to the prepared authentic canonical database")
     frontend = args.frontend.resolve(strict=True)
     root = Path(__file__).resolve().parents[1]
@@ -128,6 +139,8 @@ def main():
         AGRI_WORKSPACE_DATABASE_USER=settings.user, AGRI_WORKSPACE_SCHEMA=settings.schema,
         AGRI_WORKSPACE_ID=settings.workspace_id, VITE_API_BASE_URL=api_origin,
         TEST_API_ORIGIN=api_origin, TEST_FRONTEND_ORIGIN=frontend_origin, FRONTEND_HOST="127.0.0.1",
+        APP_HOST="127.0.0.1", API_PORT=str(args.api_port), FRONTEND_PORT=str(args.frontend_port),
+        CANONICAL_SCHEMA=source.schema, WORKSPACE_SCHEMA=settings.schema, DEPLOYMENT_ID=settings.workspace_id,
         TEST_WRITES_ISOLATED="1", AGRI_AUTH_COOKIE_SECURE="false", AGRI_AUTH_SESSION_SECONDS="43200")
     node = shutil.which("node")
     npm = shutil.which("npm.cmd" if os.name == "nt" else "npm")
@@ -154,30 +167,39 @@ def main():
         return process
 
     try:
-        copy_scoped_reference(prepared, source.schema)
-        WorkspaceStore(settings).provision()
-        subprocess.run([npm, "test"], cwd=frontend, env=environment, check=True)
+        if args.empty_private:
+            subprocess.run([sys.executable, "-m", "agri_data.deployment", "init"],
+                           cwd=root, env=environment, check=True)
+        else:
+            copy_scoped_reference(prepared, source.schema)
+            WorkspaceStore(settings).provision()
+        public_env = frontend_environment(environment)
+        subprocess.run([npm, "test"], cwd=frontend, env=public_env, check=True)
         dist = artifacts / "dist"
         subprocess.run([node, str(frontend / "node_modules" / "vite" / "bin" / "vite.js"),
-            "build", "--outDir", str(dist), "--emptyOutDir"], cwd=frontend, env=environment, check=True)
+            "build", "--outDir", str(dist), "--emptyOutDir"], cwd=frontend, env=public_env, check=True)
         launch("frontend", [node, str(frontend / "node_modules" / "vite" / "bin" / "vite.js"),
             "preview", "--host", "127.0.0.1", "--port", str(args.frontend_port), "--outDir", str(dist)],
-            frontend, environment, frontend_origin)
+            frontend, public_env, frontend_origin)
         modes = ("shared", "accounts") if args.mode == "both" else (args.mode,)
         for mode in modes:
             env = dict(environment, AGRI_AUTH_MODE=mode, TEST_AUTH_MODE=mode,
                        PLAYWRIGHT_OUTPUT_DIR=str(artifacts / ("results-" + mode)))
             owned = []
             try:
-                owned.append(launch("api-" + mode, [sys.executable, "-m", "agri_data.api"],
+                api_command = ([sys.executable, "-m", "agri_data.deployment", "api"] if args.empty_private
+                               else [sys.executable, "-m", "agri_data.api"])
+                worker_command = ([sys.executable, "-m", "agri_data.deployment", "worker"] if args.empty_private
+                                  else [sys.executable, "-m", "agri_data.workspace.worker"])
+                owned.append(launch("api-" + mode, api_command,
                                     root, env, api_origin + "/api/v1/health"))
                 readiness = ({"predicate": JobStore(FieldStore(WorkspaceStore(settings), source),
                               deployment_id=settings.workspace_id).available} if mode == "accounts"
                              else {"capability": "imports"})
-                owned.append(launch("worker-" + mode, [sys.executable, "-m", "agri_data.workspace.worker"],
+                owned.append(launch("worker-" + mode, worker_command,
                                     root, env, api_origin + "/api/v1/workspace", **readiness))
                 subprocess.run([node, str(frontend / "node_modules" / "@playwright" / "test" / "cli.js"), "test"],
-                               cwd=frontend, env=env, check=True)
+                               cwd=frontend, env=frontend_environment(env), check=True)
             finally:
                 stop(owned)
         print("Separate-instance acceptance passed. Artifacts:", artifacts)

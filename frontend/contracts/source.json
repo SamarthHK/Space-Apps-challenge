@@ -5,5 +5,6 @@
     "shared-workspace-1",
     "private-workspace-2"
   ],
-  "backend_commit": "e221e9894186949d520b0918d93136f5404df10b"
+  "backend_commit": "09170f98d4283a8572197b71b09709a72d2cc5c7",
+  "artifact_path": "backend/docs/openapi.json"
 }
