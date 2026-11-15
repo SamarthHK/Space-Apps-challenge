@@ -20,6 +20,7 @@ from agri_data.storage.exports import export_fields_spatial, export_agricultural
 from .acquisition import acquire_field_data
 from .extraction import extract_field_profile, flatten_observations
 from agri_data.reporting import write_project_report
+from agri_data.storage.full_output import write_bundle
 
 
 def run_pipeline(kml_path: str | Path, project_name: Optional[str] = None,
@@ -51,7 +52,10 @@ def run_pipeline(kml_path: str | Path, project_name: Optional[str] = None,
     if persist:
         with get_db_session() as session:
             register_source_asset(session, raw_input, raw_input.suffix.lstrip("."))
-            project = Project(name=project_name or settings.project_cfg.get("project", {}).get("name", "AgriData"),
+            project_label = project_name or settings.project_cfg.get("project", {}).get("name", "AgriData")
+            project = session.query(Project).filter_by(name=project_label).first()
+            if project is None:
+                project = Project(name=project_label,
                               region=settings.project_cfg.get("project", {}).get("region", "Unknown"))
             session.add(project)
             session.flush()
@@ -76,7 +80,6 @@ def run_pipeline(kml_path: str | Path, project_name: Optional[str] = None,
         profile["sources"] = {domain: {key: value for key, value in result.items() if key in {"status", "reason", "mode", "raw_file", "valid"}} for domain, result in acquired.items()}
         profiles[row.field_id] = profile
         acquired_by_field[row.field_id] = acquired
-        export_agricultural_profile(row.field_id, profile, output_dir / row.field_id)
         for result in acquired.values():
             raw_file = result.get("raw_file")
             if raw_file and Path(raw_file).exists() and persist:
@@ -90,6 +93,10 @@ def run_pipeline(kml_path: str | Path, project_name: Optional[str] = None,
                         record_batch_observations(session, observations)
                         session.add(ExtractionJob(job_id=key, source_id=result["source_id"], field_ids_json=[row.field_id], status="COMPLETED", completed_at=datetime.utcnow()))
         observations = flatten_observations(row.field_id, acquired)
+        bundle_dir = output_dir / "full" / row.field_id
+        manifest = write_bundle(observations, bundle_dir, {"mode": mode, "sources": profile["sources"]})
+        profile["complete_observations"] = {"path": str(bundle_dir / "observations.jsonl"), **manifest}
+        export_agricultural_profile(row.field_id, profile, output_dir / row.field_id)
         (output_dir / row.field_id / "observations.json").write_text(json.dumps(observations, indent=2, default=str))
         if observations:
             pd.DataFrame(observations).to_parquet(output_dir / row.field_id / "observations.parquet", index=False)

@@ -41,9 +41,10 @@ def extract_field_profile(field: Any, acquired: Dict[str, Any]) -> Dict[str, Any
 
 def flatten_observations(field_id: str, acquired: Dict[str, Any]) -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
-    for result in acquired.values():
+    for domain, result in acquired.items():
         for observation in result.get("observations", []):
             row = dict(observation)
             row["field_id"] = field_id
+            row.setdefault("domain", result.get("domain", domain))
             rows.append(row)
     return rows
