@@ -2,7 +2,19 @@
 
 > **Branch:** `backend`
 > **Last updated:** 2026-11-14
-> **Overall status:** 🟢 Phase 1 prototype complete — executable offline end-to-end pipeline, rotation modules, reporting, tests, and core documentation implemented. Live-authenticated sources and notebook curriculum remain follow-up work.
+> **Overall status:** Partial implementation. Complete observation bundles, non-destructive categorical filtering, and configured CSV/JSON imports are implemented. The fifteen-domain roadmap is not complete. Older completion tables below describe prototype modules and must not be interpreted as verified live acquisition coverage.
+
+## Current milestones
+
+- Full observation JSONL bundles preserve every normalized row and additional metadata, with row counts and checksums. Summaries link to full bundles.
+- Filtering writes separate artifacts with input/output checksums and counts; categorical filters are supported. Date/depth filtering and filtering CLI remain pending.
+- Import plans associate CSV/JSON files with explicit KML field names and declared variables/units. Original bytes are retained; text and missing values are supported.
+- Generic imports support fifteen domain identifiers, but do not implement specialist live sources, crop simulations, sensor calibration, or management-event ingestion.
+- Imported observations link to source assets; assets are registered with datasets. Project reuse and repeat-import deduplication are tested.
+- Thirteen targeted tests passed, including a repeat-run database/import test. Live acquisition and PostGIS were not verified in this milestone.
+- Remaining: DEM/raster integration, expanded live climate/water/satellite sources, scientific processing corrections, crop/trial/management/sensor-specific persistence, notebooks, and production validation.
+
+See `docs/imports_and_full_outputs.md` for the implemented commands and limitations.
 
 ## ✅ Prototype completion update — 2026-11-14
 

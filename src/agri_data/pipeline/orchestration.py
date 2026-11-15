@@ -13,7 +13,8 @@ from agri_data.geo.kml import load_kml
 from agri_data.geo.area import calculate_area_and_perimeter
 from agri_data.geo.geometry import calculate_centroids
 from agri_data.storage.database import init_db, get_db_session
-from agri_data.storage.models import Field, ExtractionJob, Project
+from agri_data.storage.models import Field, ExtractionJob, Project, Variable, DataSource, Dataset
+from agri_data.sources.imports import load_import_plan, import_dataset
 from agri_data.storage.observations import record_batch_observations
 from agri_data.storage.assets import register_source_asset
 from agri_data.storage.exports import export_fields_spatial, export_agricultural_profile
@@ -26,7 +27,9 @@ from agri_data.storage.full_output import write_bundle
 def run_pipeline(kml_path: str | Path, project_name: Optional[str] = None,
                  domains: Optional[Iterable[str]] = None,
                  persist: bool = True, mode: str = "live",
-                 start_date: str = "2025-01-01", end_date: str = "2025-12-31") -> Dict[str, Any]:
+                 start_date: str = "2025-01-01", end_date: str = "2025-12-31",
+                 import_plan: str | Path | None = None) -> Dict[str, Any]:
+    imports = load_import_plan(import_plan) if import_plan else []
     if mode not in {"live", "demo"}:
         raise ValueError("mode must be live or demo")
     if pd.Timestamp(start_date) > pd.Timestamp(end_date):
@@ -44,6 +47,9 @@ def run_pipeline(kml_path: str | Path, project_name: Optional[str] = None,
     fields = calculate_centroids(calculate_area_and_perimeter(load_kml(kml_path)))
     fields["field_id"] = ["FIELD_" + hashlib.sha256(((project_name or "default") + geom.normalize().wkb_hex).encode()).hexdigest()[:24] for geom in fields.geometry]
     fields = fields.drop_duplicates("field_id")
+    for dataset in imports:
+        if (fields["name"] == dataset["field_name"]).sum() != 1:
+            raise ValueError(f"Import {dataset['id']} must match exactly one KML field name")
     export_paths = export_fields_spatial(fields, output_dir / "fields")
     init_db() if persist else None
     profiles: Dict[str, Any] = {}
@@ -51,6 +57,17 @@ def run_pipeline(kml_path: str | Path, project_name: Optional[str] = None,
 
     if persist:
         with get_db_session() as session:
+            for dataset in imports:
+                if not session.query(DataSource).filter_by(source_id=dataset["source_id"]).first():
+                    session.add(DataSource(source_id=dataset["source_id"], name=dataset["source_id"], domain=dataset["domain"], access_type="import"))
+                    session.flush()
+                for name, definition in dataset["variables"].items():
+                    existing = session.query(Variable).filter_by(variable_id=name).first()
+                    if existing and existing.canonical_unit != definition["unit"]:
+                        raise ValueError(f"Database unit conflict: {name}")
+                    if not existing:
+                        session.add(Variable(variable_id=name, category=dataset["domain"], description=definition["description"], canonical_unit=definition["unit"]))
+                        session.flush()
             register_source_asset(session, raw_input, raw_input.suffix.lstrip("."))
             project_label = project_name or settings.project_cfg.get("project", {}).get("name", "AgriData")
             project = session.query(Project).filter_by(name=project_label).first()
@@ -76,6 +93,9 @@ def run_pipeline(kml_path: str | Path, project_name: Optional[str] = None,
 
     for _, row in fields.iterrows():
         acquired = acquire_field_data(row, domains=domains, start_date=start_date, end_date=end_date, mode=mode)
+        for dataset in imports:
+            if dataset["field_name"] == row["name"]:
+                acquired["import:" + dataset["id"]] = import_dataset(dataset, row)
         profile = extract_field_profile(row, acquired)
         profile["sources"] = {domain: {key: value for key, value in result.items() if key in {"status", "reason", "mode", "raw_file", "valid"}} for domain, result in acquired.items()}
         profiles[row.field_id] = profile
@@ -84,7 +104,15 @@ def run_pipeline(kml_path: str | Path, project_name: Optional[str] = None,
             raw_file = result.get("raw_file")
             if raw_file and Path(raw_file).exists() and persist:
                 with get_db_session() as session:
-                    asset = register_source_asset(session, Path(raw_file), Path(raw_file).suffix.lstrip(".") or "json")
+                    source_code = settings.get_source(result["source_id"]).get("id", result["source_id"])
+                    source = session.query(DataSource).filter_by(source_id=source_code).one()
+                    dataset_name = result.get("dataset_name", result["source_id"])
+                    dataset_record = session.query(Dataset).filter_by(source_id=source.id, dataset_name=dataset_name).first()
+                    if dataset_record is None:
+                        dataset_record = Dataset(source_id=source.id, dataset_name=dataset_name)
+                        session.add(dataset_record)
+                        session.flush()
+                    asset = register_source_asset(session, Path(raw_file), Path(raw_file).suffix.lstrip(".") or "json", dataset_id=dataset_record.id)
                     key = hashlib.sha256((row.field_id + str(asset.id) + mode + "processing-v2").encode()).hexdigest()
                     if not session.query(ExtractionJob).filter_by(job_id=key).first():
                         observations = flatten_observations(row.field_id, {"result": result})

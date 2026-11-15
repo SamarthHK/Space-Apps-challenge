@@ -27,7 +27,8 @@ def record_observation(
     original_value: Optional[float] = None,
     original_unit: Optional[str] = None,
     standardized_unit: Optional[str] = None,
-    quality_flag: str = "VALID"
+    quality_flag: str = "VALID",
+    value_text: Optional[str] = None
 ) -> Observation:
     """Records a single observation in the master observations table."""
     field = session.query(Field).filter_by(field_id=field_code).first()
@@ -53,10 +54,11 @@ def record_observation(
         source_id=source.id if source else None,
         source_asset_id=source_asset_id,
         value_numeric=value_numeric,
+        value_text=value_text,
         original_value=original_value if original_value is not None else value_numeric,
         original_unit=original_unit or var.canonical_unit,
         standardized_unit=standardized_unit or var.canonical_unit,
-        observed_at=observed_at or datetime.utcnow(),
+        observed_at=observed_at,
         depth_top_cm=depth_top_cm,
         depth_bottom_cm=depth_bottom_cm,
         statistic=statistic,
@@ -81,6 +83,7 @@ def record_batch_observations(
             field_code=obs_data["field_id"],
             variable_code=obs_data["variable_id"],
             value_numeric=obs_data.get("value_numeric"),
+            value_text=obs_data.get("value_text"),
             measurement_type=obs_data.get("measurement_type", "modelled"),
             source_code=obs_data.get("source_id"),
             source_asset_id=obs_data.get("source_asset_id"),
