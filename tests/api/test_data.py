@@ -9,6 +9,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 import psycopg
 import pytest
+from jsonschema import Draft202012Validator, FormatChecker
 
 from agri_data.api.app import create_app
 from agri_data.api.config import Settings
@@ -106,6 +107,13 @@ def test_observation_and_evidence_preserve_provider_meaning(client, authentic):
     assert matching["original_unit"] == raw["parameters"][parameter]["units"]
     assert matching["timezone"] == raw["header"]["time_standard"]
     assert "raw_path" not in json.dumps(actual) and "DATABASE_URL" not in json.dumps(records)
+    schema = client.get("/api/v1/openapi.json").json()
+    Draft202012Validator({
+        "components": schema["components"],
+        "$ref": "#/components/schemas/EvidenceResponse",
+    }, format_checker=FormatChecker()).validate({
+        "data": records, "meta": {"api_version": "v1", "request_id": "schema-check", "next_cursor": None},
+    })
 
 
 def test_real_pagination_filters_and_tampering(client, authentic, data_settings):

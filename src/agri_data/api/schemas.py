@@ -1,10 +1,23 @@
 """HTTP DTOs deliberately separate from internal scientific/storage records."""
 
-from typing import Any, Literal
+from datetime import datetime
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, WithJsonSchema
 
 from agri_data.contracts.observation import Observation
+
+
+# Provider-local timestamps (for example POWER LST) must not acquire a false UTC suffix.
+ProviderTime = Annotated[datetime | None, WithJsonSchema({
+    "anyOf": [
+        {"type": "string", "pattern": (
+            r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$"
+        )},
+        {"type": "null"},
+    ],
+    "description": "Provider-local or offset timestamp; interpret with the record's timezone field.",
+})]
 
 
 class DTO(BaseModel):
@@ -121,6 +134,12 @@ class ObservationResponse(DTO):
     meta: Meta
 
 
+class EvidenceObservation(Observation):
+    observed_at: ProviderTime = None
+    period_start: ProviderTime = None
+    period_end: ProviderTime = None
+
+
 class EvidenceResponse(DTO):
-    data: list[Observation]
+    data: list[EvidenceObservation]
     meta: PageMeta
