@@ -15,6 +15,15 @@ approved override; do not implement an account system without a new decision.
 
 The foundation's executable instructions are in `docs/api-running.md`.
 
+### Implemented increments
+
+- `209da1d`: account-free API foundation; 32 tests passed in the staged snapshot.
+- Read slice: project-scoped canonical field/observation/evidence routes,
+  explicit boundary selection and read-only PostgreSQL. No shared profile,
+  writes, acquisition or scientific summaries yet. The canonical data schema
+  is an explicit deployment prerequisite, not created by an HTTP request.
+  `docs/openapi.json` lists only implemented operations.
+
 ## Project commit policy
 
 Commit each small, coherent implementation step only after rigorous tests for

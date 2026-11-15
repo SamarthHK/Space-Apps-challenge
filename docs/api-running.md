@@ -28,13 +28,53 @@ Implemented foundation:
 - `GET /api/v1/workspace`: shared access mode and truthful capability states.
 - `GET /api/v1/openapi.json`: schema for implemented operations only.
 
-No profiles, agricultural records or write operations are exposed by this first
-increment. Unsupported capabilities remain `not_implemented`; no demo fallback.
+The read increment also implements listFields/getField, listObservations/
+getObservation/listObservationEvidence. Configure data access explicitly:
 
-Validation: `uv run --locked python -m pytest tests\api -q`.
+```powershell
+$env:AGRI_API_DATABASE_URL = "postgresql://<role>@127.0.0.1:<port>/<database>"
+$env:AGRI_API_DATABASE_NAME = "<database>"
+$env:AGRI_API_DATABASE_USER = "<role>"
+$env:AGRI_API_SCHEMA = "agri_contracts"
+$env:AGRI_API_PROJECT_IDS = "public_reference"
+# Configure PGPASSFILE through your secret store; never put passwords in source.
+```
+
+Use a prepared, provenance-verified database and an appropriate restricted
+deployment role; no migration or acceptance acquisition is run by the API.
+The canonical schema (including canonical_fields, canonical_observations and
+observation_evidence) must already exist. Database preparation remains a
+separate backend prerequisite. The API issues only read-only transactions,
+checks database/user/schema identity and applies the project allow-list to
+every field and nested evidence query. It does not expose all projects.
+Absent configuration or schema returns a blocked capability and HTTP 503, not
+an empty successful query. Profiles and all mutations remain unimplemented.
+
+Multiple boundary versions require explicit selection through
+`GET /api/v1/fields/{field_id}?boundary_id=...`. The API does not guess "current"
+from hashes or retrieval dates; area stays null without recorded metric CRS.
+Canonical observations include pending status, units, provider-local dates,
+conflicting revisions and evidence counts; raw acquisition copies are not
+presented as independent observations.
+
+Collections accept `limit` (1-200) and opaque `cursor`. Cursors bind to the
+filters and a hash of the complete response snapshot: a changed snapshot returns
+409; filter changes/tampering/server restart return 400. Restart from page one.
+Current pagination materializes each selected result in memory; this read slice
+targets the small reference corpus, not unbounded production archives. SQL
+keyset/snapshot pagination is required before scaling.
+
+Foundation validation: `uv run --locked python -m pytest tests\api\test_foundation.py -q`.
 These tests start a real loopback HTTP server, exercise origin/host checks,
 request IDs, errors and metadata, and verify generated OpenAPI. No provider
 responses or agricultural records are fabricated.
+
+Data validation requires a real populated canonical corpus. Supply the same
+data configuration with prefix `AGRI_TEST_` rather than `AGRI_API_`, then run
+`uv run --locked python -m pytest tests\api -q`. Tests fail, not skip, when
+authentic evidence/database prerequisites are absent. The data tests reconcile
+API values with checksummed provider bytes and PostGIS, test forbidden project
+access, pagination/filter errors and enforce read-only transactions.
 
 Export the implemented contract:
 

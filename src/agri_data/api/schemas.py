@@ -1,8 +1,10 @@
 """HTTP DTOs deliberately separate from internal scientific/storage records."""
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from agri_data.contracts.observation import Observation
 
 
 class DTO(BaseModel):
@@ -59,3 +61,66 @@ class Workspace(DTO):
 class WorkspaceResponse(DTO):
     data: Workspace
     meta: Meta
+
+
+class PageMeta(Meta):
+    next_cursor: str | None
+
+
+class BoundaryVersion(DTO):
+    boundary_id: str
+    source_asset_id: str
+
+
+class FieldRecord(DTO):
+    field_id: str
+    project_id: str
+    name: str | None
+    current_boundary_id: str | None
+    selected_boundary_id: str | None
+    geometry_status: Literal["available", "selection_required", "unavailable"]
+    boundary_versions: list[BoundaryVersion]
+    geometry: dict[str, Any] | None
+    metric_crs: str | None
+    area_m2: float | None
+    area_ha: float | None
+    perimeter_m: float | None
+    representative_point: dict[str, Any] | None
+    repair_notes: str | None
+
+
+class FieldResponse(DTO):
+    data: FieldRecord
+    meta: Meta
+
+
+class FieldsResponse(DTO):
+    data: list[FieldRecord]
+    meta: PageMeta
+
+
+class CanonicalObservation(DTO):
+    canonical_observation_id: str
+    context_id: str
+    field_id: str
+    variable_id: str
+    validation_status: Literal["pending", "accepted", "rejected"]
+    scientific_record: dict[str, Any]
+    validation_evidence: dict[str, Any] | None
+    evidence_count: int
+    has_conflicting_revisions: bool
+
+
+class ObservationsResponse(DTO):
+    data: list[CanonicalObservation]
+    meta: PageMeta
+
+
+class ObservationResponse(DTO):
+    data: CanonicalObservation
+    meta: Meta
+
+
+class EvidenceResponse(DTO):
+    data: list[Observation]
+    meta: PageMeta

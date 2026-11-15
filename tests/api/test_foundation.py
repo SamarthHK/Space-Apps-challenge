@@ -90,7 +90,8 @@ def test_live_health_and_workspace_are_honest_and_share_response_contract(server
     workspace = requests.get(server + "/workspace", timeout=2).json()["data"]
     assert workspace["access_mode"] == "shared_trusted_network"
     assert workspace["project_ids"] == []
-    assert all(item["state"] == "not_implemented" for item in workspace["capabilities"])
+    assert all(item["state"] == ("blocked" if item["capability_id"] in ("fields", "observations")
+                                else "not_implemented") for item in workspace["capabilities"])
     assert "user_id" not in workspace and "token" not in workspace
 
 
@@ -126,7 +127,8 @@ def test_openapi_export_is_deterministic_and_matches_live_routes(server, tmp_pat
     live = requests.get(server + "/openapi.json", timeout=2).json()
     assert live == create_app(settings()).openapi()
     operations = {operation["operationId"] for path in live["paths"].values() for operation in path.values()}
-    assert operations == {"getHealth", "getWorkspace"}
+    assert operations == {"getHealth", "getWorkspace", "listFields", "getField", "listObservations",
+                          "getObservation", "listObservationEvidence"}
     output = tmp_path / "openapi.json"
     result = subprocess.run(
         [sys.executable, "-m", "agri_data.api", "--export-openapi", str(output)],
@@ -150,3 +152,13 @@ def test_unexpected_failures_are_redacted_and_readable_by_allowed_frontend():
     assert response.json()["error"]["code"] == "internal_error"
     assert "internal-secret" not in response.text
     assert response.headers["Access-Control-Allow-Origin"] == "http://localhost:1080"
+
+
+def test_unconfigured_data_is_not_an_empty_success_and_queries_are_validated(server):
+    response = requests.get(server + "/fields", timeout=3)
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "data_unavailable"
+    for query in ["limit=0", "limit=201", "limit=word"]:
+        invalid = requests.get(server + "/fields?" + query, timeout=3)
+        assert invalid.status_code == 422
+        assert invalid.json()["error"]["code"] == "validation_error"

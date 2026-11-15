@@ -1,8 +1,10 @@
 """Read-only foundation; network isolation is not per-user authentication."""
 
 import uuid
+from datetime import date
+from typing import Literal
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -11,7 +13,10 @@ from starlette.exceptions import HTTPException
 from .config import Settings, request_id
 from .schemas import (
     Capability, ErrorResponse, Health, HealthResponse, Meta, Workspace, WorkspaceResponse,
+    FieldsResponse, FieldResponse, ObservationsResponse, ObservationResponse, EvidenceResponse,
 )
+from .data import DataStore, DataUnavailable, ResourceNotFound
+from .pagination import Pagination, InvalidCursor, ChangedSnapshot
 
 
 def error_response(request, status, code, message, *, details=None, retryable=False):
@@ -21,13 +26,15 @@ def error_response(request, status, code, message, *, details=None, retryable=Fa
     })
 
 
-def create_app(settings=None):
+def create_app(settings=None, data_settings=None):
     settings = settings or Settings.from_env()
     app = FastAPI(
         title="AgriData shared workspace API", version="1.0.0",
         docs_url=None, redoc_url=None, openapi_url="/api/v1/openapi.json",
-        responses={code: {"model": ErrorResponse} for code in (400, 403, 404, 405, 422, 500, 503)},
+        responses={code: {"model": ErrorResponse} for code in (400, 403, 404, 405, 409, 422, 500, 503)},
     )
+    store = DataStore(data_settings)
+    pagination = Pagination()
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.allowed_origins),
@@ -74,6 +81,22 @@ def create_app(settings=None):
         ]
         return error_response(request, 422, "validation_error", "Request validation failed", details=details)
 
+    @app.exception_handler(DataUnavailable)
+    async def data_unavailable(request, error):
+        return error_response(request, 503, "data_unavailable", str(error), retryable=True)
+
+    @app.exception_handler(ResourceNotFound)
+    async def resource_missing(request, error):
+        return error_response(request, 404, "not_found", "Resource not found")
+
+    @app.exception_handler(InvalidCursor)
+    async def invalid_cursor(request, error):
+        return error_response(request, 400, "invalid_cursor", "Restart pagination with the current filters")
+
+    @app.exception_handler(ChangedSnapshot)
+    async def changed_snapshot(request, error):
+        return error_response(request, 409, "snapshot_changed", "Data changed; restart pagination")
+
     @app.get("/api/v1/health", operation_id="getHealth", response_model=HealthResponse)
     def health(request: Request):
         return HealthResponse(data=Health(), meta=Meta(request_id=request.state.request_id))
@@ -99,9 +122,56 @@ def create_app(settings=None):
                 "plans": ["listPlans", "createPlan", "getPlan", "updatePlan"],
             }.items()
         ]
+        ready = store.available()
+        for capability in capabilities:
+            if capability.capability_id in ("fields", "observations"):
+                capability.state = "ready" if ready else "blocked"
+                capability.reason = None if ready else "Explicit project data configuration and prepared database required"
         return WorkspaceResponse(
-            data=Workspace(project_ids=[], capabilities=capabilities),
+            data=Workspace(project_ids=list(data_settings.project_ids) if data_settings else [], capabilities=capabilities),
             meta=Meta(request_id=request.state.request_id),
         )
+
+    def page(request, rows, context, limit, cursor):
+        data, next_cursor = pagination.page(rows, context, limit, cursor)
+        return {"data": data, "meta": {"request_id": request.state.request_id,
+                                      "api_version": "v1", "next_cursor": next_cursor}}
+
+    @app.get("/api/v1/fields", operation_id="listFields", response_model=FieldsResponse)
+    def fields(request: Request, limit: int = Query(50, ge=1, le=200),
+               cursor: str | None = Query(None, max_length=4096)):
+        return page(request, store.fields(), ["fields"], limit, cursor)
+
+    @app.get("/api/v1/fields/{field_id}", operation_id="getField", response_model=FieldResponse)
+    def field_record(request: Request, field_id: str, boundary_id: str | None = None):
+        return {"data": store.get_field(field_id, boundary_id),
+                "meta": {"request_id": request.state.request_id, "api_version": "v1"}}
+
+    @app.get("/api/v1/fields/{field_id}/observations", operation_id="listObservations",
+             response_model=ObservationsResponse)
+    def observations(
+        request: Request, field_id: str, variable_id: str | None = None,
+        validation_status: Literal["all", "pending", "accepted", "rejected"] = "all",
+        start_date: date | None = None, end_date: date | None = None,
+        limit: int = Query(50, ge=1, le=200), cursor: str | None = Query(None, max_length=4096),
+    ):
+        if (start_date is None) != (end_date is None) or (start_date and start_date > end_date):
+            return error_response(request, 422, "validation_error", "Provide an ordered start_date/end_date pair")
+        rows = store.observations(field_id, variable_id, validation_status, start_date, end_date)
+        context = [field_id, variable_id, validation_status, str(start_date), str(end_date)]
+        return page(request, rows, context, limit, cursor)
+
+    @app.get("/api/v1/fields/{field_id}/observations/{canonical_observation_id}",
+             operation_id="getObservation", response_model=ObservationResponse)
+    def observation(request: Request, field_id: str, canonical_observation_id: str):
+        return {"data": store.observation(field_id, canonical_observation_id),
+                "meta": {"request_id": request.state.request_id, "api_version": "v1"}}
+
+    @app.get("/api/v1/fields/{field_id}/observations/{canonical_observation_id}/evidence",
+             operation_id="listObservationEvidence", response_model=EvidenceResponse)
+    def evidence(request: Request, field_id: str, canonical_observation_id: str,
+                 limit: int = Query(50, ge=1, le=200), cursor: str | None = Query(None, max_length=4096)):
+        return page(request, store.evidence(field_id, canonical_observation_id),
+                    [field_id, canonical_observation_id, "evidence"], limit, cursor)
 
     return app

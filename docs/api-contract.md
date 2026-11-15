@@ -94,7 +94,8 @@ can proceed only when independent of unresolved source/method dependencies.
 
 ## 4. Operation registry
 
-**Only getHealth/getWorkspace exist in the foundation increment.**
+**Implemented:** getHealth/getWorkspace, listFields/getField,
+listObservations/getObservation/listObservationEvidence.
 The implementation column identifies the backend task, not current readiness.
 Resource IDs, nested resources, downloads and jobs must stay within the explicit
 shared project scope. No login routes exist.
@@ -142,6 +143,25 @@ receive 404 before implementation, or 503 when an implemented route has a
 missing dependency. A successful health response is not feature readiness.
 
 ## 5. First-slice DTOs
+
+### Implemented read-slice limits (authoritative over future write DTOs below)
+
+`docs/openapi.json` is the exact implemented schema. Fields do not yet have a
+version/ETag/archive mechanism: no writes are enabled. They return field_id,
+project_id, nullable name/current_boundary_id/selected_boundary_id, geometry_status,
+boundary_versions and nullable geometry/metric_crs/area_m2/area_ha/perimeter_m/
+representative_point/repair_notes. No invented version, bounds, declarations,
+location or financial fields are returned. The later DTO extensions below must
+be introduced with their implementing task.
+
+`getField` accepts optional boundary_id. When more than one stored version
+exists, geometry_status is selection_required and geometry is null until an
+explicit version is selected. A sole recorded boundary is unambiguous.
+Unprepared canonical schema or missing configuration is 503, not an empty list.
+Observation date filters must be supplied as an ordered start_date/end_date
+pair; dates filter actual provider observed_at, never retrieval timestamps.
+Snapshot changes during pagination return 409; tampering, changed filters or
+server restart invalidate the cursor with 400. See api-running.md for scale limits.
 
 Names below are schema names for OpenAPI. Fields listed as nullable must be
 returned as null when absent, not filled from frontend seeds.
